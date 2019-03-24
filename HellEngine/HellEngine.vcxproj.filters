@@ -1,36 +1,93 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="HellEngine">
+      <UniqueIdentifier>{60790B1C-4C31-4D69-B538-26C5A10FE859}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="HellEngine\Events">
+      <UniqueIdentifier>{44D96E43-B0EF-6CD9-F966-F8FA65BC3D61}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="HellEngine\ImGUI">
+      <UniqueIdentifier>{4A72E14F-366B-00A2-5F9D-E5264BF5DFAD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{2AC788B4-1694-E3BF-3FAD-D1672BD9184E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\OpenGL">
+      <UniqueIdentifier>{1E7D2C1D-8A08-9AE1-9319-1DD6FF23F6E1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\Windows">
+      <UniqueIdentifier>{64FBD71A-50F4-F66C-7926-DCF1657ED678}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\HellEngine\Core.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="src\HellEngine.h" />
     <ClInclude Include="src\HellEngine\Application.h">
-      <Filter>Header Files</Filter>
+      <Filter>HellEngine</Filter>
     </ClInclude>
-    <ClInclude Include="src\HellEngine.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\HellEngine\Core.h">
+      <Filter>HellEngine</Filter>
     </ClInclude>
     <ClInclude Include="src\HellEngine\EntryPoint.h">
-      <Filter>Header Files</Filter>
+      <Filter>HellEngine</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\Events\ApplicationEvent.h">
+      <Filter>HellEngine\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Events\Event.h">
+      <Filter>HellEngine\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Events\KeyEvent.h">
+      <Filter>HellEngine\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Events\MouseEvent.h">
+      <Filter>HellEngine\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\ImGUI\ImGuiLayer.h">
+      <Filter>HellEngine\ImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Layer.h">
+      <Filter>HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\LayerStack.h">
+      <Filter>HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Log.h">
+      <Filter>HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Window.h">
+      <Filter>HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\ImGuiOpenGLRenderer.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\Windows\WindowsWindow.h">
+      <Filter>Platform\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\hellpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HellEngine\Application.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>HellEngine</Filter>
     </ClCompile>
+    <ClCompile Include="src\HellEngine\ImGUI\ImGuiLayer.cpp">
+      <Filter>HellEngine\ImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Layer.cpp">
+      <Filter>HellEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\LayerStack.cpp">
+      <Filter>HellEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Log.cpp">
+      <Filter>HellEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\ImGuiOpenGLRenderer.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\Windows\WindowsWindow.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hellpch.cpp" />
   </ItemGroup>
 </Project>

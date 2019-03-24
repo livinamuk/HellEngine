@@ -1,0 +1,12 @@
+[submodule "spdlog"]
+	path = spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "HellEngine/vendor/spdlog"]
+	path = HellEngine/vendor/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "HellEngine/vendor/GLFW"]
+	path = HellEngine/vendor/GLFW
+	url = https://github.com/TheCherno/glfw
+[submodule "HellEngine/vendor/imgui"]
+	path = HellEngine/vendor/imgui
+	url = https://github.com/TheCherno/imgui
