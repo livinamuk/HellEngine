@@ -10,12 +10,30 @@ public:
 
 	void OnUpdate() override
 	{
-		HELL_INFO("ExampleLayer::Update");
+		//HELL_INFO("ExampleLayer::Update");
+		
+		//if (HellEngine::Input::IsKeyPressed(HELL_KEY_TAB))
+		//	HELL_TRACE("Tab key is pressed (poll)!");
 	}
 
 	void OnEvent(HellEngine::Event& event) override
 	{
-		HELL_TRACE("{0}", event);
+		//HELL_TRACE("{0}", event);
+
+		/*if (event.GetEventType() == HellEngine::EventType::KeyPressed)
+		{
+			HellEngine::KeyPressedEvent& e = (HellEngine::KeyPressedEvent&)event;
+			HELL_TRACE("{0}", (char)e.GetKeyCode());
+		}*/
+
+		HellEngine::KeyPressedEvent& e = (HellEngine::KeyPressedEvent&)event;
+		if (e.GetKeyCode() == HELL_KEY_ESCAPE)
+		{
+
+			//HellEngine::EventDispatcher dispatcher(e);
+			//dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+		//	HellEngine::Application::Close();
+		}
 	}
 
 };

@@ -93,7 +93,7 @@
       <ImportLibrary>..\bin\Debug-windows-x86_64\HellEngine\HellEngine.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Debug-windows-x86_64\HellEngine\HellEngine.dll\ (xcopy /Q /E /Y /I ..\bin\Debug-windows-x86_64\HellEngine\HellEngine.dll ..\bin\Debug-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Debug-windows-x86_64\HellEngine\HellEngine.dll ..\bin\Debug-windows-x86_64\Sandbox &gt; nul)</Command>
+      <Command>IF EXIST ..\bin\Debug-windows-x86_64\HellEngine\HellEngine.dll\ (xcopy /Q /E /Y /I ..\bin\Debug-windows-x86_64\HellEngine\HellEngine.dll "..\bin\Debug-windows-x86_64\Sandbox\" &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Debug-windows-x86_64\HellEngine\HellEngine.dll "..\bin\Debug-windows-x86_64\Sandbox\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -119,7 +119,7 @@
       <ImportLibrary>..\bin\Release-windows-x86_64\HellEngine\HellEngine.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Release-windows-x86_64\HellEngine\HellEngine.dll\ (xcopy /Q /E /Y /I ..\bin\Release-windows-x86_64\HellEngine\HellEngine.dll ..\bin\Release-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Release-windows-x86_64\HellEngine\HellEngine.dll ..\bin\Release-windows-x86_64\Sandbox &gt; nul)</Command>
+      <Command>IF EXIST ..\bin\Release-windows-x86_64\HellEngine\HellEngine.dll\ (xcopy /Q /E /Y /I ..\bin\Release-windows-x86_64\HellEngine\HellEngine.dll "..\bin\Release-windows-x86_64\Sandbox\" &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Release-windows-x86_64\HellEngine\HellEngine.dll "..\bin\Release-windows-x86_64\Sandbox\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
@@ -145,7 +145,7 @@
       <ImportLibrary>..\bin\Dist-windows-x86_64\HellEngine\HellEngine.lib</ImportLibrary>
     </Link>
     <PostBuildEvent>
-      <Command>IF EXIST ..\bin\Dist-windows-x86_64\HellEngine\HellEngine.dll\ (xcopy /Q /E /Y /I ..\bin\Dist-windows-x86_64\HellEngine\HellEngine.dll ..\bin\Dist-windows-x86_64\Sandbox &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Dist-windows-x86_64\HellEngine\HellEngine.dll ..\bin\Dist-windows-x86_64\Sandbox &gt; nul)</Command>
+      <Command>IF EXIST ..\bin\Dist-windows-x86_64\HellEngine\HellEngine.dll\ (xcopy /Q /E /Y /I ..\bin\Dist-windows-x86_64\HellEngine\HellEngine.dll "..\bin\Dist-windows-x86_64\Sandbox\" &gt; nul) ELSE (xcopy /Q /Y /I ..\bin\Dist-windows-x86_64\HellEngine\HellEngine.dll "..\bin\Dist-windows-x86_64\Sandbox\" &gt; nul)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -158,13 +158,17 @@
     <ClInclude Include="src\HellEngine\Events\KeyEvent.h" />
     <ClInclude Include="src\HellEngine\Events\MouseEvent.h" />
     <ClInclude Include="src\HellEngine\ImGUI\ImGuiLayer.h" />
+    <ClInclude Include="src\HellEngine\Input.h" />
+    <ClInclude Include="src\HellEngine\KeyCodes.h" />
     <ClInclude Include="src\HellEngine\Layer.h" />
     <ClInclude Include="src\HellEngine\LayerStack.h" />
     <ClInclude Include="src\HellEngine\Log.h" />
+    <ClInclude Include="src\HellEngine\MouseButtonCodes.h" />
     <ClInclude Include="src\HellEngine\Window.h" />
     <ClInclude Include="src\Platform\OpenGL\ImGuiOpenGLRenderer.h" />
     <ClInclude Include="src\Platform\Windows\WindowsWindow.h" />
     <ClInclude Include="src\hellpch.h" />
+    <ClInclude Include="WindowsInput.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HellEngine\Application.cpp" />
@@ -177,6 +181,7 @@
     <ClCompile Include="src\hellpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WindowsInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="vendor\GLFW\GLFW.vcxproj">

@@ -65,6 +65,10 @@
       <Filter>Platform\Windows</Filter>
     </ClInclude>
     <ClInclude Include="src\hellpch.h" />
+    <ClInclude Include="src\HellEngine\Input.h" />
+    <ClInclude Include="WindowsInput.h" />
+    <ClInclude Include="src\HellEngine\KeyCodes.h" />
+    <ClInclude Include="src\HellEngine\MouseButtonCodes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HellEngine\Application.cpp">
@@ -89,5 +93,6 @@
       <Filter>Platform\Windows</Filter>
     </ClCompile>
     <ClCompile Include="src\hellpch.cpp" />
+    <ClCompile Include="WindowsInput.cpp" />
   </ItemGroup>
 </Project>

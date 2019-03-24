@@ -16,10 +16,11 @@ IncludeDir = {}
 IncludeDir["GLFW"] = "HellEngine/vendor/GLFW/include"
 IncludeDir["Glad"] = "HellEngine/vendor/Glad/include"
 IncludeDir["ImGui"] = "HellEngine/vendor/imgui/"
-
-include "HellEngine/vendor/GLFW"
-include "HellEngine/vendor/Glad"
-include "HellEngine/vendor/imgui"
+ 
+ group "Dependencies"
+	include "HellEngine/vendor/GLFW"
+	include "HellEngine/vendor/Glad"
+	include "HellEngine/vendor/imgui"
 
 project "HellEngine"
 	location "HellEngine"
@@ -69,11 +70,11 @@ project "HellEngine"
 
 		postbuildcommands
 		{
-			("{COPY} %{cfg.buildtarget.relpath} ../bin/" .. outputdir .. "/Sandbox")
+			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
 		}
 
 	filter "configurations:Debug"
-		defines "HELL_DEBUG"
+		defines "HELL_DEBUG" 
 		runtime "Debug"
 		symbols "On"
 

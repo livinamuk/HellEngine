@@ -4,6 +4,7 @@
 #include "HellEngine/Log.h"
 
 #include "Glad/glad.h"
+#include "Input.h"
 
 namespace HellEngine
 
@@ -41,6 +42,11 @@ namespace HellEngine
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
 
+	//	HellEngine::KeyPressedEvent& ev = (HellEngine::KeyPressedEvent&)e;
+//		if (ev.GetKeyCode() == HELL_KEY_ESCAPE)
+//			dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+
+
 
 		//HELL_CORE_INFO("{0}", e);
 
@@ -64,6 +70,11 @@ namespace HellEngine
 
 			m_Window->OnUpdate();
 		}
+	}
+
+	void Application::Close()
+	{
+		m_Running = false;
 	}
 
 	bool Application::OnWindowClose(WindowCloseEvent& e)
