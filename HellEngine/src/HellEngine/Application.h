@@ -6,6 +6,7 @@
 #include "HellEngine/LayerStack.h"
 #include "HellEngine/Events/Event.h"
 #include "HellEngine/Events/ApplicationEvent.h"
+#include "HellEngine/ImGui/ImGuiLayer.h"
 
 namespace HellEngine
 {
@@ -15,7 +16,7 @@ namespace HellEngine
 		Application();
 		virtual ~Application();
 		void Run();
-		void Close();
+		
 		void OnEvent(Event& e);
 		
 		void PushLayer(Layer* layer);
@@ -27,8 +28,9 @@ namespace HellEngine
 	private:
 		bool OnWindowClose(WindowCloseEvent& e);
 		static Application* s_Instance;
-		
+
 		std::unique_ptr<Window> m_Window;
+		ImGuiLayer* m_ImGuiLayer;
 		bool m_Running = true;
 		LayerStack m_LayerStack;
 	};

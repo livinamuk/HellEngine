@@ -11,7 +11,7 @@
 #endif
 
 #ifdef HELL_DEBUG
- #define HZ_ENABLE_ASSERTS
+ #define HELL_ENABLE_ASSERTS
 #endif
 
 #ifdef HELL_ENABLE_ASSERTS

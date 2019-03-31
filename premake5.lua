@@ -15,7 +15,9 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDir = {}
 IncludeDir["GLFW"] = "HellEngine/vendor/GLFW/include"
 IncludeDir["Glad"] = "HellEngine/vendor/Glad/include"
+IncludeDir["glm"] = "HellEngine/vendor/glm/include"
 IncludeDir["ImGui"] = "HellEngine/vendor/imgui/"
+IncludeDir["glm"] = "HellEngine/vendor/glm"
  
  group "Dependencies"
 	include "HellEngine/vendor/GLFW"
@@ -37,7 +39,9 @@ project "HellEngine"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/glm/glm/**.hpp",
+		"%{prj.name}/vendor/glm/glm/**.inl"
 	}
 
 	includedirs
@@ -46,7 +50,8 @@ project "HellEngine"
 		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
-		"%{IncludeDir.ImGui}"
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.glm}"
 	}
 
 	links 
@@ -106,7 +111,8 @@ project "Sandbox"
 	includedirs
 	{
 		"HellEngine/vendor/spdlog/include",
-		"HellEngine/src"
+		"HellEngine/src",
+		"%{IncludeDir.glm}"
 	}
 
 	links

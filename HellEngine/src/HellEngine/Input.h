@@ -4,7 +4,7 @@
 
 namespace HellEngine
 {
-	class HELL_API Input
+	class HELL_API Input 
 	{
 	public:
 		inline static bool IsKeyPressed(int keycode) { return s_Instance->IsKeyPressedImpl(keycode); }

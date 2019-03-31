@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="HellEngine">
+      <UniqueIdentifier>{60790B1C-4C31-4D69-B538-26C5A10FE859}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HellEngine\vendor">
+      <UniqueIdentifier>{BDC38CB4-29DA-8A4A-7251-166CDEA65BD2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HellEngine\vendor\glm">
+      <UniqueIdentifier>{8CE4ADF0-F850-69EB-C144-01492D708B53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\SandboxApp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\HellEngine\vendor\glm\include">
+      <Filter>HellEngine\vendor\glm</Filter>
+    </None>
+  </ItemGroup>
+</Project>
