@@ -16,3 +16,6 @@
 [submodule "HellEngine/vendor/assimp"]
 	path = HellEngine/vendor/assimp
 	url = https://github.com/jonestristand/assimp
+[submodule "rapidjson"]
+	path = rapidjson
+	url = https://github.com/Tencent/rapidjson
