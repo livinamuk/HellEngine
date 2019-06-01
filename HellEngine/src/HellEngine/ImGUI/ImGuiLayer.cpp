@@ -3,7 +3,7 @@
 
 #include "imgui.h"
 
-#define IMGUI_IMPL_API
+//#define IMGUI_IMPL_API
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
 
@@ -35,7 +35,6 @@ namespace HellEngine {
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
 		ImGui::StyleColorsDark();
-		ImGui::StyleColorsDark();
 
 		ImGuiStyle& style = ImGui::GetStyle();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -61,7 +60,7 @@ namespace HellEngine {
 	void ImGuiLayer::OnImGuiRender()
 	{
 		static bool show = true;
-		ImGui::ShowDemoWindow(&show);
+		//ImGui::ShowDemoWindow(&show);
 
 	}
 
@@ -76,7 +75,7 @@ namespace HellEngine {
 	{
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		Application& app = Application::Get();
-		io.DisplaySize = ImVec2(app.GetWindow().GetWidth(), app.GetWindow().GetHeight());
+		io.DisplaySize = ImVec2((float)app.GetWindow().GetWidth(), (float)app.GetWindow().GetHeight());
 
 		// rendering
 		ImGui::Render();

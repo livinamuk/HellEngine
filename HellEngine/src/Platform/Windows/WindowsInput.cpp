@@ -8,12 +8,30 @@ namespace HellEngine {
 
 	Input* Input::s_Instance = new WindowsInput();
 
+	bool WindowsInput::IsKeyPressedOnceImpl(int keycode)
+	{/*
+		// First check if key was pressed last frame
+		if (WasKeyPressedLastFrame[keycode])
+			return false;
+
+		// Now check if it's being pressed now
+		if (IsKeyPressedImpl(keycode))
+		{ 
+			WasKeyPressedLastFrame[keycode] = true;
+			return true;
+		}*/
+		return false;
+	}	
+	
 	bool WindowsInput::IsKeyPressedImpl(int keycode)
 	{
 		auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
-		auto state = glfwGetKey(window, keycode);
+		auto state = glfwGetKey(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow()), keycode);
+
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}
+
+	
 
 	bool WindowsInput::IsMouseButtonPressedImpl(int button)
 	{

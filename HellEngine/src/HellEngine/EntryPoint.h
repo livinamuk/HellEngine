@@ -6,6 +6,9 @@ extern HellEngine::Application* HellEngine::CreateApplication();
 
 int main(int argc, char** argv)
 {
+
+ //system("pause");
+
 	HellEngine::Log::Init();
 	printf("Welcome to Hell\n\n");
 	HELL_CORE_WARN("Welcome To Hell");

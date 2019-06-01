@@ -123,3 +123,4 @@
 #define HELL_KEY_RIGHT_ALT          346
 #define HELL_KEY_RIGHT_SUPER        347
 #define HELL_KEY_MENU               348
+#define HELL_KEY_LAST               HELL_KEY_MENU

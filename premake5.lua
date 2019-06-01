@@ -18,17 +18,22 @@ IncludeDir["Glad"] = "HellEngine/vendor/Glad/include"
 IncludeDir["glm"] = "HellEngine/vendor/glm/include"
 IncludeDir["ImGui"] = "HellEngine/vendor/imgui/"
 IncludeDir["glm"] = "HellEngine/vendor/glm"
+IncludeDir["stb"] = "HellEngine/vendor/stb_image"
+IncludeDir["assimp"] = "HellEngine/vendor/assimp/include"
+IncludeDir["assimpcfg"] = "HellEngine/vendor/assimp/config"
  
- group "Dependencies"
+group "Dependencies"
 	include "HellEngine/vendor/GLFW"
 	include "HellEngine/vendor/Glad"
 	include "HellEngine/vendor/imgui"
+	include "HellEngine/vendor/assimp"
 
 project "HellEngine"
 	location "HellEngine"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
-	staticruntime "off"
+	cppdialect "C++17"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -44,26 +49,35 @@ project "HellEngine"
 		"%{prj.name}/vendor/glm/glm/**.inl"
 	}
 
+	defines
+	{
+		"_CRT_SECURE_NO_WARNINGS"
+	}
+
 	includedirs
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
+		"%{prj.name}/vendor/stb_image",
+		"%{prj.name}/vendor/OpenAL",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.glm}"
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.assimp}",
+		"%{IncludeDir.assimpcfg}"
 	}
-
+	
 	links 
 	{ 
 		"GLFW",
 		"Glad",
 		"ImGui",
-		"opengl32.lib"
+		"opengl32.lib",
+		"assimp"
 	}
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -73,31 +87,27 @@ project "HellEngine"
 			"GLFW_INCLUDE_NONE"
 		}
 
-		postbuildcommands
-		{
-			("{COPY} %{cfg.buildtarget.relpath} \"../bin/" .. outputdir .. "/Sandbox/\"")
-		}
-
 	filter "configurations:Debug"
 		defines "HELL_DEBUG" 
 		runtime "Debug"
-		symbols "On"
+		symbols "on"
 
 	filter "configurations:Release"
 		defines "HELL_RELEASE"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 
 	filter "configurations:Dist"
 		defines "HELL_DIST"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 
 project "Sandbox"
 	location "Sandbox"
 	kind "ConsoleApp"
 	language "C++"
-	staticruntime "off"
+	cppdialect "C++17"
+	staticruntime "on"
 
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -112,16 +122,24 @@ project "Sandbox"
 	{
 		"HellEngine/vendor/spdlog/include",
 		"HellEngine/src",
-		"%{IncludeDir.glm}"
+		"HellEngine/vendor",
+		"%{IncludeDir.glm}",
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.Glad}",
+		"%{IncludeDir.assimp}",
+		"%{IncludeDir.assimpcfg}"
 	}
+	
 
 	links
-	{
-		"HellEngine"
-	}
+	{	
+		"GLFW",
+		"Glad",
+		"HellEngine",
+		"assimp"
+	}	
 
 	filter "system:windows"
-		cppdialect "C++17"
 		systemversion "latest"
 
 		defines
@@ -132,15 +150,15 @@ project "Sandbox"
 	filter "configurations:Debug"
 		defines "HELL_DEBUG"
 		runtime "Debug"
-		symbols "On"
+		symbols "on"
 
 	filter "configurations:Release"
 		defines "HELL_RELEASE"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 
 	filter "configurations:Dist"
 		defines "HELL_DIST"
 		runtime "Release"
-		optimize "On"
+		optimize "on"
 

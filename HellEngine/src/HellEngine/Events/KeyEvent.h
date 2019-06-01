@@ -4,7 +4,7 @@
 
 namespace HellEngine {
 
-	class HELL_API KeyEvent : public Event
+	class KeyEvent : public Event
 	{
 	public:
 		inline int GetKeyCode() const { return m_KeyCode; }
@@ -17,7 +17,7 @@ namespace HellEngine {
 		int m_KeyCode;
 	};
 
-	class HELL_API KeyPressedEvent : public KeyEvent
+	class KeyPressedEvent : public KeyEvent
 	{
 	public:
 		KeyPressedEvent(int keycode, int repeatCount)
@@ -28,7 +28,7 @@ namespace HellEngine {
 		std::string ToString() const override
 		{
 			std::stringstream ss;
-			ss << "KeyPressedEvent: " << m_KeyCode << " (" << m_RepeatCount << " repeats)";
+			ss << "KeyPressedEvent: " << m_KeyCode << "(" << m_RepeatCount << " repeats)";
 			return ss.str();
 		}
 
@@ -37,7 +37,7 @@ namespace HellEngine {
 		int m_RepeatCount;
 	};
 
-	class HELL_API KeyReleasedEvent : public KeyEvent
+	class KeyReleasedEvent : public KeyEvent
 	{
 	public:
 		KeyReleasedEvent(int keycode)
@@ -53,7 +53,7 @@ namespace HellEngine {
 		EVENT_CLASS_TYPE(KeyReleased)
 	};
 
-	class HELL_API KeyTypedEvent : public KeyEvent
+	class KeyTypedEvent : public KeyEvent
 	{
 	public:
 		KeyTypedEvent(int keycode)

@@ -7,7 +7,7 @@
 
 namespace HellEngine {
 
-	class HELL_API LayerStack
+	class LayerStack
 	{
 	public:
 		LayerStack();

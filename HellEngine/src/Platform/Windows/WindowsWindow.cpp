@@ -3,7 +3,7 @@
 #include "HellEngine/Events/MouseEvent.h"
 #include "HellEngine/Events/ApplicationEvent.h"
 #include "HellEngine/Events/KeyEvent.h"
-#include "Glad/glad.h"
+#include "Platform/OpenGL/OpenGLContext.h"
 
 namespace HellEngine {
 	static bool s_GLFWInitialized = false;
@@ -12,6 +12,38 @@ namespace HellEngine {
 	{
 		HELL_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
+
+	bool WindowsWindow::IsMouseEnabled()
+	{
+		return m_mouseEnabled;
+	}
+
+	void WindowsWindow::ToggleMouseEnabled()
+	{
+		m_mouseEnabled = !m_mouseEnabled;
+
+		if (m_mouseEnabled)
+		{
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+		else
+		{
+			glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+	}
+
+	void WindowsWindow::ToggleFullscreen()
+	{
+		m_fullscreen = !m_fullscreen;
+
+		if (m_fullscreen)
+			SetWindowMode(WindowMode::FULL_SCREEN, m_BaseVideoMode.width, m_BaseVideoMode.height);
+		else
+			SetWindowMode(WindowMode::WINDOWED, m_Data.WindowedWidth, m_Data.WindowedHeight);
+
+		glViewport(0, 0, GetWidth(), GetHeight());
+	}
+	
 
 	Window* Window::Create(const WindowProps& props)
 	{
@@ -33,6 +65,8 @@ namespace HellEngine {
 		m_Data.Title = props.Title;
 		m_Data.Width = props.Width;
 		m_Data.Height = props.Height;
+		m_Data.WindowedWidth = props.Width;
+		m_Data.WindowedHeight = props.Height;
 
 		HELL_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
@@ -45,12 +79,36 @@ namespace HellEngine {
 			s_GLFWInitialized = true;
 		}
 
+		m_PrimaryMonitor = glfwGetPrimaryMonitor();
+
+		m_BaseVideoMode = *(glfwGetVideoMode(m_PrimaryMonitor));
+		HELL_CORE_TRACE("Storing underlying OS video mode: {0}x{1}@{2}Hz (r{3}g{4}b{5})",
+			m_BaseVideoMode.width,
+			m_BaseVideoMode.height,
+			m_BaseVideoMode.refreshRate,
+			m_BaseVideoMode.redBits,
+			m_BaseVideoMode.greenBits,
+			m_BaseVideoMode.blueBits);
+
+
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-		glfwMakeContextCurrent(m_Window);
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-		HELL_CORE_ASSERT(status, "Failed to initialize Glad");
+
+		m_Context = new OpenGLContext(m_Window);
+		m_Context->Init();
+
+
+
+		
+		// Change to windowed, fullscreen, or fullscreen borderless
+		// Store current information about the window location and size (starting location/size)
+		m_OldWindowedParams.Width = props.Width;
+		m_OldWindowedParams.Height = props.Height;
+		glfwGetWindowPos(m_Window, &(m_OldWindowedParams.XPos), &(m_OldWindowedParams.YPos));
+		SetWindowMode(props.Mode, 0, 0); 
+		
+
 		glfwSetWindowUserPointer(m_Window, &m_Data);
-		SetVSync(true);
+		SetVSync(false);
 
 		// Set GLFW callbacks
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height)
@@ -62,6 +120,8 @@ namespace HellEngine {
 			WindowResizeEvent event(width, height);
 			data.EventCallback(event);
 		});
+
+		
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)
 		{
@@ -143,6 +203,64 @@ namespace HellEngine {
 		});
 	}
 
+
+	void WindowsWindow::SetWindowMode(const WindowMode & mode, unsigned int width = 0, unsigned int height = 0)
+	{
+		if (!m_Window) // Ensure there is a window to work on
+			return;
+		if (mode == m_Data.Mode) // Nothing to do as this is not a change
+			return;
+
+		// If currently windowed, stash the current size and position of the window
+		if (m_Data.Mode == WindowMode::WINDOWED) {
+			m_OldWindowedParams.Width = m_Data.Width;
+			m_OldWindowedParams.Height = m_Data.Height;
+			glfwGetWindowPos(m_Window, &(m_OldWindowedParams.XPos), &(m_OldWindowedParams.YPos));
+
+		}
+
+		GLFWmonitor* monitor = nullptr;
+
+		if (mode == WindowMode::BORDERLESS) {
+			// For borderless full screen, the new width and height will be the video mode width and height
+			width = m_BaseVideoMode.width;
+			height = m_BaseVideoMode.height;
+			monitor = m_PrimaryMonitor;
+		}
+		else if (mode == WindowMode::WINDOWED && (width == 0 || height == 0)) {
+			// For windowed, use old window height and width if none provided
+			width = m_OldWindowedParams.Width;
+			height = m_OldWindowedParams.Height;
+			// monitor = nullptr; 
+		}
+		else if (mode == WindowMode::FULL_SCREEN) {
+			if (width == 0 || height == 0) {
+				// Use the old window size
+				// TODO: May want to change this to check if it is a valid full screen resolution pair
+				width = m_Data.Width;
+				height = m_Data.Height;
+			}
+			monitor = m_PrimaryMonitor;
+		}
+
+		// Update stored width and height
+		m_Data.Width = width;
+		m_Data.Height = height;
+
+		// Trigger resize event
+		if (m_Data.EventCallback) {
+			WindowResizeEvent e(width, height);
+			m_Data.EventCallback(e);
+		}
+
+		HELL_CORE_INFO("Changing window mode from {0} to {1}: [{2}, {3}]", m_Data.Mode, mode, width, height);
+
+		// Record new window type
+		m_Data.Mode = mode;
+
+		glfwSetWindowMonitor(m_Window, monitor, m_OldWindowedParams.XPos, m_OldWindowedParams.YPos, width, height, m_BaseVideoMode.refreshRate);
+	}
+
 	void WindowsWindow::Shutdown()
 	{
 		glfwDestroyWindow(m_Window);
@@ -151,7 +269,7 @@ namespace HellEngine {
 	void WindowsWindow::OnUpdate()
 	{
 		glfwPollEvents();
-		glfwSwapBuffers(m_Window);
+		m_Context->SwapBuffers();
 	}
 
 	void WindowsWindow::SetVSync(bool enabled)

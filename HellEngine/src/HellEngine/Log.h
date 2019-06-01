@@ -6,7 +6,7 @@
 
 namespace HellEngine {
 
-	class HELL_API Log
+	class Log
 	{
 	public:
 		static void Init();

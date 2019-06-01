@@ -13,6 +13,12 @@
     <Filter Include="src">
       <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
+    <Filter Include="res">
+      <UniqueIdentifier>{feda7295-f24b-4aa7-86c0-4f3009227eea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="res\shaders">
+      <UniqueIdentifier>{032e3bed-d917-4869-aa7d-a5f800270df3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SandboxApp.cpp">
@@ -20,8 +26,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\HellEngine\vendor\glm\include">
-      <Filter>HellEngine\vendor\glm</Filter>
-    </None>
+    <None Include="res\shaders\Fxaa.frag" />
+    <None Include="res\shaders\composite.vert" />
   </ItemGroup>
 </Project>

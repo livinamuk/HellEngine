@@ -13,3 +13,6 @@
 [submodule "HellEngine/vendor/glm"]
 	path = HellEngine/vendor/glm
 	url = https://github.com/g-truc/glm
+[submodule "HellEngine/vendor/assimp"]
+	path = HellEngine/vendor/assimp
+	url = https://github.com/jonestristand/assimp
