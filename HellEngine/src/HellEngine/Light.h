@@ -9,6 +9,7 @@ namespace HellEngine
 	public: // methods
 		Light();
 		Light(float x, float y, float z);
+		Light(glm::vec3 position, glm::vec3 color, float attConstant, float attLinear, float attExp, float strength);
 		~Light();
 		void CalculateShadowProjectionMatricies();
 		void CalculateRadius();

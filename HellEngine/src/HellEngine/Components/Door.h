@@ -17,7 +17,7 @@ namespace HellEngine {
 	class Door
 	{
 	public: // methods
-		Door(float x, float z, Axis axis);
+		Door(float x, float z, Axis axis, std::string floorMaterialName, bool rotateFloor);
 		~Door();
 
 		void Update(float deltaTime);
@@ -43,6 +43,7 @@ namespace HellEngine {
 
 	public: // static
 		static Model* modelDoor;
+		static Model* modelDoorShadowCaster;
 		static Model* modelDoorJam;
 		static Model* modelWallHole;
 	};

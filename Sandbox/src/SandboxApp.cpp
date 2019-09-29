@@ -2,35 +2,63 @@
 #include "imgui/imgui.h"
 #include <cmath> 
 #include "Platform/OpenGL/glExtension.h" // glInfo struct
+#include "Config.h"
+#include "HellEngine/Animation/SkinnedMesh.h"
+#include "HellEngine/Audio/Audio.h"
+#include "HellEngine/GameObjects/Decal.h"
+#include "HellEngine/GameObjects/Shell.h"
 
 namespace HellEngine
 {
+	//bool Config::DOF_showFocus;
+	bool Config::DOF_vignetting;
+	float Config::DOF_vignout;
+	float Config::DOF_vignin;
+	float Config::DOF_vignfade;
+	float Config::DOF_CoC;
+	float Config::DOF_maxblur;
+	int Config::DOF_samples;
+	int Config::DOF_rings;
+	float Config::DOF_threshold;
+	float Config::DOF_gain;
+	float Config::DOF_bias;
+	float Config::DOF_fringe;
+
 	class ExampleLayer : public HellEngine::Layer
 	{
 	public:
 
-		const int MAX_LIGHTS = 4;
+		const int MAX_LIGHTS = 8;
 
 		int SCR_WIDTH, SCR_HEIGHT;
+		bool _IMGUI_RUN_ONCE = true;
 
 		bool showBoundingBoxes = false;
 		bool showBuffers = false;
+		bool showVolumes = false;
 		bool showLights = false;
 		bool showImGUI = true;
 		bool optimise = false;
 		bool NoClip = false;
+		bool showRaycastPlane = false;
+
+		glm::vec3 ray_direction;
+		RaycastData raycastData;
+
+		bool shellEjected = false;
+		bool shotgunFiring = false;
 
 		Camera camera;
 		float deltaTime;
 		float lastFrame;
+
+		File file;
 
 		vector<MousePickInfo> mousePickIndices;
 		MousePickInfo mousePicked{ MousePickType::NotFound, -1 };
 
 		House house;
 		Player player;
-
-		//Audio audio;
 
 		bool runOnce = true;
 
@@ -44,6 +72,7 @@ namespace HellEngine
 		PBO pBuffer;
 		GBuffer gBuffer;
 		LightingBuffer lightingBuffer;
+		std::vector<BlurBuffer> blurBuffers;
 		ShadowCubeMapArray shadowCubeMapArray;
 
 		float roughness = 0.077f;
@@ -61,18 +90,40 @@ namespace HellEngine
 		unsigned int skyboxVAO;
 
 		vector<BoundingBox*> boundingBoxPtrs;
-		vector<BoundingPlane*> boundingPlanePtrs;
+		vector<BoundingPlane*> boundingPlanePtrs; 
+
+		vector<Decal> decals;
+		vector<Shell> shells;
 
 
 		Model* bebop;
 
 		float time = 0;
 
+		glm::vec3 WorkBenchPosition;
+
+		SkinnedMesh skinnedMesh;
+
 		ExampleLayer() : Layer("Example")
 		{
+			Audio::LoadAudio("Door1.wav");
+			Audio::LoadAudio("Shotgun.wav");
+			Audio::LoadAudio("ShellBounce.wav");
+		//	Audio::LoadAudio("Music.mp3");
+			//Audio::LoadAudio("Music2.mp3");
+			//Audio::LoadAudio("Music3.mp3");
+			Audio::LoadAudio("player_step_1.wav");
+			Audio::LoadAudio("player_step_2.wav");
+			Audio::LoadAudio("player_step_3.wav");
+			Audio::LoadAudio("player_step_4.wav");
+
+
+			//ozz = Ozz_Animation("res/objects/seymour_skeleton.ozz"); 
 
 			deltaTime = 0.0f;
 			lastFrame = 0.0f;
+
+			WorkBenchPosition = glm::vec3(5.25f, 0, 2.8f);
 
 			// App setup
 			Application& app = Application::Get();
@@ -81,38 +132,86 @@ namespace HellEngine
 
 			GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
 
+
 			// pbo
 			pBuffer = PBO(SCR_WIDTH, SCR_HEIGHT);
 
+			// setup
+			Config::Load();
+
+			//Audio audio;
 
 			// MODELS: load files
 			ModelLoader loader;
+			//Model::models.push_back(loader.LoadFromFile("AnimatedShotgun.FBX"));
+			//Model::models.push_back(loader.LoadFromFile("AnimatedShotgun.dae"));
+			//Model::models.push_back(loader.LoadFromFile("model.dae"));
+			//Model::models.push_back(loader.LoadFromFile("Shotgun.dae"));
 			Model::models.push_back(loader.LoadFromFile("Wall.obj"));
-			Model::models.push_back(loader.LoadFromFile("model.dae"));
 			Model::models.push_back(loader.LoadFromFile("Door.obj"));
+			Model::models.push_back(loader.LoadFromFile("DoorShadowCaster.obj"));
 			Model::models.push_back(loader.LoadFromFile("Door_jam.obj"));
 			Model::models.push_back(loader.LoadFromFile("Wall_DoorHole.obj"));
-			Model::models.push_back(loader.LoadFromFile("Mannequin.obj"));
-			Model::models.push_back(loader.LoadFromFile("Old_Cotton_Couch.obj"));
-			Model::models.push_back(loader.LoadFromFile("sphere.obj"));
-			Model::models.push_back(loader.LoadFromFile("Shotgun.obj"));
-			Model::models.push_back(loader.LoadFromFile("Shotgun2.obj"));
-			Model::models.push_back(loader.LoadFromFile("knight.dae"));
-			Model::models.push_back(loader.LoadFromFile("Colt45.obj"));
+			Model::models.push_back(loader.LoadFromFile("UnitPlane.obj"));
 			Model::models.push_back(loader.LoadFromFile("Light.obj"));
 			Model::models.push_back(loader.LoadFromFile("SphereLight.obj"));
+			Model::models.push_back(loader.LoadFromFile("sphere.obj"));
+			Model::models.push_back(loader.LoadFromFile("Shell.fbx"));
+			Model::models.push_back(loader.LoadFromFile("Old_Cotton_Couch.obj"));
+			Model::models.push_back(loader.LoadFromFile("PictureFrame.FBX"));
+
+			//Model::models.push_back(loader.LoadFromFile("DoorFinal.obj"));
+
+			Material::BuildMaterialList();
+
+			// Temporary commented out to speed up load time
+			if (true) {
+				Texture::Init();
+
+				//
+
+
+				//Model::models.push_back(loader.LoadFromFile("Mannequin.obj"));
+				/*
+				Model::models.push_back(loader.LoadFromFile("Shotgun.obj"));
+				Model::models.push_back(loader.LoadFromFile("Shotgun2.obj"));
+				Model::models.push_back(loader.LoadFromFile("knight.dae"));
+				Model::models.push_back(loader.LoadFromFile("Colt45.obj"));
+				Model::models.push_back(loader.LoadFromFile("Bench.obj"));
+				Model::models.push_back(loader.LoadFromFile("SM_Shotgun_01a.FBX"));
+
+				Model::models.push_back(loader.LoadFromFile("Shotgun3.obj"));
+				Model::models.push_back(loader.LoadFromFile("Handgun.obj"));
+				Model::models.push_back(loader.LoadFromFile("REDoor.obj"));
+				*/
+			}
+
+
+
 			// MODELS: set pointers
 			Wall::model = Model::GetByName("Wall.obj");
+			//Door::modelDoor = Model::GetByName("DoorFinal.obj");
 			Door::modelDoor = Model::GetByName("Door.obj");
+			Door::modelDoorShadowCaster = Model::GetByName("DoorShadowCaster.obj");
 			Door::modelDoorJam = Model::GetByName("Door_jam.obj");
 			Door::modelWallHole = Model::GetByName("Wall_DoorHole.obj");
 
-			// setup
-			Texture::Init();
-			house.Init();
+			File::LoadMapNames();
+
+			//house.LoadTestScene();
+			house = File::LoadMap("Level2.map");
+			house.RebuildRooms();
+			RebuildMap();
+
 
 			// OPENGL
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+			const GLubyte* vendor = glGetString(GL_VENDOR); // Returns the vendor
+			const GLubyte* renderer = glGetString(GL_RENDERER); // Returns a hint to the model
+
+			std::cout << "VENDOR: " << vendor << "\n";
+			std::cout << "RENDERER: " << renderer << "\n";
 
 			// Check GL extensions
 			glExtension& ext = glExtension::getInstance();
@@ -126,6 +225,11 @@ namespace HellEngine
 			gBuffer = GBuffer(SCR_WIDTH, SCR_HEIGHT);
 			lightingBuffer = LightingBuffer(SCR_WIDTH, SCR_HEIGHT);
 
+			blurBuffers.push_back(BlurBuffer(SCR_WIDTH / 2, SCR_HEIGHT / 2));
+			blurBuffers.push_back(BlurBuffer(SCR_WIDTH / 4, SCR_HEIGHT / 4));
+			blurBuffers.push_back(BlurBuffer(SCR_WIDTH / 8, SCR_HEIGHT / 8));
+			blurBuffers.push_back(BlurBuffer(SCR_WIDTH / 16, SCR_HEIGHT / 16));
+
 			// OpenGL
 			glEnable(GL_DEPTH_TEST);
 			glEnable(GL_CULL_FACE);
@@ -137,7 +241,7 @@ namespace HellEngine
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 			// Camera
-			camera.Position = glm::vec3(0.6f, 0.0f, 0.5f);
+			camera.Position = glm::vec3(0.6f, 0.0f, 9.45f);
 			camera.CalculateProjectionMatrix(SCR_WIDTH, SCR_HEIGHT);
 
 			// Shaders
@@ -151,6 +255,13 @@ namespace HellEngine
 			Shader::LoadShader("DEBUG", "test.vert", "test.frag", "NONE");
 			Shader::LoadShader("Composite", "composite.vert", "composite.frag", "NONE");
 			Shader::LoadShader("NullTechnique", "null_technique.vert", "null_technique.frag", "NONE");
+			Shader::LoadShader("BlurHorizontal", "blurHorizontal.vert", "blur.frag", "NONE");
+			Shader::LoadShader("BlurVertical", "blurVertical.vert", "blur.frag", "NONE");
+			Shader::LoadShader("Final", "final.vert", "final.frag", "NONE");
+			Shader::LoadShader("DownScale", "downScale.vert", "downScale.frag", "NONE");
+			Shader::LoadShader("Final", "final.vert", "final.frag", "NONE");
+			Shader::LoadShader("DOF", "DOF.vert", "DOF.frag", "NONE");
+			Shader::LoadShader("Decals", "decals.vert", "decals.frag", "NONE");
 			//Shader::LoadShader("Fxaa", "debugFboShader.vert", "Fxaa.frag", "NONE");
 
 			Shader* lampShader = Shader::GetShaderByName("LampShader");
@@ -163,7 +274,14 @@ namespace HellEngine
 			geometryShader->setInt("roughnessTexture", 1);
 			geometryShader->setInt("metallicTexture", 2);
 			geometryShader->setInt("normalMap", 3);
+			geometryShader->setInt("emissiveMap", 4);
 			geometryShader->setMat4("projection", camera.projectionMatrix);
+
+			Shader* decalShader = Shader::GetShaderByName("Decals");
+			decalShader->use();
+			decalShader->setInt("depthTexture", 0);
+			decalShader->setInt("diffuseTexture", 1);
+			decalShader->setInt("normalTexture", 2);
 
 
 			//for (int i = 0; i < 50; i++)
@@ -194,13 +312,70 @@ namespace HellEngine
 			lightingShader->use();
 			lightingShader->setInt("albedoTexture", 0);
 			lightingShader->setInt("normalTexture", 1);
-			lightingShader->setInt("positionTexture", 2);
-			lightingShader->setInt("depthMap", 3);
+			lightingShader->setInt("depthTexture", 2);
+			lightingShader->setInt("emissiveTexture", 3);
+			lightingShader->setInt("shadowMaps", 4);
 
 			Shader* compositeShader = Shader::GetShaderByName("Composite");
 			compositeShader->use();
 			compositeShader->setInt("albedoTexture", 0);
 			compositeShader->setInt("accumulatedLighting", 1);
+
+			Shader* blurHorizontalShader = Shader::GetShaderByName("BlurHorizontal");
+			blurHorizontalShader->use();
+			blurHorizontalShader->setInt("image", 0);
+
+			Shader* blurVerticalShader = Shader::GetShaderByName("BlurVertical");
+			blurVerticalShader->use();
+			blurVerticalShader->setInt("image", 0);
+
+			Shader* downScaleShader = Shader::GetShaderByName("DownScale");
+			downScaleShader->use();
+			downScaleShader->setInt("inputTexture", 0);
+
+			Shader* DOFShader = Shader::GetShaderByName("DOF");
+			DOFShader->use();
+			DOFShader->setInt("renderTexture", 0);
+			DOFShader->setInt("depthTexture", 1);
+
+			Shader* finalShader = Shader::GetShaderByName("Final");
+			finalShader->use();
+			finalShader->setInt("scene", 0);
+			finalShader->setInt("blur0", 1);
+			finalShader->setInt("blur1", 2);
+			finalShader->setInt("blur2", 3);
+			finalShader->setInt("blur3", 4);
+
+
+
+
+			glm::vec3 couchPosition = glm::vec3(-2.9f, 0, 6.1f);
+			RenderableObject::NewObject("Couch", Model::GetByName("Old_Cotton_Couch.obj"));
+			RenderableObject::SetPositionByName("Couch", couchPosition);
+			RenderableObject::SetScaleByName("Couch", glm::vec3(0.07));
+			//RenderableObject::SetAngleByName("Couch", PI);
+			RenderableObject::SetRotationByName("Couch", glm::vec3(0, PI, 0));
+			RenderableObject::SetDiffuseTextureByName("Couch", Texture::GetIDByName("Couch_A_Base_Color.png"));
+			RenderableObject::SetRoughnessTextureByName("Couch", Texture::GetIDByName("Couch_A_Roughness.png"));
+			RenderableObject::SetMetallicTextureByName("Couch", Texture::GetIDByName("Couch_A_Metallic.png"));
+			RenderableObject::SetNormalMapByName("Couch", Texture::GetIDByName("Couch_A_NormalMap.png"));
+			BoundingBox bb = BoundingBox(couchPosition, glm::vec3(2.1f, 0.8f, 0.9f), BOTTOM_CENTERED);
+			RenderableObject::SetBoundingBoxByName("Couch", bb);
+
+
+
+
+			glm::vec3 framePosition = glm::vec3(0, 1.6f, 3.25f);
+			RenderableObject::NewObject("PictureFrame", Model::GetByName("PictureFrame.FBX"));
+			RenderableObject::SetPositionByName("PictureFrame", framePosition);
+			RenderableObject::SetScaleByName("PictureFrame", glm::vec3(0.9));
+			RenderableObject::SetRotationByName("PictureFrame", glm::vec3(ROTATE_270, ROTATE_90, 0));
+			RenderableObject::SetDiffuseTextureByName("PictureFrame", Texture::GetIDByName("PictureFrame_BaseColor.png"));
+			RenderableObject::SetRoughnessTextureByName("PictureFrame", Texture::GetIDByName("PictureFrame_Roughness.png"));
+			RenderableObject::SetMetallicTextureByName("PictureFrame", Texture::GetIDByName("PictureFrame_Metallic.png"));
+			RenderableObject::SetNormalMapByName("PictureFrame", Texture::GetIDByName("PictureFrame_NormalMap.png"));
+			BoundingBox bb2 = BoundingBox(framePosition, glm::vec3(0.05, 0.5f, 0.08f), ObjectOrigin::BOTTOM_CENTERED);
+			RenderableObject::SetBoundingBoxByName("PictureFrame", bb2);
 
 
 
@@ -212,23 +387,30 @@ namespace HellEngine
 
 			//ModelLoader::LoadModel("Door.obj");
 
+			
+		
 
 
-			if (true) {
+			if (false) {
+				//RenderableObject::NewObject("Cowboy", Model::GetByName("Shotgun.dae"));
 				RenderableObject::NewObject("Cowboy", Model::GetByName("model.dae"));
+				//RenderableObject::NewObject("Cowboy", Model::GetByName("AnimatedShotgun.FBX")); 
 				RenderableObject::SetPositionByName("Cowboy", glm::vec3(0, 0, 1.10f));
 				RenderableObject::SetScaleByName("Cowboy", glm::vec3(0.2));
-				RenderableObject::SetRotateAngleByName("Cowboy", glm::vec3(1, 0, 0));
-				RenderableObject::SetAngleByName("Cowboy", PI * 1.5f);
+				//RenderableObject::SetRotateAngleByName("Cowboy", glm::vec3(1, 0, 0));
+				//RenderableObject::SetAngleByName("Cowboy", PI * 1.5f);
 				RenderableObject::SetDiffuseTextureByName("Cowboy", Texture::GetIDByName("eye.png"));
 			}
 
-			if (false) {
+
+
+			/*if (false) {
 				RenderableObject::NewObject("Cowboy", Model::GetByName("model.dae"));
+				//RenderableObject::NewObject("Cowboy", Model::GetByName("AnimatedShotgun.dae"));
 				RenderableObject::SetPositionByName("Cowboy", glm::vec3(0, 0, 1.00f));
 				RenderableObject::SetScaleByName("Cowboy", glm::vec3(0.01));
 				RenderableObject::SetDiffuseTextureByName("Cowboy", Texture::GetIDByName("eye.png"));
-			}
+			}*/
 
 
 			//RenderableObject::SetScaleByName("Cowboy", glm::vec3(1));
@@ -245,96 +427,130 @@ namespace HellEngine
 			RenderableObject::SetMetallicTextureByName("Shepherd", Texture::GetIDByName("Couch_A_Metallic.png"));*/
 
 
-			glm::vec3 couchPosition = glm::vec3(-2.9f, 0, 6.1f);
-			RenderableObject::NewObject("Couch", Model::GetByName("Old_Cotton_Couch.obj"));
-			RenderableObject::SetPositionByName("Couch", couchPosition);
-			RenderableObject::SetScaleByName("Couch", glm::vec3(0.07));
-			RenderableObject::SetAngleByName("Couch", PI);
-			RenderableObject::SetDiffuseTextureByName("Couch", Texture::GetIDByName("Couch_A_Base_Color.png"));
-			RenderableObject::SetRoughnessTextureByName("Couch", Texture::GetIDByName("Couch_A_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Couch", Texture::GetIDByName("Couch_A_Metallic.png"));
-			RenderableObject::SetNormalMapByName("Couch", Texture::GetIDByName("Couch_A_NormalMap.png"));
-			BoundingBox bb = BoundingBox(couchPosition, glm::vec3(2.1f, 0.8f, 0.9f), BOTTOM_CENTERED);
-			RenderableObject::SetBoundingBoxByName("Couch", bb);
+			if (false)
+			{
 
-			/*float mannequinAngle = 2.0f;
-			glm::vec3 mannequinPosition = glm::vec3(-1, 0, 2.0f);
-			RenderableObject::NewObject("Mannequin", Model::GetByName("Mannequin.obj"));
-			RenderableObject::SetPositionByName("Mannequin", mannequinPosition);
-			RenderableObject::SetAngleByName("Mannequin", mannequinAngle);
-			RenderableObject::SetDiffuseTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
-			RenderableObject::SetRoughnessTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
-			RenderableObject::SetMetallicTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
-			BoundingBox bb2 = BoundingBox(mannequinPosition, glm::vec3(0.3f, 1.8f, 0.3f), BOTTOM_CENTERED);
-			bb2.SetAngle(mannequinAngle);
-			RenderableObject::SetBoundingBoxByName("Mannequin", bb2);
+				RenderableObject::NewObject("REDoor", Model::GetByName("REDoor.obj"));
+				RenderableObject::SetPositionByName("REDoor", glm::vec3(3, 0, 2));
+				RenderableObject::SetScaleByName("REDoor", glm::vec3(0.9f));
+				//RenderableObject::SetRotateAngleByName("REDoor", glm::vec3(1, 0, 0));
+				//RenderableObject::SetAngleByName("REDoor", PI * 1.5f);
+				RenderableObject::SetDiffuseTextureByName("REDoor", Texture::GetIDByName("REDoor_BaseColor.png"));
+				RenderableObject::SetRoughnessTextureByName("REDoor", Texture::GetIDByName("REDoor_Roughness.png"));
+				RenderableObject::SetMetallicTextureByName("REDoor", Texture::GetIDByName("REDoor_Metallic.png"));
+				RenderableObject::SetNormalMapByName("REDoor", Texture::GetIDByName("REDoor_NormalMap.png"));
 
 
-			RenderableObject::NewObject("Weapon", Model::GetByName("Shotgun2.obj"));
-			RenderableObject::SetPositionByName("Weapon", glm::vec3(0, 1.2f, 2.2f));
-			RenderableObject::SetScaleByName("Weapon", glm::vec3(1.5f));
-			RenderableObject::SetAngleByName("Weapon", 0);
-			RenderableObject::SetDiffuseTextureByName("Weapon", Texture::GetIDByName("Shotgun2_BaseColor.png"));
-			RenderableObject::SetRoughnessTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Metallic.png"));
-			RenderableObject::SetNormalMapByName("Weapon", Texture::GetIDByName("Shotgun2_NormalMap.png"));
 
-			*/
+				RenderableObject::NewObject("Bench", Model::GetByName("Bench.obj"));
+				RenderableObject::SetPositionByName("Bench", glm::vec3(5.25f, 0, 2.8f));
+				//RenderableObject::SetAngleByName("Bench", PI * 1.5f);
+				RenderableObject::SetDiffuseTextureByName("Bench", Texture::GetIDByName("Workbench_Base_Color.png"));
+				RenderableObject::SetRoughnessTextureByName("Bench", Texture::GetIDByName("EmptyMetallic.png"));
+				RenderableObject::SetMetallicTextureByName("Bench", Texture::GetIDByName("Workbench_Metallic.png"));
+				RenderableObject::SetNormalMapByName("Bench", Texture::GetIDByName("Workbench_NormalMap.png"));
+				BoundingBox bb2 = BoundingBox(WorkBenchPosition, glm::vec3(0.5f, 0.98f, 2.2f), BOTTOM_CENTERED);
+				RenderableObject::SetBoundingBoxByName("Bench", bb2);
 
-			RenderableObject::NewObject("Weapon", Model::GetByName("Colt45.obj"));
+				RenderableObject::NewObject("Shotty2", Model::GetByName("Shotgun3.obj"));
+				RenderableObject::SetPositionByName("Shotty2", glm::vec3(5.20f, 0, 2.8f));
+				//RenderableObject::SetAngleByName("Shotty2", PI * 1.5f);
+				RenderableObject::SetDiffuseTextureByName("Shotty2", Texture::GetIDByName("Shotgun2_BaseColor.png"));
+				RenderableObject::SetRoughnessTextureByName("Shotty2", Texture::GetIDByName("Shotgun2_Roughness.png"));
+				RenderableObject::SetMetallicTextureByName("Shotty2", Texture::GetIDByName("Shotgun2_Metallic.png"));
+				RenderableObject::SetNormalMapByName("Shotty2", Texture::GetIDByName("Shotgun2_NormalMap.png"));
 
-			/*RenderableObject::NewObject("Shotgun", Model::GetByName("Shotgun.obj"));
-			RenderableObject::SetPositionByName("Shotgun", glm::vec3(0, 1, 2.2f));
-			RenderableObject::SetScaleByName("Shotgun", glm::vec3(1));`
-			RenderableObject::SetAngleByName("Shotgun", 0);
-			RenderableObject::SetDiffuseTextureByName("Shotgun", Texture::GetIDByName("Shotgun_BaseColor.png"));
-			RenderableObject::SetRoughnessTextureByName("Shotgun", Texture::GetIDByName("Shotgun_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Shotgun", Texture::GetIDByName("Shotgun_Metallic.png"));
-			RenderableObject::SetNormalMapByName("Shotgun", Texture::GetIDByName("Shotgun_NormalMap.png"));*/
+				/*	RenderableObject::NewObject("Handgun", Model::GetByName("Handgun.obj"));
+					RenderableObject::SetPositionByName("Handgun", glm::vec3(5.25f, 0, 2.8f));
+					RenderableObject::SetAngleByName("Handgun", PI * 1.5f);
+					RenderableObject::SetDiffuseTextureByName("Handgun", Texture::GetIDByName("M1911_BaseColor.png"));
+					RenderableObject::SetRoughnessTextureByName("Handgun", Texture::GetIDByName("M1911_Roughness.png"));
+					RenderableObject::SetMetallicTextureByName("Handgun", Texture::GetIDByName("M1911_Metallic.png"));
+					RenderableObject::SetNormalMapByName("Handgun", Texture::GetIDByName("EmptyNormalMap.png"));*/
+
+					/*float mannequinAngle = 2.0f;
+					glm::vec3 mannequinPosition = glm::vec3(-1, 0, 2.0f);
+					RenderableObject::NewObject("Mannequin", Model::GetByName("Mannequin.obj"));
+					RenderableObject::SetPositionByName("Mannequin", mannequinPosition);
+					RenderableObject::SetAngleByName("Mannequin", mannequinAngle);
+					RenderableObject::SetDiffuseTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
+					RenderableObject::SetRoughnessTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
+					RenderableObject::SetMetallicTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
+					BoundingBox bb2 = BoundingBox(mannequinPosition, glm::vec3(0.3f, 1.8f, 0.3f), BOTTOM_CENTERED);
+					bb2.SetAngle(mannequinAngle);
+					RenderableObject::SetBoundingBoxByName("Mannequin", bb2);
+					*/
+
+				/*RenderableObject::NewObject("Weapon", Model::GetByName("SM_Shotgun_01a.FBX"));
+				RenderableObject::SetPositionByName("Weapon", glm::vec3(0, 1.2f, 2.2f));
+				RenderableObject::SetScaleByName("Weapon", glm::vec3(0.2f));
+				RenderableObject::SetAngleByName("Weapon", ROTATE_90);
+				RenderableObject::SetDiffuseTextureByName("Weapon", Texture::GetIDByName("Shotgun2_BaseColor.png"));
+				RenderableObject::SetRoughnessTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Roughness.png"));
+				RenderableObject::SetMetallicTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Metallic.png"));
+				RenderableObject::SetNormalMapByName("Weapon", Texture::GetIDByName("Shotgun2_NormalMap.png"));*/
+
+			
+
+				//	RenderableObject::NewObject("Weapon", Model::GetByName("Colt45.obj"));
+
+					/*RenderableObject::NewObject("Shotgun", Model::GetByName("Shotgun.obj"));
+					RenderableObject::SetPositionByName("Shotgun", glm::vec3(0, 1, 2.2f));
+					RenderableObject::SetScaleByName("Shotgun", glm::vec3(1));`
+					RenderableObject::SetAngleByName("Shotgun", 0);
+					RenderableObject::SetDiffuseTextureByName("Shotgun", Texture::GetIDByName("Shotgun_BaseColor.png"));
+					RenderableObject::SetRoughnessTextureByName("Shotgun", Texture::GetIDByName("Shotgun_Roughness.png"));
+					RenderableObject::SetMetallicTextureByName("Shotgun", Texture::GetIDByName("Shotgun_Metallic.png"));
+					RenderableObject::SetNormalMapByName("Shotgun", Texture::GetIDByName("Shotgun_NormalMap.png"));*/
 
 
-			//shader->setFloat("texScale", 10.0f);
-			//shader->setFloat("roughness", 0.1f);
-			//shader->setFloat("metallic", 0.1f);
-			//RenderableObject m = RenderableObject(Model::GetByName("Mannequin.obj"), "Plastic2.png", mannequinPosition,2.0f, glm::vec3(0.9f));
-			//m.Draw(shader, bindTextures);
-			//shader->setFloat("texScale", 1);
+					//shader->setFloat("texScale", 10.0f);
+					//shader->setFloat("roughness", 0.1f);
+					//shader->setFloat("metallic", 0.1f);
+					//RenderableObject m = RenderableObject(Model::GetByName("Mannequin.obj"), "Plastic2.png", mannequinPosition,2.0f, glm::vec3(0.9f));
+					//m.Draw(shader, bindTextures);
+					//shader->setFloat("texScale", 1);
 
-			/*RenderableObject::NewObject("Sphere", Model::GetByName("sphere.obj"));
-			RenderableObject::SetScaleByName("Sphere", glm::vec3(0.1));
-			RenderableObject::SetDiffuseTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));
-			RenderableObject::SetRoughnessTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));*/
+					/*RenderableObject::NewObject("Sphere", Model::GetByName("sphere.obj"));
+					RenderableObject::SetScaleByName("Sphere", glm::vec3(0.1));
+					RenderableObject::SetDiffuseTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));
+					RenderableObject::SetMetallicTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));
+					RenderableObject::SetRoughnessTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));*/
 
-			/*RenderableObject::NewObject("Shells", Model::GetByName("Shells.obj"));
-			RenderableObject::SetPositionByName("Shells", glm::vec3(0, 0, 0));
-			RenderableObject::SetScaleByName("Shells", glm::vec3(0.01f));
-			RenderableObject::SetAngleByName("Shells", PI);
-			RenderableObject::SetDiffuseTextureByName("Shells", Texture::GetIDByName("Couch_A_Base_Color.png"));
-			RenderableObject::SetRoughnessTextureByName("Shells", Texture::GetIDByName("Couch_A_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Shells", Texture::GetIDByName("Couch_A_Metallic.png"));*/
+					/*RenderableObject::NewObject("Shells", Model::GetByName("Shells.obj"));
+					RenderableObject::SetPositionByName("Shells", glm::vec3(0, 0, 0));
+					RenderableObject::SetScaleByName("Shells", glm::vec3(0.01f));
+					RenderableObject::SetAngleByName("Shells", PI);
+					RenderableObject::SetDiffuseTextureByName("Shells", Texture::GetIDByName("Couch_A_Base_Color.png"));
+					RenderableObject::SetRoughnessTextureByName("Shells", Texture::GetIDByName("Couch_A_Roughness.png"));
+					RenderableObject::SetMetallicTextureByName("Shells", Texture::GetIDByName("Couch_A_Metallic.png"));*/
+			}
 
 			// My objects
-			skybox = Skybox(0, 0, 0);
-			cube = Cube(-0.75f, 0.5f, 3.25f);
+			skybox = Skybox(glm::vec3(0));
+			/*cube = Cube(-0.75f, 0.5f, 3.25f);
 			plane = Plane(0, 2.4f, 0, glm::vec3(20));
 			lightCube = Cube(0, 0, 0, glm::vec3(0.1));
 
 			cube.angle = -0.25f;
-			cube.scale = glm::vec3(0.8);
+			cube.scale = glm::vec3(0.8);*/
 
 			// Setup house
-			AssingMousePickIDs();
-			boundingBoxPtrs = CreateBoudingBoxPtrsVector();
-			boundingPlanePtrs = CreateBoudingPlanePtrsVector();
+			RebuildMap();
 
-			//Light::lights[0].position = house.rooms[0].light.position + glm::vec3(0, -0.4f, 0);
-			//Light::lights[1].position = house.rooms[1].light.position + glm::vec3(0, -0.4f, 0);
-			//Light::lights[2].position = house.rooms[2].light.position + glm::vec3(0, -0.4f, 0);
-			//Light::lights[3].position = house.rooms[3].light.position + glm::vec3(0, -0.4f, 0);
+			std::cout << "\n";
 
-			//for (Light & light : Light::lights)
-			//	light.CalculateShadowProjectionMatricies();
+			/////////////////////////////////////
+			// LOAD THE MOTHER FUCKING SHOTGUN //
+			/////////////////////////////////////
+
+			if (!skinnedMesh.LoadMesh("res/objects/AnimatedShotgun.FBX"))
+				HELL_ERROR("Mesh load failed\n");
+			else
+				HELL_ERROR("Mesh loaded!\n");
+
+			// Begin music
+			Audio::StreamAudio("Music.mp3");
 		}
 
 		vector<BoundingBox*> CreateBoudingBoxPtrsVector()
@@ -353,11 +569,29 @@ namespace HellEngine
 		vector<BoundingPlane*> CreateBoudingPlanePtrsVector()
 		{
 			vector<BoundingPlane*> planes;
-
+			
 			// Iterate over ever room in the house, add the walls
-			for (Room & room : house.rooms)
-				for (Wall & w : room.walls)
+			for (Room& room : house.rooms)
+			{
+				for (Wall& w : room.walls)
 					planes.push_back(&w.boundingPlane);
+				planes.push_back(&room.floor.plane);
+				planes.push_back(&room.ceiling.plane);
+			}
+			HELL_ERROR("planes: " + std::to_string(planes.size()));
+
+			for (BoundingBox* box : boundingBoxPtrs)
+			{
+				BoundingPlane* p0 = &box->frontPlane;
+				BoundingPlane* p1 = &box->backPlane;
+				BoundingPlane* p2 = &box->leftPlane;
+				BoundingPlane* p3 = &box->rightPlane;
+
+				planes.push_back(p0);
+				planes.push_back(p1);
+				planes.push_back(p2);
+				planes.push_back(p3);
+			}
 
 			return planes;
 		}
@@ -371,25 +605,53 @@ namespace HellEngine
 
 		float test = 0;
 
+
+
 		void OnUpdate() override
 		{
 			Application& app = Application::Get();
 			GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
 			glfwGetWindowSize(window, &SCR_WIDTH, &SCR_HEIGHT);
+			app.GetWindow().SetVSync(true);
 
 			float currentFrame = (float)glfwGetTime();
 			deltaTime = currentFrame - lastFrame;
 			lastFrame = currentFrame;
 			camera.Update(deltaTime);
+			skinnedMesh.Update(deltaTime, &camera);
 
-			time -= deltaTime;
-			//RenderableObject::SetAngleByName("Shotgun", time);
-			RenderableObject::SetAngleByName("Weapon", time);
-			//	RenderableObject::SetAngleByName("Shotgun", ROTATE_90);
+			Audio::MainUpdate();
+			
+			time += deltaTime;
+
+			if (player.walking)
+				skinnedMesh.headBobCounter += deltaTime * skinnedMesh.headBobSpeed;
+
+			// GAME OBJECTS
+			for (Shell& shell : shells)
+				shell.Update(deltaTime);
+
+			raycastData = GetRaycastData(0);
+		
+
+			//ShotgunLogic::Update(deltaTime, &shells, &skinnedMesh, &camera);
+
+			
+			if (!shellEjected && time > 0.45f)
+			{
+				shellEjected = true;
+				shells.push_back(Shell(Model::GetByName("Shell.fbx"), skinnedMesh.boltPos + (camera.Up * -Shell::shellUpFactor) + (camera.Right * Shell::shellRightFactor) + (camera.Front * -Shell::shellForwardFactor), &camera, deltaTime));
+			}
+
+			if (time > skinnedMesh.totalAnimationTime)
+				shotgunFiring = false;
 
 
-				// Hacks
-			player.position = camera.Position;
+
+
+			//player.position = camera.Position;
+			player.Update(&camera, deltaTime);
+
 
 			// Check collisions
 			if (!NoClip)
@@ -403,7 +665,8 @@ namespace HellEngine
 
 
 
-			camera.Position = player.position;
+			//camera.Position = player.position;
+			camera.CalculateviewPosition(player.GetViewPosition());
 			camera.CalculateMatrices();
 
 
@@ -421,82 +684,16 @@ namespace HellEngine
 			Shader* FxaaShader = Shader::GetShaderByName("Fxaa");
 			Shader* compositeShader = Shader::GetShaderByName("Composite");
 			Shader* nullTechniqueShader = Shader::GetShaderByName("NullTechnique");
+			Shader* finalShader = Shader::GetShaderByName("Final");
+			Shader* downScaleShader = Shader::GetShaderByName("DownScale");
 
-			// move light position over time
-			//Light::lights.at(0).position.x = sin(glfwGetTime() * 0.5) * 1.0;
-			//Light::lights.at(0).position.z = (sin(glfwGetTime() * 0.5)) + 2;
+			Shader* blurHorizontalShader = Shader::GetShaderByName("BlurHorizontal");
+			Shader* blurVerticalShader = Shader::GetShaderByName("BlurVertical");
+			Shader* debugShader = Shader::GetShaderByName("DEBUG");
+			Shader* DOFShader = Shader::GetShaderByName("DOF"); 
+			Shader* decalShader = Shader::GetShaderByName("Decals");
 
-
-			// FLICKER
-			//Light::lights.at(2).color = glm::vec3(0.105f, 0.643f, 0.976f);
-			//Light::lights.at(2).strength = 2.5f + RandomFloat(0, 0.5f);
-
-
-			// Weapon spin
-			if (selectedWeapon == 1)
-			{
-				RenderableObject::SetModelByName("Weapon", Model::GetByName("Colt45.obj"));
-				RenderableObject::SetPositionByName("Weapon", glm::vec3(0, 0.85f, 2.2f));
-				RenderableObject::SetScaleByName("Weapon", glm::vec3(9.0f));
-				RenderableObject::SetDiffuseTextureByName("Weapon", Texture::GetIDByName("M1911_BaseColor.png"));
-				RenderableObject::SetRoughnessTextureByName("Weapon", Texture::GetIDByName("M1911_Roughness.png"));
-				RenderableObject::SetMetallicTextureByName("Weapon", Texture::GetIDByName("M1911_Metallic.png"));
-				RenderableObject::SetNormalMapByName("Weapon", Texture::GetIDByName("M1911_NormalMap.png"));
-			}
-			else if (selectedWeapon == 2)
-			{
-
-				RenderableObject::SetModelByName("Weapon", Model::GetByName("Shotgun.obj"));
-				RenderableObject::SetPositionByName("Weapon", glm::vec3(0, 1, 2.2f));
-				RenderableObject::SetScaleByName("Weapon", glm::vec3(1));
-				RenderableObject::SetDiffuseTextureByName("Weapon", Texture::GetIDByName("Shotgun_BaseColor.png"));
-				RenderableObject::SetRoughnessTextureByName("Weapon", Texture::GetIDByName("Shotgun_Roughness.png"));
-				RenderableObject::SetMetallicTextureByName("Weapon", Texture::GetIDByName("Shotgun_Metallic.png"));
-				RenderableObject::SetNormalMapByName("Weapon", Texture::GetIDByName("Shotgun_NormalMap.png"));
-			}
-			else if (selectedWeapon == 3)
-			{
-
-				RenderableObject::SetModelByName("Weapon", Model::GetByName("Shotgun2.obj"));
-				RenderableObject::SetPositionByName("Weapon", glm::vec3(0, 1, 2.2f));
-				RenderableObject::SetScaleByName("Weapon", glm::vec3(2));
-				RenderableObject::SetDiffuseTextureByName("Weapon", Texture::GetIDByName("Shotgun2_BaseColor.png"));
-				RenderableObject::SetRoughnessTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Roughness.png"));
-				RenderableObject::SetMetallicTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Metallic.png"));
-				RenderableObject::SetNormalMapByName("Weapon", Texture::GetIDByName("Shotgun2_NormalMap.png"));
-			}
-
-
-
-
-			if (selectedWeapon == 4) {
-				RenderableObject::SetModelByName("Cowboy", Model::GetByName("model.dae"));
-				RenderableObject::SetScaleByName("Cowboy", glm::vec3(0.2));
-				RenderableObject::SetAngleByName("Cowboy", PI * 1.5f);
-			}
-
-			else if (selectedWeapon == 5) {
-				RenderableObject::SetModelByName("Cowboy", Model::GetByName("knight.dae"));
-				RenderableObject::SetScaleByName("Cowboy", glm::vec3(0.01));
-				RenderableObject::SetAngleByName("Cowboy", 0);
-			}
-
-
-			RenderableObject::SetPositionByName("Weapon", glm::vec3(-3, RenderableObject::GetPositionByName("Weapon").y, -3));
-			
-			RenderableObject::SetPositionByName("Weapon", glm::vec3(0.6f, 1, -0.8f));
-
-			RenderableObject::SetPositionByName("Cowboy", glm::vec3(-3.6f, 0, -3.10f));
-
-			RenderableObject* cowboy = RenderableObject::GetPointerToRenderableObjectByName("Cowboy");
-			cowboy->model->calculateAnimatedTransforms();
-
-			Animator animator;
-			Animation *animation = &cowboy->model->animation;
-			Joint* rootJoint = &cowboy->model->rootJoint;
-
-			animator.Update(animation, rootJoint, glm::mat4(1), deltaTime);
-
+		
 
 
 			// Clear default buffer
@@ -506,49 +703,54 @@ namespace HellEngine
 
 
 			/////////////////////////////////////////////////////////////////
-			//						Prepare House						//
+			//						Prepare House						   //
 			/////////////////////////////////////////////////////////////////
 
-			Light::lights.clear();
-
-			for (Room & room : house.rooms)
+			bool preparehouse = true;
+			if (preparehouse)
 			{
-				room.CalculateLightLimits();
-				Light::lights.push_back(&room.light);
+				Light::lights.clear();
+
+				for (Room& room : house.rooms)
+				{
+					room.CalculateLightLimits();
+					Light::lights.push_back(&room.light);
+				}
 			}
-
-			/*for (int i = 0; i < house.rooms.size(); i++)
-			{
-				Light::lights[i].radius = house.rooms[i].light.radius;
-				Light::lights[i].upperXlimit = house.rooms[i].light.upperXlimit;
-				Light::lights[i].lowerXlimit = house.rooms[i].light.lowerXlimit;
-				Light::lights[i].upperZlimit = house.rooms[i].light.upperZlimit;
-				Light::lights[i].lowerZlimit = house.rooms[i].light.lowerZlimit;
-			}*/
+			
 
 
-			/////////////////////////////////////////////////////////////////
-			//						Render passes						//
-			/////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////
+		//						Render passes						//
+		/////////////////////////////////////////////////////////////////
 
-			GeometryPass(geometryShader);
-			ShadowMapPass(simpleDepthShader);
+		ShadowMapPass(simpleDepthShader);
+		GeometryPass(geometryShader);
+		DecalPass(decalShader);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
+		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		for (int i = 0; i < Light::lights.size(); i++) {
+			StencilPass(nullTechniqueShader, i);
+			LightingPass(lightingShader, i);
+		}
+
+		CompositePass(compositeShader);
+			
+		BlurPass(blurVerticalShader, blurHorizontalShader);
+		FinalPass(finalShader);
+		DOFPass(DOFShader);
 
 
-			glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
-			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//////////////////////////////////////////////////////
+			//													//
+			//					FORWARD	RENDERING				//
+			//													//
+			//////////////////////////////////////////////////////
 
-			glEnable(GL_STENCIL_TEST);
-			for (int i = 0; i < Light::lights.size(); i++) {
-				//StencilPass(nullTechniqueShader, i);
-				LightingPass(lightingShader, i);
-			}
-			glDisable(GL_STENCIL_TEST);
-
-			CompositePass(compositeShader);
-
-			/////////////////////////////////////////////////////////////////
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			// Deferred Debug
 			if (showBuffers)
@@ -556,19 +758,53 @@ namespace HellEngine
 				glUseProgram(debugFboShader->ID);
 				glActiveTexture(GL_TEXTURE0);
 
-				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gFinal);
+				glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
 				glViewport(0, SCR_HEIGHT / 2, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 				Quad2D::RenderQuad(debugFboShader);
-				glBindTexture(GL_TEXTURE_2D, gBuffer.gNormal);
+				glBindTexture(GL_TEXTURE_2D, gBuffer.gEmmisive);
 				glViewport(SCR_WIDTH / 2, SCR_HEIGHT / 2, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 				Quad2D::RenderQuad(debugFboShader);
-				glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
+				glBindTexture(GL_TEXTURE_2D, gBuffer.gNormal);
 				glViewport(0, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 				Quad2D::RenderQuad(debugFboShader);
-				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gLighting);
+				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gDOF);
 				glViewport(SCR_WIDTH / 2, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 				Quad2D::RenderQuad(debugFboShader);
+
+
+		/*		glBindTexture(GL_TEXTURE_2D, blurBuffers[0].textureA);
+				glViewport(0, SCR_HEIGHT / 2, SCR_WIDTH / 2, SCR_HEIGHT / 2);
+				Quad2D::RenderQuad(debugFboShader);
+				glBindTexture(GL_TEXTURE_2D, blurBuffers[1].textureA);
+				glViewport(SCR_WIDTH / 2, SCR_HEIGHT / 2, SCR_WIDTH / 2, SCR_HEIGHT / 2);
+				Quad2D::RenderQuad(debugFboShader);
+				glBindTexture(GL_TEXTURE_2D, blurBuffers[2].textureA);
+				glViewport(0, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
+				Quad2D::RenderQuad(debugFboShader);
+				glBindTexture(GL_TEXTURE_2D, blurBuffers[3].textureA);
+				glViewport(SCR_WIDTH / 2, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
+				Quad2D::RenderQuad(debugFboShader);*/
+
+
+			/*	for (int x = 0; x < 4; x++)
+				{
+					glBindTexture(GL_TEXTURE_2D, blurBuffers[x].textureA);
+					glViewport(SCR_WIDTH / 4 * x, 0, SCR_WIDTH / 4 - 1, SCR_HEIGHT / 4);
+					Quad2D::RenderQuad(debugFboShader);
+
+					glBindTexture(GL_TEXTURE_2D, blurBuffers[x].textureB);
+					glViewport(SCR_WIDTH / 4 * x, SCR_HEIGHT / 4 + 1, SCR_WIDTH / 4 - 1, SCR_HEIGHT / 4);
+					Quad2D::RenderQuad(debugFboShader);
+				}*.
+
+				/*glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, blurBuffers[1].textureA);
+				Quad2D::RenderQuad(debugFboShader);*/
 			}
+
+
+
 			// Draw final image
 			else
 			{
@@ -576,30 +812,58 @@ namespace HellEngine
 
 				debugFboShader->use();
 				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gFinal);
+				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gLighting);
+				//glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
+				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gDOF);
+				//glBindTexture(GL_TEXTURE_2D, gBuffer.gEmmisive);
+				//glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("bebop.png"));
+				glDisable(GL_DEPTH_TEST); 
 				Quad2D::RenderQuad(debugFboShader);
+				glEnable(GL_DEPTH_TEST);
 
-				glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.ID);
+
+			/*	glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.ID);
 				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST); 
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				*/
 
-				// Show lights	
-				//glUseProgram(lampShader->ID);
+				/*
+				graphiteToday at 07:56
+					Honestly, having written four engines now, two personal, two professional.For shadow mapping what you want is two position - only buffers, one for static geometryand one for dynamic geometry.Things in the environment that are staticand will never move, like your worldand map models, those you bake directly down into the static buffer.Doing the vertex* matrix transform on the CPU, shoving it into that buffer.Dynamic stuff you just put all inside the dynamic position - only buffer as - is.When you do your shadow mapping pass, you calculate an index list of the geometry in the range of the light(only if the light moves, keep the same index list if the light did not move) and you render all your statics thenand there as one draw call.Now you enumerate the dynamic objects in the dynamic bufferand just render all of them(after frustum culling) those have to be rendered regardless even if the light does not move because they can end up inside any light volume.
+					This is the only method that scalesand works.
+					So the cost is basically one draw call for static geometry per light(or 6 for omni - directional point lights) + n draw calls for the dynamic objects
+					Which is pretty much unbeatable without using multiple viewports
+					So you can set an upper bound on your scene complexity this way too.Shadow draw calls will be(numSpotLights + numDirectionalLights + numPointLights * 6)* (nDynamicObjectsInView - 1)
+					Which is really not that bad
+					Oh yeah, those are lights in view too of course
+					*/
+				// Show lights
 				lampShader->use();
 				lampShader->setMat4("projection", camera.projectionMatrix);
 				lampShader->setMat4("view", camera.viewMatrix);
+
+
+			//	DrawPoint(lampShader, finalShellPos, glm::mat4(1), glm::vec3(0, 1, 1));
+				//DrawPoint(lampShader, skinnedMesh.boltPos, glm::mat4(1), glm::vec3(0, 1, 1));
 
 				// Draw lights
 				if (showLights) {
 					for (Light * light : Light::lights)
 					{
-						lightCube.position = light->position;
+						lightCube.transform.position = light->position;
 
 						lampShader->setVec3("color", light->color);
 						lightCube.Draw(lampShader, false);
 					}
 				}
+
+				if (showRaycastPlane && raycastData.planeIndex != -1)
+				{
+					lampShader->setVec3("color", HELL_YELLOW);
+					boundingPlanePtrs[raycastData.planeIndex]->Draw(lampShader);
+				}
+
 				// Draw bounding boxes
 				if (showBoundingBoxes) {
 					lampShader->setVec3("color", HELL_YELLOW);
@@ -610,11 +874,49 @@ namespace HellEngine
 
 					for (BoundingPlane* & p : boundingPlanePtrs)
 						p->Draw(lampShader);
-
+					
 					// player sphere
-					RenderableObject r = RenderableObject(Model::GetByName("sphere.obj"), "NO TEXTURE", player.position, 0, glm::vec3(0.1f));
+					RenderableObject r = RenderableObject(Model::GetByName("sphere.obj"), "NO TEXTURE", player.position, glm::vec3(0), glm::vec3(0.1f));
 					r.Draw(lampShader, false);
 
+					glEnable(GL_DEPTH_TEST);
+				}
+				// Debug light volumes
+				if (showVolumes) {
+
+					glDisable(GL_DEPTH_TEST);
+					glEnable(GL_CULL_FACE);
+
+					//glDisable(GL_CULL_FACE);
+
+
+					lampShader->setVec3("color", glm::vec3(1, 0, 0));
+
+					// Render main room
+					house.rooms[0].lightVolume.Draw(lampShader, GL_TRIANGLES);
+
+					// Render door way volumes
+					for (Room & room : house.rooms)
+					{
+						for (int i = 0; i < room.doors_BackWall.size(); i++)
+							if (room.doors_BackWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+								room.backWallDoorwayLightVolumes[i].Draw(lampShader, GL_TRIANGLES);
+
+						for (int i = 0; i < room.doors_FrontWall.size(); i++)
+							if (room.doors_FrontWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+								room.frontWallDoorwayLightVolumes[i].Draw(lampShader, GL_TRIANGLES);
+
+						for (int i = 0; i < room.doors_LeftWall.size(); i++)
+							if (room.doors_LeftWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+								room.leftWallDoorwayLightVolumes[i].Draw(lampShader, GL_TRIANGLES);
+
+						for (int i = 0; i < room.doors_RightWall.size(); i++)
+							if (room.doors_RightWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+								room.rightWallDoorwayLightVolumes[i].Draw(lampShader, GL_TRIANGLES);
+					}
+
+
+					//glEnable(GL_CULL_FACE);
 					glEnable(GL_DEPTH_TEST);
 				}
 
@@ -627,6 +929,8 @@ namespace HellEngine
 
 			// Update Mouse Pick ID
 			mousePicked = GetMousePicked();
+
+			//std::cout << Texture::GetIDByName("door.png") << ": YEH WHAT\n";
 		}
 
 
@@ -637,30 +941,54 @@ namespace HellEngine
 
 		void StencilPass(Shader *shader, int lightIndex)
 		{
+			Light* light = Light::lights[lightIndex];
+			glm::mat4 modelMatrix = glm::mat4(1);
+			//modelMatrix = glm::translate(modelMatrix, light->position);
+			//modelMatrix = glm::scale(modelMatrix, glm::vec3(light->radius));
+			glm::mat4 gWVP = camera.projectionMatrix * camera.viewMatrix * modelMatrix;
+
+			shader->use();
+			shader->setMat4("gWVP", gWVP);
+			
 			glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.ID);
-			glDrawBuffer(GL_NONE);	 // Wanna read from the GBuffer(depth) but NOT write to it!
+			glDrawBuffer(GL_NONE);
+
+			glEnable(GL_STENCIL_TEST);
 			glEnable(GL_DEPTH_TEST);
 			glDisable(GL_CULL_FACE);
 			glClear(GL_STENCIL_BUFFER_BIT);
-			glStencilFunc(GL_ALWAYS, 0, 0);	 // Need the stencil test to be enabled BUT want it to succeed always. Only the depth test matters.
+			glStencilFunc(GL_ALWAYS, 0, 0);
 			glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
 			glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
-			Light* light = Light::lights[lightIndex];
 			
+			// Render main room
+			Room* room = &house.rooms[lightIndex];
+			house.rooms[lightIndex].lightVolume.Draw(shader, GL_TRIANGLES);
 
-			glm::mat4 modelMatrix = glm::mat4(1);
-			modelMatrix = glm::translate(modelMatrix, light->position);
-			modelMatrix = glm::scale(modelMatrix, glm::vec3(light->radius));
-			glm::mat4 gWVP = camera.projectionMatrix * camera.viewMatrix * modelMatrix;
-			
-			shader->use(); 
-			shader->setMat4("gWVP", gWVP);
+			// Render door way volumes
+			for (int i = 0; i < room->doors_BackWall.size(); i++)
+				if (room->doors_BackWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+					room->backWallDoorwayLightVolumes[i].Draw(shader, GL_TRIANGLES);
+
+			for (int i = 0; i < room->doors_FrontWall.size(); i++)
+				if (room->doors_FrontWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+					room->frontWallDoorwayLightVolumes[i].Draw(shader, GL_TRIANGLES);
+
+			for (int i = 0; i < room->doors_LeftWall.size(); i++)
+				if (room->doors_LeftWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+					room->leftWallDoorwayLightVolumes[i].Draw(shader, GL_TRIANGLES);
+
+			for (int i = 0; i < room->doors_RightWall.size(); i++)
+				if (room->doors_RightWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
+					room->rightWallDoorwayLightVolumes[i].Draw(shader, GL_TRIANGLES);
 		}
 
 		void LightingPass(Shader *shader, int lightIndex)
-		{	
-			glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.ID);
+			unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+			glDrawBuffers(5, attachments);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
@@ -669,12 +997,14 @@ namespace HellEngine
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, gBuffer.rboDepth);
 			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, gBuffer.gEmmisive);
+			glActiveTexture(GL_TEXTURE4);
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, shadowCubeMapArray.depthCubemap);
 
 			shader->use();
 			shader->setMat4("inverseProjectionMatrix", glm::inverse(camera.projectionMatrix));
 			shader->setMat4("inverseViewMatrix", glm::inverse(camera.viewMatrix));
-			shader->setVec3("viewPos", camera.GetViewPosition());
+			shader->setVec3("viewPos", camera.Position);
 			shader->setFloat("screenWidth", SCR_WIDTH);
 			shader->setFloat("screenHeight", SCR_HEIGHT);
 			shader->setInt("shadows", true);
@@ -690,49 +1020,36 @@ namespace HellEngine
 			shader->setFloat("lightAttenuationExp[" + std::to_string(i) + "]", light->attExp);
 			shader->setFloat("lightAttenuationLinear[" + std::to_string(i) + "]", light->attLinear);
 			shader->setFloat("lightAttenuationConstant[" + std::to_string(i) + "]", light->attConstant);
-
-			
 			shader->setFloat("lowerXlimit", light->lowerXlimit);
 			shader->setFloat("upperXlimit", light->upperXlimit);
 			shader->setFloat("lowerZlimit", light->lowerZlimit);
 			shader->setFloat("upperZlimit", light->upperZlimit);
 
-/*			std::cout << i << " x1: " << light->lowerXlimit << "\n";
-			std::cout << i << " x2: " << light->upperXlimit << "\n";
-			std::cout << i << " z1: " << light->lowerZlimit << "\n";
-			std::cout << i << " z2: " << light->upperZlimit << "\n\n";
-			*/
-
-			//shader->setFloat("lowerXlimit", 1.0);
-			//shader->setFloat("upperXlimit", 4.0);
-			//shader->setFloat("lowerZlimit", -2.0);
-			//shader->setFloat("upperZlimit", 2.0);
-
-
 			glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+
 			glDisable(GL_DEPTH_TEST);
 			glEnable(GL_BLEND);
 			glBlendEquation(GL_FUNC_ADD);
 			glBlendFunc(GL_ONE, GL_ONE);
+
 			glEnable(GL_CULL_FACE);
 			glCullFace(GL_FRONT);
+
 
 			// LIGHTING PASS
 			glm::mat4 modelMatrix = glm::mat4(1);
 			modelMatrix = glm::translate(modelMatrix, light->position);
 			modelMatrix = glm::scale(modelMatrix, glm::vec3(light->radius));
 			glm::mat4 gWVP = camera.projectionMatrix * camera.viewMatrix * modelMatrix;
-
 			shader->setInt("lightIndex", i);
 			shader->setMat4("gWVP", gWVP);
-				
-			// Render light
-			//	Quad2D::RenderQuad(shader);
-			RenderableObject sphere = RenderableObject(Model::GetByName("SphereLight.obj"), "red.png", light->position, 0, glm::vec3(light->radius));
+			RenderableObject sphere = RenderableObject(Model::GetByName("SphereLight.obj"), "red.png", light->position, glm::vec3(0), glm::vec3(light->radius));
 			sphere.Draw(shader, false);
 
 			glCullFace(GL_BACK);
 			glDisable(GL_BLEND);
+
+			glDisable(GL_STENCIL_TEST);
 		}
 
 		void CompositePass(Shader* shader)
@@ -754,7 +1071,9 @@ namespace HellEngine
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, lightingBuffer.gLighting);
+			glBindTexture(GL_TEXTURE_2D, gBuffer.gLighting);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, gBuffer.gEmmisive);
 
 
 
@@ -769,24 +1088,236 @@ namespace HellEngine
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glEnable(GL_DEPTH_TEST);
+
+		}
+
+		void BlurPass(Shader* blurVerticalShader, Shader* blurHorizontalShader)
+		{
+			// clear blur fuffer
+			glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[0].ID);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[1].ID);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[2].ID);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[3].ID);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			//glDisable(GL_DEPTH_TEST);
+
+			// Source
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.ID);
+			glReadBuffer(GL_COLOR_ATTACHMENT0);
+			int factor = 2;
+
+			// Destination
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, blurBuffers[0].ID);
+			glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+			// Blit
+			glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH / factor, SCR_HEIGHT / factor, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+				
+			// Blur horizontal
+			glViewport(0, 0, SCR_WIDTH / factor, SCR_HEIGHT / factor);
+			glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[0].ID);	
+			glReadBuffer(GL_COLOR_ATTACHMENT0);
+			glDrawBuffer(GL_COLOR_ATTACHMENT1);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, blurBuffers[0].textureA);
+			blurHorizontalShader->use();
+			blurHorizontalShader->setFloat("targetWidth", SCR_WIDTH / factor);
+			Quad2D::RenderQuad(blurHorizontalShader);
+	
+			// Blur vertical
+			glViewport(0, 0, SCR_WIDTH / factor, SCR_HEIGHT / factor);
+			glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[0].ID);
+			glReadBuffer(GL_COLOR_ATTACHMENT1);
+			glDrawBuffer(GL_COLOR_ATTACHMENT0);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, blurBuffers[0].textureB);
+			blurVerticalShader->use();
+			blurVerticalShader->setFloat("targetHeight", SCR_HEIGHT / factor);
+			Quad2D::RenderQuad(blurVerticalShader);
+			
+
+			// second downscale //
+			
+			for (int i = 1; i < 4; i++)
+			{
+				factor *= 2;
+				// Source
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, blurBuffers[i - 1].ID);
+				glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+				// Destination
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, blurBuffers[i].ID);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+				// Blit
+				glBlitFramebuffer(0, 0, SCR_WIDTH / (factor / 2), SCR_HEIGHT / (factor / 2), 0, 0, SCR_WIDTH / factor, SCR_HEIGHT / factor, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+				// Blur horizontal
+				glViewport(0, 0, SCR_WIDTH / factor, SCR_HEIGHT / factor);
+				glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[i].ID);
+				glReadBuffer(GL_COLOR_ATTACHMENT0);
+				glDrawBuffer(GL_COLOR_ATTACHMENT1);
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, blurBuffers[i].textureA);
+				blurHorizontalShader->use();
+				blurHorizontalShader->setFloat("targetWidth", SCR_WIDTH / factor);
+				Quad2D::RenderQuad(blurHorizontalShader);
+
+				// Blur vertical
+				glViewport(0, 0, SCR_WIDTH / factor, SCR_HEIGHT / factor);
+				glBindFramebuffer(GL_FRAMEBUFFER, blurBuffers[i].ID);
+				glReadBuffer(GL_COLOR_ATTACHMENT1);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, blurBuffers[i].textureB);
+				blurVerticalShader->use();
+				blurVerticalShader->setFloat("targetHeight", SCR_HEIGHT / factor);
+				Quad2D::RenderQuad(blurVerticalShader);
+
+			}
+		}
+
+		bool bloom = true;
+		float exposure = 1.0f;
+
+		void FinalPass(Shader* shader)
+		{
+			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			shader->use();
+			glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, lightingBuffer.gComposite);
+			// glDrawBuffer(GL_COLOR_ATTACHMENT0); // draw to colour acttachment 1
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, blurBuffers[0].textureA);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, blurBuffers[1].textureA);
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, blurBuffers[2].textureA);
+			glActiveTexture(GL_TEXTURE4);
+			glBindTexture(GL_TEXTURE_2D, blurBuffers[3].textureA);
+			
+			shader->setInt("bloom", bloom);
+			shader->setFloat("exposure", exposure); 
+			Quad2D::RenderQuad(shader);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+
+		void DOFPass(Shader* shader)
+		{
+			//return;
+
+			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			shader->use();
+			glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, lightingBuffer.gLighting);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, gBuffer.rboDepth);	
+
+			unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+			glDrawBuffers(3, attachments);
+
+
+			shader->setFloat("screenWidth", SCR_WIDTH);
+			shader->setFloat("screenHeight", SCR_HEIGHT);
+
+			shader->setBool("showFocus", Config::DOF_showFocus);
+			shader->setBool("vignetting", Config::DOF_vignetting);
+			shader->setFloat("vignout", Config::DOF_vignout);
+			shader->setFloat("vignin", Config::DOF_vignin);
+			shader->setFloat("vignfade", Config::DOF_vignfade);
+			shader->setFloat("CoC", Config::DOF_CoC);
+			shader->setFloat("maxblur", Config::DOF_maxblur);
+			shader->setInt("samples", Config::DOF_samples);
+			shader->setInt("samples", Config::DOF_samples);
+			shader->setInt("rings", Config::DOF_rings);
+			shader->setFloat("threshold", Config::DOF_threshold);
+			shader->setFloat("gain", Config::DOF_gain);
+			shader->setFloat("bias", Config::DOF_bias);
+			shader->setFloat("fringe", Config::DOF_fringe);
+
+			Quad2D::RenderQuad(shader);
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+			//glEnable (GL_DEPTH_TEST);
+			//glEnable(GL_BLEND);
 		}
 
 		void GeometryPass(Shader *shader)
 		{
-			//Timer timer("Geometry pass");
-			glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.ID);
-
-			// Prep for drawing again, cause later stencil test disables it
-			unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-			glDrawBuffers(4, attachments);
-
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+			glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.ID);
+			unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+			glDrawBuffers(5, attachments);
+			
+			glDepthMask(GL_TRUE); 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			
 			shader->use();
 			shader->setMat4("pv", camera.projectionViewMatrix);
-			//shader->setMat4("view", camera.viewMatrix);
+			shader->setFloat("TEXTURE_SCALE", 1.0);		// idk the best way to handles this. but for now its here.
 			DrawScene(shader, true);
+
+			// Commented out below cause now you're drawing decals into the GBuffer right after this
+			//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			//glDepthMask(GL_FALSE);
+		}
+
+		
+
+		void DecalPass(Shader* shader)
+		{
+
+			/*Cube cube = Cube(raycastData.intersectionPoint, glm::vec3(1, 1, 1) * 0.025f);
+			glm::vec3 normal = glm::vec3(0, 0, 1);
+			if (raycastData.planeIndex != -1)
+				normal = boundingPlanePtrs[raycastData.planeIndex]->normal;*/
+			
+			shader->use();
+			shader->setMat4("pv", camera.projectionViewMatrix);
+			shader->setMat4("inverseProjectionMatrix", glm::inverse(camera.projectionMatrix));
+			shader->setMat4("inverseViewMatrix", glm::inverse(camera.viewMatrix));
+			shader->setFloat("screenWidth", SCR_WIDTH);
+			shader->setFloat("screenHeight", SCR_HEIGHT);
+			
+			
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, gBuffer.rboDepth);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, gBuffer.gNormal);
+
+			glEnable(GL_BLEND);
+			glDepthMask(GL_FALSE);
+			glEnable (GL_DEPTH_TEST);
+			//glDisable(GL_DEPTH_TEST);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			
+			shader->setInt("writeRoughnessMetallic", 0);
+			for (Decal decal : decals) {
+				shader->setVec3("targetPlaneSurfaceNormal", decal.normal);
+				decal.Draw(shader, false);
+			}
+			shader->setInt("writeRoughnessMetallic", 1);
+			for (Decal decal : decals) {
+				shader->setVec3("targetPlaneSurfaceNormal", decal.normal);
+				decal.Draw(shader, true);
+			}
+
+			//if (showRaycastPlane)
+			//	cube.DecalDraw(shader, normal);
+
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glDepthMask(GL_FALSE);
 		}
 
 
@@ -797,6 +1328,7 @@ namespace HellEngine
 			glBindFramebuffer(GL_FRAMEBUFFER, shadowCubeMapArray.ID);
 			glClear(GL_DEPTH_BUFFER_BIT);
 
+
 			shader->use();
 			shader->setFloat("far_plane", ShadowCubeMapArray::SHADOW_FAR_PLANE);
 
@@ -806,8 +1338,10 @@ namespace HellEngine
 				shader->setInt("lightIndex", j);
 				for (unsigned int i = 0; i < 6; ++i)
 					shader->setMat4("shadowMatrices[" + std::to_string(i) + "]", Light::lights[j]->shadowTransforms[i]);
-
+				//glEnable(GL_CULL_FACE);
+				//glCullFace(GL_FRONT);
 				DrawScene(shader, false);
+				//glCullFace(GL_BACK);
 			}
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
@@ -836,6 +1370,7 @@ namespace HellEngine
 
 		void DrawSkybox(Shader *shader)
 		{
+			return;
 			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glDepthFunc(GL_LEQUAL);
@@ -853,65 +1388,40 @@ namespace HellEngine
 		void DrawScene(Shader *shader, bool bindTextures)
 		{
 			house.DrawAll(shader, bindTextures);
-
-
-
 			RenderableObject::DrawAll(shader, bindTextures);
-	
 
-		/*	glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("bebop.png"));
-			glm::mat4 modelMatrix = glm::mat4(1.0f);
-			modelMatrix = glm::translate(modelMatrix, glm::vec3(0,0,1));
-			modelMatrix = glm::rotate(modelMatrix, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-			modelMatrix = glm::scale(modelMatrix, glm::vec3(0.01f));
-			shader->setMat4("model", modelMatrix);
-			bebop->Draw(shader);*/
+			RenderableObject r;
+			r.model == Model::GetByName("Shell.fbx");
 
+
+			for (Shell shell : shells)
+			 shell.Draw(shader, bindTextures);
 			
-			/*RenderableObject sphere = RenderableObject(Model::GetByName("sphere.obj"), "red.png", glm::vec3(0, 1, 1), 0, glm::vec3(0.15f));
-			int nrRows = 7;
-			int nrColumns = 7;  
-			float spacing = 0.35f;
-			glm::mat4 model;
-			for (int x = 0; x < 7; x++)
+
+			// SHOTGUN HUD
+			if (bindTextures)
 			{
-				shader->setFloat("metallic", (float)x / (float)nrRows);
-				for (int y = 0; y < 6; y++)
-				{
-					shader->setFloat("roughness", glm::clamp((float)y / (float)nrColumns, 0.05f, 1.0f));
+				Util::OUTPUT_TEXT = "";
+				Util::OUTPUT("Time: " + std::to_string(time));
 
-					float xpos = -1 + (spacing * x);
-					float ypos = 0.25f + (spacing * y);
-					sphere.position = glm::vec3(xpos, ypos, 1);
+				vector<glm::mat4> Transforms;
 
-					model = glm::mat4();
-					shader->setMat4("model", model);
+				if (time < skinnedMesh.totalAnimationTime)
+					skinnedMesh.BoneTransform(time, Transforms);
+				else
+					skinnedMesh.BoneTransform(0, Transforms);
 
-					sphere.Draw(shader, bindTextures);
-				}
-			}*/
+				for (unsigned int i = 0; i < Transforms.size(); i++)
+					shader->setMat4("jointTransforms[" + std::to_string(i) + "]", glm::transpose(Transforms[i]));
 
-			
+				skinnedMesh.Render(shader, camera);
 
-			// floor
-			/*if (bindTextures) {
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
+				shader->setInt("animated", false);
+				//////////////////////////////////////////////////////////////////////////////////
 			}
-			shader->setFloat("roughness", roughness);
-			shader->setFloat("metallic", metallic);
-			shader->setFloat("bias", bias);
-			plane.Draw(shader, bindTextures);
-			plane2.Draw(shader, bindTextures);*/
-
-
 		}
 
+		
 		virtual void OnImGuiRender() override
 		{
 			if (!showImGUI)
@@ -923,72 +1433,653 @@ namespace HellEngine
 			int fps = std::round(io->Framerate);
 			std::string fpsText = "FPS: " + std::to_string(fps);
 
+			//const char * Types[] = { "NotFound", "Wall", "Door"}; 
 
-			const char * Types[] = { "NotFound", "Wall", "Door"};  
-			//string t = Types[mousePicked.type];
+			int debugWindowWidth = 480;
+			int comboWidth = 177;
+			int comboWidth2 = 140;
+			int lightOptionsWidth = 205;
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
-			
-			ImGui::SetNextWindowSize(ImVec2(320, SCR_HEIGHT - 40));
+			ImGui::SetNextWindowSize(ImVec2(debugWindowWidth, SCR_HEIGHT - 40));
 			//ImGui::SetNextWindowPos(ImVec2(32, 32));
 			ImGui::Begin("Test", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 			ImGui::Text("WELCOME TO HELL");
 			ImGui::Text(fpsText.c_str());
-
 
 			// Player pos
 			std::string p = "Player Pos: " + std::to_string(player.position.x) + ", " + std::to_string(player.position.y) + ", " + std::to_string(player.position.z);
 			ImGui::Text(p.c_str());
 			ImGui::Text(" ");
 
+			if (raycastData.planeIndex != -1)
+			Util::OUTPUT("raycast plane: " + Util::Vec3ToString(boundingPlanePtrs[raycastData.planeIndex]->normal));
+
+			ImGui::Text(Util::OUTPUT_TEXT.c_str());
+
+
+			//////////////////
+			// Main menu yo //
+			//////////////////
+
+		//	ImguiFloat3("Cam Pos:   ", &camera.Position);
+		//	ImguiFloat3("Cam Front: ", &camera.Front);
+		//	ImguiFloat3("Ray thing: ", &ray_wor);
+
+			//ImGui::Text(("DistanceAtoB: " + std::to_string(a)).c_str());
+			//ImGui::Text(("intersectionX: " + std::to_string(b)).c_str());
+
+
+			/*ImGui::Text("sway amount"); ImGui::SameLine();
+			ImGui::InputFloat("##G", &skinnedMesh.swayAmount, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("smooth amount"); ImGui::SameLine();
+			ImGui::InputFloat("##Gf", &skinnedMesh.smoothAmount, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("min X"); ImGui::SameLine();
+			ImGui::InputFloat("##fGf", &skinnedMesh.min_X, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("man X"); ImGui::SameLine();
+			ImGui::InputFloat("##ffGf", &skinnedMesh.max_X, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("min Y"); ImGui::SameLine();
+			ImGui::InputFloat("##fgGf", &skinnedMesh.min_Y, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("man Y"); ImGui::SameLine();
+			ImGui::InputFloat("##fqwefGf", &skinnedMesh.max_Y, 0.0f, 9.0f, 10.0f);*/
+
+			/*
+			ImGui::Text("translation"); ImGui::SameLine();
+			ImGui::InputFloat3("##B", glm::value_ptr(skinnedMesh.meshTranslation), -10, 10);
+
+			ImGui::Text("rotation angle"); ImGui::SameLine();
+			ImGui::InputFloat3("##A", glm::value_ptr(skinnedMesh.meshRotation), -10, 10);
+
+			ImGui::Text("scale"); ImGui::SameLine();
+			ImGui::InputFloat("##G", &skinnedMesh.meshScale, 0.0f, 9.0f, 10.0f);
+
+			ImGui::Text("headbob factor X"); ImGui::SameLine();
+			ImGui::InputFloat("#qwe#ghh", &skinnedMesh.headBobFactorX, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("headbob factor Y"); ImGui::SameLine();
+			ImGui::InputFloat("##gfdshh", &skinnedMesh.headBobFactorY, 0.0f, 9.0f, 10.0f);
+			ImGui::Text("headbob speed"); ImGui::SameLine();
+			ImGui::InputFloat("##gfhh", &skinnedMesh.headBobSpeed, 0.0f, 9.0f, 10.0f);
+
+
+			ImGui::Text("rotation amount"); ImGui::SameLine();
+			ImGui::SliderFloat("##C", &skinnedMesh.meshRotAngle, 0.0f, 5.0f);
+			
+			
+			ImGui::Text("SHELL FORWARD"); ImGui::SameLine();
+			ImGui::InputFloat("##fdG", &Shell::shellForwardFactor, 0.0f, 9.0f, 10.0f);
+
+			ImGui::Text("SHELL up"); ImGui::SameLine();
+			ImGui::InputFloat("##fdqweG", &Shell::shellUpFactor, 0.0f, 9.0f, 10.0f);
+
+			ImGui::Text("SHELL right"); ImGui::SameLine();
+			ImGui::InputFloat("##fsdfdG", &Shell::shellRightFactor, 0.0f, 9.0f, 10.0f);
+
+			ImGui::Text("SHELL SPEED RIGHT"); ImGui::SameLine();
+			ImGui::InputFloat("##fdqqweqweweG", &Shell::shellSpeedRight, 0.0f, 9.0f, 10.0f);
+
+			ImGui::Text("SHELL SPEED UP"); ImGui::SameLine();
+			ImGui::InputFloat("##fsdffaffdG", &Shell::shellSpeedUp, 0.0f, 9.0f, 10.0f);
+
+			ImGui::Text("SHELL GRAV"); ImGui::SameLine();
+			ImGui::InputFloat("##fsdffawerffdG", &Shell::shellGravity, 0.0f, 9.0f, 10.0f);
+			
+
+			std::string s;
+			s = "BOLT: " + std::to_string(skinnedMesh.boltPos.x);
+			s += ", " + std::to_string(skinnedMesh.boltPos.y);
+			s += ", " + std::to_string(skinnedMesh.boltPos.z);
+			ImGui::Text(s.c_str());
+
+
+			s = "FRONT: " + std::to_string(camera.Front.x);
+			s += ", " + std::to_string(camera.Front.y);
+			s += ", " + std::to_string(camera.Front.z);
+			ImGui::Text(s.c_str());
+
+			s = "UP: " + std::to_string(camera.Up.x);
+			s += ", " + std::to_string(camera.Up.y);
+			s += ", " + std::to_string(camera.Up.z);
+			ImGui::Text(s.c_str());
+
+			*/
+
+			
+
+		//	ImGui::End();
+		//	return;
+			
+			ImGui::BeginTabBar("MASTER_TAB_BAR", tab_bar_flags);
+			ImGui::Text("\n");
+
+			if (ImGui::BeginTabItem("Player")) {
+				PlayerMenu();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Game")) {
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Shaders")) {
+				ShaderMenu();
+				ImGui::EndTabItem();
+			}							
+			if (ImGui::BeginTabItem("Map")) 	{
+				MapMenu();
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();				
+			ImGui::End();
+
 			//ImGui::SliderFloat("lowerXlimit", &lowerXlimit, 0.0f, 20.0f);
 			//ImGui::SliderFloat("upperXlimit", &upperXlimit, 0.0f, 20.0f);
 			//ImGui::SliderFloat("lowerZlimit", &lowerZlimit, 0.0f, 20.0f);
 			//ImGui::SliderFloat("upperZlimit", &upperZlimit, 0.0f, 20.0f);
+			/*
+			ImGui::SliderFloat("brightness", &brightness, -0.5f, 0.5f);
+			ImGui::SliderFloat("contrast", &contrast, -0.0f, 2.0f);
+			ImGui::SliderFloat("bias", &bias, -0.2f, 1.0f);*/
+		}
 
-			// Light debug
-			for (int i = 0; i < Light::lights.size(); i++)
+		void PlayerMenu()
+		{
+			ImGui::PushItemWidth(50);
+			ImGui::InputFloat("headbobSpeed", &camera.headBobSpeed);
+			ImGui::InputFloat("headbobFactor", &camera.headBobFactor);
+			ImGui::Text("\n");
+
+			ImGui::InputFloat("crouchingSpeed", &player.crouchDownSpeed);
+			ImGui::InputFloat("crouchingHeight", &player.couchingViewHeight);
+			ImGui::InputFloat("standingHeight", &player.standingViewHeight);
+			ImGui::Text(("Crouching: " + std::to_string(player.crouching)).c_str());
+			ImGui::Text(("CurrentHeight: " + std::to_string(player.currentHeight)).c_str());
+			ImGui::Text("\n");
+
+			ImGui::InputFloat("Run Speed", &player.runningSpeed);
+			ImGui::InputFloat("Walk Speed", &player.walkingSpeed);
+			ImGui::InputFloat("Crouch Speed", &player.crouchingSpeed);
+			ImGui::InputFloat("Jump Strength", &player.jumpStrength);
+			ImGui::InputFloat("Gravity", &player.gravity);
+			ImGui::Text(("Grounded: " + std::to_string(player.IsGrounded())).c_str());
+			ImGui::Text("\n");
+
+			ImGui::InputFloat("Approach Speed", &player.velocityApproachSpeed);
+			ImGui::Text(std::string("Current Vel: " + Util::Vec3ToString(player.currentVelocity)).c_str());
+			ImGui::Text(std::string("Target Vel:  " + Util::Vec3ToString(player.targetVelocity)).c_str());
+			ImGui::Text("\n");
+
+			ImGui::InputFloat("TARGET PITCH", &camera.TargetPitch);
+			ImGui::InputFloat("TARGET YAW", &camera.TargetYaw);
+			ImGui::InputFloat("CURRENT PITCH", &camera.CurrentPitch);
+			ImGui::InputFloat("CURRENT YAW", &camera.CurrentYaw);
+			ImGui::InputFloat("ROTATION SPEED", &camera.rotationSpeed);
+
+
+			if (ImGui::InputFloat("Light_Volume_Bias", &Room::Light_Volume_Bias))
+				RebuildMap();
+
+
+			ImGui::PushItemWidth(250);
+			if (ImGui::InputFloat3("##B", glm::value_ptr(WorkBenchPosition), 2, 2))
+				RenderableObject::SetPositionByName("Bench", WorkBenchPosition);
+		}
+
+
+		void ShaderMenu()
+		{
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None; 
+			ImGui::BeginTabBar("SHADER_TAB_BAR", tab_bar_flags);
+			ImGui::Text("\n");
+
+			if (ImGui::BeginTabItem("DOF")) {
+
+				ImGui::SameLine(); ImGui::Checkbox("Show Focus##showFocus", &Config::DOF_showFocus);
+				ImGui::SameLine(); ImGui::Checkbox("Vignetting##vignetting", &Config::DOF_vignetting);
+				ImGui::SliderFloat("Vignette Out", &Config::DOF_vignout, 0.0f, 5.0f);
+				ImGui::SliderFloat("Vignette In", &Config::DOF_vignin, 0.0f, 5.0f);
+				ImGui::SliderFloat("Vignette Fade", &Config::DOF_vignfade, 0.0f, 200.0f);
+				ImGui::SliderFloat("CoC", &Config::DOF_CoC, 0.0f, 5.0f);
+				ImGui::SliderFloat("Max Blur", &Config::DOF_maxblur, 0.0f, 5.0f);
+				ImGui::SliderInt("Samples", &Config::DOF_samples, 0, 10);
+				ImGui::SliderInt("Rings", &Config::DOF_rings, 0, 10);
+				ImGui::SliderFloat("Threshold", &Config::DOF_threshold, 0.0f, 5.0f);
+				ImGui::SliderFloat("Gain", &Config::DOF_gain, 0.0f, 5.0f);
+				ImGui::SliderFloat("Bias", &Config::DOF_bias, 0.0f, 5.0f);
+				ImGui::SliderFloat("Fringe", &Config::DOF_fringe, 0.0f, 5.0f);
+
+
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+
+		}
+
+
+		void MapMenu()
+		{
+			int comboWidth = 177;
+			int comboWidth2 = 140;
+			int lightOptionsWidth = 205;
+			ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+
+			static vector<std::string> current_floorMaterial;
+			static vector<std::string> current_DoorFloorMaterial;
+			static vector<std::string> current_ceilingMaterial;
+			static vector<std::string> current_wallMaterial;
+			static vector<std::string> current_doorAxis;
+
+			// Setup
+			if (_IMGUI_RUN_ONCE)
 			{
-				ImGui::ColorEdit3((std::to_string(i) + "Color").c_str(), glm::value_ptr(Light::lights[i]->color), i);
-				ImGui::InputFloat3((std::to_string(i) + "Position").c_str(), glm::value_ptr(Light::lights[i]->position), -10, 10);
-				ImGui::SliderFloat((std::to_string(i) + "Constant").c_str(), &Light::lights[i]->attConstant, 0.0f, 5.0f);
-				ImGui::SliderFloat((std::to_string(i) + "Linear").c_str(), &Light::lights[i]->attLinear, 0.0f, 5.0f);
-				ImGui::SliderFloat((std::to_string(i) + "Exp").c_str(), &Light::lights[i]->attExp, 0.0f, 5.0f);
-				ImGui::SliderFloat((std::to_string(i) + "Strength").c_str(), &Light::lights[i]->strength, 0.0f, 50.0f);
-				std::string radiusText = "Radius: " + std::to_string(Light::lights[i]->radius);
-				ImGui::Text(radiusText.c_str()); 
-				ImGui::Text(" ");
+				current_floorMaterial.clear();
+				current_ceilingMaterial.clear();
+				current_wallMaterial.clear();
+				current_DoorFloorMaterial.clear();
+				current_doorAxis.clear();
+
+				for (int i = 0; i < house.rooms.size(); i++)
+				{
+					current_floorMaterial.push_back(house.rooms[i].floor.material->name);
+					current_ceilingMaterial.push_back(house.rooms[i].ceiling.material->name);
+					current_wallMaterial.push_back(house.rooms[i].walls[0].material->name);
+				}
+
+				for (int i = 0; i < house.doors.size(); i++)
+				{
+					current_DoorFloorMaterial.push_back(house.doors[i].floor.material->name);
+					current_doorAxis.push_back(Util::AxisToString(house.doors[i].axis));
+				}
+				_IMGUI_RUN_ONCE = false;
+			}
+
+			// Map list
+			static std::string currentMap = "Level1.map";
+
+			// Materials list
+			std::vector<std::string> materialList;
+			for (Material & material : Material::materials)
+				materialList.push_back(material.name);
+
+			// Axis list
+			std::vector<std::string> axisList;
+			axisList.push_back("X");
+			axisList.push_back("X_NEGATIVE");
+			axisList.push_back("Z");
+			axisList.push_back("Z_NEGATIVE");
+			
+			// NEW LOAD SAVE MENU
+
+			if (ImGui::BeginCombo("##MapList", currentMap.c_str()))
+			{
+				for (int n = 0; n < File::MapList.size(); n++)
+				{
+					bool is_selected = (currentMap == File::MapList[n]);
+					if (ImGui::Selectable(File::MapList[n].c_str(), is_selected)) {
+						//	house.rooms[i].SetWallMaterial(Material::GetMaterialByName(materialList[n]));
+						currentMap = File::MapList[n];
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
 			}
 
 
-			ImGui::SliderFloat("roughness", &roughness, 0.0f, 1.0f);
-			ImGui::SliderFloat("metallic", &metallic, 0.0f, 1.0f);
-			ImGui::SliderFloat("brightness", &brightness, -0.5f, 0.5f);
-			ImGui::SliderFloat("contrast", &contrast, -0.0f, 2.0f);
-			ImGui::SliderFloat("bias", &bias, -0.2f, 1.0f);
+			if (ImGui::Button("New Map"))
+				house.RemoveAllContents();
 
-			ImGui::InputFloat("headbobSpeed", &camera.headBobSpeed);
-			ImGui::InputFloat("headbobFactor", &camera.headBobFactor);
-			ImGui::InputFloat("playerSpeed", &camera.MovementSpeed);
+			ImGui::SameLine(); if (ImGui::Button("Load Map")) {
+				house = File::LoadMap(currentMap);
+				house.RebuildRooms();
+				RebuildMap();
+
+				camera.Position = glm::vec3(0.6f, 0.0f, 9.45f);
+				player.position = glm::vec3(0.6f, 0.0f, 9.45f);
+				camera.TargetYaw = 270.0f;
+				camera.TargetPitch = -6.0f;
+				HellEngine::Application::Get().GetWindow().ToggleMouseEnabled();
+			}
+			ImGui::SameLine(); if (ImGui::Button("Save Map"))
+				File::SaveMap(currentMap, &house);
+
+			ImGui::Text("\n");
+			ImGui::Separator();
+			ImGui::Text("\n");
+
+			// NEw ROOMS AND DOOR
+
+			ImGui::PushItemWidth(75);
+
+			if (ImGui::Button("New Door")) {
+				house.AddDoor(house.newDoorPosition.x, house.newDoorPosition.y, Axis::X, "FloorBoards", false);
+				RebuildMap();
+			}
+			ImGui::SameLine(); ImGui::Text("At");
+			ImGui::SameLine(); ImGui::InputFloat2("##NEWDOOR", glm::value_ptr(house.newDoorPosition), 1, 0);
+
+			if (ImGui::Button("New Room"))
+			{
+				house.AddRoom(
+					glm::vec3(house.newRoomCornerAPosition.x, 0, house.newRoomCornerAPosition.y),
+					glm::vec3(house.newRoomCornerBPosition.x, 0, house.newRoomCornerBPosition.y),
+					"Wall",
+					"FloorBoards",
+					"Concrete2",
+					false,
+					false);
+				RebuildMap();
+			}
+
+			ImGui::SameLine(); ImGui::Text("Inner corner");
+			ImGui::SameLine(); ImGui::InputFloat2("##CORNERA", glm::value_ptr(house.newRoomCornerAPosition), 1, 0);
+			ImGui::SameLine(); ImGui::Text("Outer corner");
+			ImGui::SameLine(); ImGui::InputFloat2("##CORNERB", glm::value_ptr(house.newRoomCornerBPosition), 1, 0);
 
 
-			//ImGui::SliderFloat("LightRadius", &this->lightRadius, -5.0f, 20.0f);
+			// ROOOOOOOOOMS TAB
+			if (house.rooms.size() > 0)
+			{
+				ImGui::Text("\n");
+
+				ImGui::BeginTabBar("MyTabBar", tab_bar_flags);
+				for (int i = 0; i < house.rooms.size(); i++)
+				{
+					// ROOMS
+					if (ImGui::BeginTabItem(("Room " + std::to_string(i)).c_str()))
+					{
+						// MATERIALS
+						{
+							ImGui::Text("\n");
+							ImGui::PushItemWidth(comboWidth);
+
+							// Size
+							ImGui::Text("North Wall");
+							ImGui::SameLine(); if (ImGui::Button("<##A")) {
+								house.rooms[i].cornerA.z -= 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine(); if (ImGui::Button(">##B")) {
+								house.rooms[i].cornerA.z += 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine();
+
+							ImGui::Text("East Wall");
+							ImGui::SameLine(); if (ImGui::Button("<##C")) {
+								house.rooms[i].cornerA.x -= 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine(); if (ImGui::Button(">##D")) {
+								house.rooms[i].cornerA.x += 0.1;
+								RebuildMap();
+							}
+							ImGui::Text("South Wall");
+							ImGui::SameLine(); if (ImGui::Button("<##E")) {
+								house.rooms[i].cornerB.z -= 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine(); if (ImGui::Button(">##F")) {
+								house.rooms[i].cornerB.z += 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine();
+
+							ImGui::Text("West Wall");
+							ImGui::SameLine(); if (ImGui::Button("<##G")) {
+								house.rooms[i].cornerB.x -= 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine(); if (ImGui::Button(">##H")) {
+								house.rooms[i].cornerB.x += 0.1;
+								RebuildMap();
+							}
+
+							// Walls
+							ImGui::Text("Walls  ");
+							ImGui::SameLine();
+							if (ImGui::BeginCombo("##combo3", current_wallMaterial[i].c_str()))
+							{
+								for (int n = 0; n < materialList.size(); n++)
+								{
+									bool is_selected = (current_wallMaterial[i] == materialList[n]);
+									if (ImGui::Selectable(materialList[n].c_str(), is_selected)) {
+										house.rooms[i].SetWallMaterial(Material::GetMaterialByName(materialList[n]));
+										current_wallMaterial[i] = materialList[n];
+									}
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();
+								}
+								ImGui::EndCombo();
+							}
+
+							// Floor
+							ImGui::Text("Floor  ");
+							ImGui::SameLine();
+							if (ImGui::BeginCombo("##combo", current_floorMaterial[i].c_str()))
+							{
+								for (int n = 0; n < materialList.size(); n++)
+								{
+									bool is_selected = (current_floorMaterial[i] == materialList[n]);
+									if (ImGui::Selectable(materialList[n].c_str(), is_selected)) {
+										house.rooms[i].floor.material = Material::GetMaterialByName(materialList[n]);
+										current_floorMaterial[i] = materialList[n];
+									}
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();
+								}
+								ImGui::EndCombo();
+							}
+							ImGui::SameLine(); ImGui::Checkbox("##checkBox", &house.rooms[i].floor.rotateTexture);
+							ImGui::SameLine(); ImGui::Text("Rotate");
+
+							ImGui::Text("Floor Tex Scale"); ImGui::SameLine();
+							ImGui::InputFloat("##floorscale", &house.rooms[i].floor.textureScale, 2, 0);
+							
+							// Ceiling
+							ImGui::Text("Ceiling");
+							ImGui::SameLine();
+							if (ImGui::BeginCombo("##combo2", current_ceilingMaterial[i].c_str()))
+							{
+								for (int n = 0; n < materialList.size(); n++)
+								{
+									bool is_selected = (current_ceilingMaterial[i] == materialList[n]);
+									if (ImGui::Selectable(materialList[n].c_str(), is_selected)) {
+										house.rooms[i].ceiling.material = Material::GetMaterialByName(materialList[n]);
+										current_ceilingMaterial[i] = materialList[n];
+									}
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();
+								}
+								ImGui::EndCombo();
+							}
+							ImGui::SameLine(); ImGui::Checkbox("##checkBox2", &house.rooms[i].ceiling.rotateTexture);
+							ImGui::SameLine(); ImGui::Text("Rotate");
+
+							ImGui::Text("Wall TexCoord Offset");
+							ImGui::SameLine(); ImGui::InputFloat2("##TEX_X", glm::value_ptr(house.rooms[i].texOffset), 10, 0);
+						}
+
+						// LIGHTS ///this needs checkign
+						{
+							ImGui::Text("\n");
+							ImGui::PushItemWidth(lightOptionsWidth);
+
+							ImGui::Text("Light Color   "); ImGui::SameLine();
+							if (ImGui::ColorEdit3("##A", glm::value_ptr(Light::lights[i]->color), i))
+								house.rooms[i].CreateLightVolumes();
+
+							ImGui::Text("Light Position"); ImGui::SameLine();
+							if (ImGui::InputFloat3("##B", glm::value_ptr(Light::lights[i]->position), -10, 10))
+								house.rooms[i].CreateLightVolumes();
+
+							ImGui::Text("Light Constant"); ImGui::SameLine();
+							if (ImGui::SliderFloat("##C", &Light::lights[i]->attConstant, 0.0f, 5.0f))
+								house.rooms[i].CreateLightVolumes();
+
+							ImGui::Text("Light Linear  "); ImGui::SameLine();
+							if (ImGui::SliderFloat("##D", &Light::lights[i]->attLinear, 0.0f, 5.0f))
+								house.rooms[i].CreateLightVolumes();
+
+							ImGui::Text("Light Exp     "); ImGui::SameLine();
+							if (ImGui::SliderFloat("##E", &Light::lights[i]->attExp, 0.0f, 5.0f))
+								house.rooms[i].CreateLightVolumes();
+
+							ImGui::Text("Light Strength"); ImGui::SameLine();
+							if (ImGui::SliderFloat("##F", &Light::lights[i]->strength, 0.0f, 50.0f))
+								house.rooms[i].CreateLightVolumes();
+
+							ImGui::Text(("Light Radius: " + std::to_string(Light::lights[i]->radius)).c_str());
+						}
+
+						ImGui::SameLine(); if (ImGui::Button("Re-center light##LIGHT")) {
+							house.rooms[i].CenterLight();
+						}
+
+						ImGui::EndTabItem();
+					}
+				}
+				ImGui::EndTabBar();
+
+			}
 
 
-			//ImGui::Text("\nLight Properties");
-		//	ImGui::SliderFloat3("pos", glm::value_ptr(this->light.position), -20.0f, 20.0f);
-	//		ImGui::SliderFloat("Shininess", &this->f, 0.0f, 128.0f);
+			if (house.doors.size() > 0)
+			{
+				ImGui::Text("\n");
 
-			ImGui::End();
+				ImGui::BeginTabBar("MyTabBar2", tab_bar_flags);
+				for (int i = 0; i < house.doors.size(); i++)
+				{
+					ImGui::Text("\n");
+
+					// DOORS
+					if (ImGui::BeginTabItem(("Door " + std::to_string(i)).c_str()))
+					{
+						// MATERIALS
+						{
+							std::string x = Util::FloatToString(house.doors[i].position.x, 1);
+							std::string z = Util::FloatToString(house.doors[i].position.z, 1);
+							ImGui::Text(("Position: " + x + ", " + z).c_str());
+
+							ImGui::PushItemWidth(comboWidth2);
+
+							// Door axis
+							ImGui::Text("Rotation Axis ");
+							ImGui::SameLine();
+							if (ImGui::BeginCombo("##combo7", current_doorAxis[i].c_str()))
+							{
+								for (int n = 0; n < axisList.size(); n++)
+								{
+									bool is_selected = (current_doorAxis[i] == axisList[n]);
+									if (ImGui::Selectable(axisList[n].c_str(), is_selected)) {
+										house.doors[i].axis = Util::StringToAxis(axisList[n]);
+										current_doorAxis[i] = axisList[n];
+									}
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();
+								}
+								ImGui::EndCombo();
+							}
+
+
+							ImGui::Text("Move X");
+							ImGui::SameLine();
+
+							if (ImGui::Button("<##H")) {
+								house.doors[i].position.x -= 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine();
+
+							if (ImGui::Button(">##I")) {
+								house.doors[i].position.x += 0.1;
+								RebuildMap();
+							}
+							ImGui::Text("Move Z");
+							ImGui::SameLine();
+
+							if (ImGui::Button("<##J")) {
+								house.doors[i].position.z -= 0.1;
+								RebuildMap();
+							}
+							ImGui::SameLine();
+							if (ImGui::Button(">##K")) {
+								house.doors[i].position.z += 0.1;
+								RebuildMap();
+							}
+
+
+							// Door floor material
+							ImGui::Text("Floor Material");
+							ImGui::SameLine();
+						
+		void ReportError(char* msg);	if (ImGui::BeginCombo("##combo5", current_DoorFloorMaterial[i].c_str()))
+							{
+								for (int n = 0; n < materialList.size(); n++)
+								{
+									bool is_selected = (current_DoorFloorMaterial[i] == materialList[n]);
+									if (ImGui::Selectable(materialList[n].c_str(), is_selected)) {
+										house.doors[i].floor.material = Material::GetMaterialByName(materialList[n]);
+										current_DoorFloorMaterial[i] = materialList[n];
+									}
+									if (is_selected)
+										ImGui::SetItemDefaultFocus();
+								}
+								ImGui::EndCombo();
+							}
+
+							ImGui::Text("Floor Rotate  ");
+							ImGui::SameLine(); ImGui::Checkbox("##checkBox3", &house.doors[i].floor.rotateTexture);
+
+						}
+						ImGui::EndTabItem();
+					}
+				}
+				ImGui::EndTabBar();
+			}
 		}
 
 
 		void OnEvent(HellEngine::Event& event) override
 		{
+			if (event.GetEventType() == HellEngine::EventType::MouseButtonPressed)
+			{
+				if (!shotgunFiring)
+				{
+					time = 0;
+					Audio::PlayAudio("Shotgun.wav");
+					shellEjected = false;
+					shotgunFiring = true;
+
+					for (int i = 0; i < 12; i++) {
+						raycastData = GetRaycastData(0.125f);
+						if (raycastData.planeIndex != -1)
+						decals.push_back(Decal(DecalType::BULLET_HOLE, raycastData.intersectionPoint, boundingPlanePtrs[raycastData.planeIndex]->normal));
+					}
+				}
+			}
+
 			// Key pressed
 			if (event.GetEventType() == HellEngine::EventType::KeyPressed)
 			{
 				HellEngine::KeyPressedEvent& e = (HellEngine::KeyPressedEvent&)event;
 
+
+				/*if (e.GetKeyCode() == HELL_KEY_1)
+					Audio::LoadAudio("Music.mp3");
+				if (e.GetKeyCode() == HELL_KEY_2)
+					Audio::LoadAudio("Music2.mp3");
+				if (e.GetKeyCode() == HELL_KEY_3)
+					Audio::LoadAudio("Music3.mp3");*/
+
+					// RESET TIME
+				if (e.GetKeyCode() == HELL_KEY_T)
+					time = 0;
+
+				// RESET TIME
+				if (e.GetKeyCode() == HELL_KEY_C)
+				{
+					decals.clear();
+				}
+					
 				// toggle fullscreen
 				if (e.GetKeyCode() == HELL_KEY_F)
 				{
@@ -1015,14 +2106,24 @@ namespace HellEngine
 				if (e.GetKeyCode() == HELL_KEY_O)
 					optimise = !optimise;
 				// Toggle mouse control
-				if (e.GetKeyCode() == HELL_KEY_TAB)
+				if (e.GetKeyCode() == HELL_KEY_M)
 					HellEngine::Application::Get().GetWindow().ToggleMouseEnabled();
 				// Recalculate shit
 				if (e.GetKeyCode() == HELL_KEY_R) {
 					for (Light * light : Light::lights)
 						light->CalculateShadowProjectionMatricies();
-				}
 
+
+					for (Room & room : house.rooms)
+						room.CreateLightVolumes();
+				}
+				// Light Volumes
+				if (e.GetKeyCode() == HELL_KEY_V)
+					showVolumes = !showVolumes;	
+				
+				// Raycast Plane
+				if (e.GetKeyCode() == HELL_KEY_R)
+					showRaycastPlane = !showRaycastPlane;
 
 				// Weapons
 				if (e.GetKeyCode() == HELL_KEY_1)
@@ -1037,7 +2138,14 @@ namespace HellEngine
 					selectedWeapon = 5;
 
 				if (e.GetKeyCode() == HELL_KEY_E)
+				{
 					Interact();
+				}
+
+				if (e.GetKeyCode() == HELL_KEY_Q)
+					for (Door& door : house.doors)
+						door.Interact();
+					
 			}
 			//Key released
 			if (event.GetEventType() == HellEngine::EventType::KeyReleased)
@@ -1058,6 +2166,11 @@ namespace HellEngine
 
 			gBuffer.Configure(SCR_WIDTH, SCR_HEIGHT);
 			lightingBuffer.Configure(SCR_WIDTH, SCR_HEIGHT);
+
+			blurBuffers[0].Configure(SCR_WIDTH / 2, SCR_HEIGHT / 2);
+			blurBuffers[1].Configure(SCR_WIDTH / 4, SCR_HEIGHT / 4);
+			blurBuffers[2].Configure(SCR_WIDTH / 8, SCR_HEIGHT / 8);
+			blurBuffers[3].Configure(SCR_WIDTH / 16, SCR_HEIGHT / 16);
 		}
 
 		void DrawPoint(Shader *shader, glm::vec3 position, glm::mat4 modelMatrix, glm::vec3 color)
@@ -1180,6 +2293,74 @@ namespace HellEngine
 			return result;
 		}
 
+		void RebuildMap()
+		{
+			house.RebuildRooms();
+			AssingMousePickIDs();
+			boundingBoxPtrs = CreateBoudingBoxPtrsVector();
+			boundingPlanePtrs = CreateBoudingPlanePtrsVector();
+			_IMGUI_RUN_ONCE = true;
+		}
+
+		void ImguiFloat3(std::string text, glm::vec3* vector)
+		{
+			//static int imguiCounter = 0;
+			//std::string id = "##" + std::to_string(imguiCounter++);
+			std::string s = text + " [" + std::to_string(vector->x) + ", " + std::to_string(vector->y) + ", " + std::to_string(vector->z) + "]";
+			ImGui::Text(s.c_str());// ImGui::SameLine();
+
+			//glm::vec3* v;
+			//ImGui::InputFloat3(id.c_str(), &vector, -10, 10);
+
+		}
+
+		RaycastData GetRaycastData(float variance)
+		{
+			 
+			// RAYCASTING
+			glm::vec3 ray_nds = glm::vec3(0, 0, 0);
+			glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0f, 1.0f);
+			glm::vec4 ray_eye = glm::inverse(camera.projectionMatrix) * ray_clip;
+			ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
+			glm::vec3 r = glm::inverse(camera.viewMatrix) * ray_eye;
+			ray_direction = glm::vec3(r.x, r.y, r.z);
+			
+			float offset = (variance * 0.5) - RandomFloat(0, variance);
+			ray_direction.x += offset;
+			offset = (variance * 0.5) - RandomFloat(0, variance);
+			ray_direction.y += offset;
+			offset = (variance * 0.5) - RandomFloat(0, variance);
+			ray_direction.z += offset;
+
+			ray_direction = glm::normalize(ray_direction);
+			
+			glm::vec3 ray_origin = camera.Position;
+
+			RaycastData raycastData;
+			raycastData.distance = 1000;
+			raycastData.planeIndex = -1;
+			raycastData.intersectionPoint = glm::vec3(0);
+
+			for (int i = 0; i < boundingPlanePtrs.size(); i++)
+			{
+				BoundingPlane* plane = boundingPlanePtrs[i];
+				// Check first triangle
+				CollisionData collision = Util::RayTriangleIntersect(ray_origin, ray_direction, plane->A, plane->B, plane->C);
+				if (collision.occured && collision.distance < raycastData.distance) {
+					raycastData.intersectionPoint = collision.location;
+					raycastData.distance = collision.distance;
+					raycastData.planeIndex = i;
+				}
+				// Check second triangle
+				collision = Util::RayTriangleIntersect(ray_origin, ray_direction, plane->C, plane->D, plane->A);
+				if (collision.occured && collision.distance < raycastData.distance) {
+					raycastData.intersectionPoint = collision.location;
+					raycastData.distance = collision.distance;
+					raycastData.planeIndex = i;
+				}
+			}
+			return raycastData;
+		}
 	};
 
 

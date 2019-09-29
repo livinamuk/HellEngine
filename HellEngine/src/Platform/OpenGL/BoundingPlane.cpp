@@ -9,7 +9,7 @@ namespace HellEngine {
 	{
 	}
 
-	BoundingPlane::BoundingPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C, glm::vec3 D)
+	BoundingPlane::BoundingPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C, glm::vec3 D, bool testCollisions)
 	{
 		if (VAO = -1)
 			glGenVertexArrays(1, &VAO);
@@ -18,7 +18,9 @@ namespace HellEngine {
 		this->B = B;
 		this->C = C;
 		this->D = D;
-
+		//this->D.z += 1;
+		//this->C.z += 1;
+		this->testCollisions = testCollisions;
 
 		BufferData();
 
@@ -84,6 +86,6 @@ namespace HellEngine {
 		// Get plane normal
 		glm::vec3 v1 = A - B;
 		glm::vec3 v2 = C - B;
-		normal = glm::cross(v1, v2);
+		normal = glm::normalize(glm::cross(v1, v2));
 	}
 }

@@ -8,11 +8,11 @@ namespace HellEngine {
 	{
 	public:
 		Cube();
-		Cube(float x, float y, float z);
-		Cube(float x, float y, float z, glm::vec3 scale);
+		Cube(glm::vec3 position, glm::vec3 scale = glm::vec3(1));
 		virtual ~Cube();
 
 		void Draw(Shader *shader, bool bindTextures) override;
+		void DecalDraw(Shader* shader, glm::vec3 normal);
 
 		static void Init();
 		static unsigned int VAO;

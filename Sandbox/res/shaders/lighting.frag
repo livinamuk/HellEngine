@@ -1,12 +1,11 @@
 #version 400 core
-layout (location = 0) out vec4 FragColor;
+layout (location = 4) out vec4 FragColor;
 
-//in  vec2 TexCoords;
-  
 uniform sampler2D albedoTexture;
 uniform sampler2D normalTexture;
-uniform sampler2D positionTexture;
-uniform samplerCubeArray depthMap;
+uniform sampler2D depthTexture;
+uniform sampler2D emissiveTexture;
+uniform samplerCubeArray shadowMaps;
 
 uniform float lightStrengths[16];
 uniform vec3 lightPositions[16];
@@ -27,7 +26,6 @@ uniform float lowerXlimit;
 uniform float upperXlimit;
 uniform float lowerZlimit;
 uniform float upperZlimit;
-
 
 const float PI = 3.14159265359;
 
@@ -63,8 +61,8 @@ float ShadowCalculation(vec3 fragPos, vec3 lightPos, int light)
     float diskRadius = (1.0 + (viewDistance / far_plane)) / 50.0;
     for(int i = 0; i < samples; ++i)
     {
-        //float closestDepth = texture(depthMap, fragToLight + gridSamplingDisk[i] * diskRadius).r;
-        float closestDepth = texture(depthMap, vec4(fragToLight + gridSamplingDisk[i] * diskRadius, light)).r;
+        //float closestDepth = texture(shadowMaps, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+        float closestDepth = texture(shadowMaps, vec4(fragToLight + gridSamplingDisk[i] * diskRadius, light)).r;
         closestDepth *= far_plane;   // undo mapping [0;1]
         if(currentDepth - bias > closestDepth)
             shadow += 1.0;
@@ -126,8 +124,14 @@ void main()
     vec2 gScreenSize = vec2(screenWidth, screenHeight);
     vec2 TexCoord = gl_FragCoord.xy / gScreenSize;
 
+	
+    // return early for emissive fragment
+//	vec3 emissive = texture(emissiveTexture, vec2(TexCoord.s, TexCoord.t)).rgb;
+//	if ((emissive.x > 0) || (emissive.y > 0) || (emissive.z > 0))
+//		return;
+
     // Get the Fragment Z position (from the depth buffer)
-    float z = texture(positionTexture, vec2(TexCoord.s, TexCoord.t)).x * 2.0f - 1.0f;
+    float z = texture(depthTexture, vec2(TexCoord.s, TexCoord.t)).x * 2.0f - 1.0f;
     vec4 clipSpacePosition = vec4(vec2(TexCoord.s, TexCoord.t) * 2.0 - 1.0, z, 1.0);
     vec4 viewSpacePosition = inverseProjectionMatrix * clipSpacePosition;
 
@@ -135,19 +139,26 @@ void main()
     viewSpacePosition /= viewSpacePosition.w;
     vec4 worldSpacePosition = inverseViewMatrix * viewSpacePosition;
     vec3 WorldPos = worldSpacePosition.xyz;
+
+	// is it shadow? then BAIL
+	int i = lightIndex;
+	float shadow = ShadowCalculation(WorldPos, lightPositions[i], i);
+	if (shadow > 0.75)
+		return;
 	
 	// reflectance equation
 	vec3 Lo = vec3(0.0);
 
 	// This if statement will discard any fragments outside walls without doors, cause no light can ever get passed that.
-	if ((WorldPos.x >= lowerXlimit) && (WorldPos.x <= upperXlimit) && (WorldPos.z >= lowerZlimit) && (WorldPos.z <= upperZlimit))
+	//if ((WorldPos.x >= lowerXlimit) && (WorldPos.x <= upperXlimit) && (WorldPos.z >= lowerZlimit) && (WorldPos.z <= upperZlimit))
 	//if (true)
 	{
 		// Only calculate fragments in between the floor and ceiling. THIS COULD BE POINTLESS? I'm pretty sure it is.
-		if ((WorldPos.y >= -0.01) && (WorldPos.y <= 2.41f)) 
+		//if ((WorldPos.y >= -0.01) && (WorldPos.y <= 2.41f)) 
 		{
 			vec3 albedo     = pow(texture(albedoTexture, TexCoord).rgb, vec3(2.2));
-			float metallic  = texture(albedoTexture, TexCoord).a;
+			float metallic  = texture(emissiveTexture, TexCoord).a;
+			//float metallic  = texture(albedoTexture, TexCoord).a;
 			float roughness = texture(normalTexture, TexCoord).a;
 
 			vec3 N = normalize(texture(normalTexture, TexCoord).rgb) ;//* 2 -1  ; //getNormalFromMap();
@@ -156,7 +167,6 @@ void main()
 			F0 = mix(F0, albedo, metallic);
 
 			// calculate per-light radiance
-			int i = lightIndex;
 			vec3 L = normalize(lightPositions[i] - WorldPos);
 			vec3 H = normalize(V + L);
 			float distance = length(lightPositions[i] - WorldPos);
@@ -165,7 +175,6 @@ void main()
 			{
 				float attenuation = 1.0 / (lightAttenuationConstant[i] + lightAttenuationLinear[i] * distance + lightAttenuationExp[i] * distance * distance);
 				attenuation *= lightStrengths[i];
-				float shadow = ShadowCalculation(WorldPos, lightPositions[i], i);
 
 				vec3 radiance = lightColors[i] * attenuation;
 				float NDF = DistributionGGX(N, H, roughness);   
@@ -182,5 +191,18 @@ void main()
 			}
 			FragColor = vec4(Lo, 1.0);
 		}
+	//	FragColor.rgb = texture(albedoTexture, vec2(TexCoord.s, TexCoord.t)).rgb;
 	}
 }
+
+
+ //vec3 getshadowtc(vec3 dir, vec4 shadowparams, vec2 shadowoffset)
+  //  {
+  //      vec3 adir = abs(dir);
+   //     float m = max(adir.x, adir.y);
+   //     vec2 mparams = shadowparams.xy / max(adir.z, m);
+   //     vec4 proj;
+   //     if(adir.x > adir.y) proj = vec4(dir.zyx, 0.0); else proj = vec4(dir.xzy, 1.0);
+    //    if(adir.z > m) proj = vec4(dir, 2.0);
+    //    return vec3(proj.xy * mparams.x + vec2(proj.w, step(proj.z, 0.0)) * shadowparams.z + shadowoffset, mparams.y + shadowparams.w);
+   // }

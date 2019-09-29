@@ -31,6 +31,13 @@ namespace HellEngine {
 		return state == GLFW_PRESS || state == GLFW_REPEAT;
 	}
 
+	bool WindowsInput::IsKeyReleasedImpl(int keycode)
+	{
+		auto window = static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow());
+		auto state = glfwGetKey(static_cast<GLFWwindow*>(Application::Get().GetWindow().GetNativeWindow()), keycode);
+
+		return state == GLFW_RELEASE;
+	}
 	
 
 	bool WindowsInput::IsMouseButtonPressedImpl(int button)

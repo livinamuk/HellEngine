@@ -9,16 +9,13 @@ namespace HellEngine {
 	const float WALL_HEIGHT = 2.4f;
 	//unsigned int modelMatricesVBO = 0;
 
-	Wall::Wall(float x, float z, Axis axis, float width)
+	Wall::Wall(float x, float z, Axis axis, float width, Material* material)
 	{
-		// First setup for instancing if not already.
-		//if (modelMatricesVBO == 0)
-		//	glGenBuffers(1, &modelMatricesVBO);
-
 		position = glm::vec3(x, 0, z);
 		this->width = width;
 		this->axis = axis;
 		this->scale = glm::vec3(width, 1, 1);
+		this->material = material;
 
 		if (axis == Axis::X) {
 			angle = ROTATE_0;
@@ -29,9 +26,9 @@ namespace HellEngine {
 			normal = glm::vec3(0, 0, -1);
 		}
 		else if (axis == Axis::Z) {
-			angle = ROTATE_90; 
+			angle = ROTATE_90;
 			normal = glm::vec3(1, 0, 0);
-		}			
+		}
 		else if (axis == Axis::Z_NEGATIVE) {
 			angle = ROTATE_270;
 			normal = glm::vec3(-1, 0, 0);
@@ -42,17 +39,15 @@ namespace HellEngine {
 
 	Wall::~Wall()
 	{
+		// Destuctor
 	}
 
 	void Wall::Draw(Shader* shader, bool bindTextures)
 	{
-		/*glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::translate(modelMatrix, position);
-		modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-		modelMatrix = glm::scale(modelMatrix, scale);
-		*/
+		if (bindTextures) {
+			material->BindTextures();
+		}
 		shader->setMat4("model", modelMatrix);
-
 		this->model->Draw(shader);
 	}
 

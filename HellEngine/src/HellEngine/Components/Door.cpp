@@ -1,14 +1,16 @@
 #include "hellpch.h"
 #include "Door.h"
+#include "HellEngine/Audio/Audio.h"
 
 
 namespace HellEngine {
 
 	Model* Door::modelDoor = nullptr;
+	Model* Door::modelDoorShadowCaster = nullptr;
 	Model* Door::modelDoorJam = nullptr;
 	Model* Door::modelWallHole = nullptr;
 
-	Door::Door(float x, float z, Axis axis)
+	Door::Door(float x, float z, Axis axis, std::string floorMaterialName, bool rotateFloor)
 	{
 		this->position = glm::vec3(x, 0, z);
 		this->axis = axis;
@@ -19,13 +21,13 @@ namespace HellEngine {
 
 		// Floor
 		if (axis == X)
-			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f);
+			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f, Material::GetMaterialByName(floorMaterialName), rotateFloor);
 		if (axis == X_NEGATIVE)
-			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f);
+			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f, Material::GetMaterialByName(floorMaterialName), rotateFloor);
 		if (axis == Z)
-			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1);
+			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1, Material::GetMaterialByName(floorMaterialName), rotateFloor);
 		if (axis == Z_NEGATIVE)
-			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1);
+			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1, Material::GetMaterialByName(floorMaterialName), rotateFloor);
 	}
 
 	Door::~Door()
@@ -56,6 +58,8 @@ namespace HellEngine {
 
 	void Door::Interact()
 	{
+		Audio::PlayAudio("Door1.wav");
+
 		if (doorStatus == DOOR_CLOSED)
 			doorStatus = DOOR_OPENING;
 		if (doorStatus == DOOR_OPEN)

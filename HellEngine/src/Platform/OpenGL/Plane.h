@@ -8,10 +8,7 @@ namespace HellEngine {
 	{
 	public: // methods
 		Plane();
-		Plane(float x, float y, float z);
-		Plane(float x, float y, float z, glm::vec3 scale);
-
-		Plane(glm::vec3 position, float width, float depth, float height);
+		Plane(glm::vec3 position, glm::vec3 scale = glm::vec3(1));
 		virtual ~Plane();
 
 	public: // fields

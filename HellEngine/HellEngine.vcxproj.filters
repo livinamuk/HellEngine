@@ -13,14 +13,26 @@
     <Filter Include="src\HellEngine\Audio">
       <UniqueIdentifier>{5899C2B6-4428-4C80-ED46-607BD9B45C26}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\HellEngine\Audio\extras">
+      <UniqueIdentifier>{9EDFA4ED-0AED-D2D3-93D3-CEBEFFDF9E8A}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\HellEngine\Components">
       <UniqueIdentifier>{CC9EE2B0-3861-163B-8111-A5C7ED12EF18}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\HellEngine\Events">
       <UniqueIdentifier>{1B227D98-878E-3893-5082-D0F0BCAD5AFB}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\HellEngine\GameObjects">
+      <UniqueIdentifier>{8AFB50C8-760B-FD98-DFC4-61B7CBF3EB31}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\HellEngine\ImGUI">
       <UniqueIdentifier>{417C4EB7-2D0B-D880-D629-EC7BC297E826}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\HellEngine\Logic">
+      <UniqueIdentifier>{546986B7-40F8-0F81-E916-247CD5842027}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\HellEngine\Renderer">
+      <UniqueIdentifier>{9D2349A3-095B-913A-1265-F55D7E1BB833}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\Platform">
       <UniqueIdentifier>{21CA02E5-0D2D-9289-B6B2-CA3FA2F45D0C}</UniqueIdentifier>
@@ -33,6 +45,12 @@
     </Filter>
     <Filter Include="vendor">
       <UniqueIdentifier>{B3738122-9F15-ACF8-88D0-BF4C74113349}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\fmod">
+      <UniqueIdentifier>{480879C1-B4BD-F1B6-3DB2-EB8DA966E8BA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\fmod\include">
+      <UniqueIdentifier>{BBF78DCB-2759-6BD9-B0C6-B18B1C27A298}</UniqueIdentifier>
     </Filter>
     <Filter Include="vendor\glm">
       <UniqueIdentifier>{829FC5A8-6E57-07F6-D75E-E051C335A2E6}</UniqueIdentifier>
@@ -57,7 +75,7 @@
     <ClInclude Include="src\HellEngine.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\HellEngine\Animation\Joint.h">
+    <ClInclude Include="src\HellEngine\Animation\SkinnedMesh.h">
       <Filter>src\HellEngine\Animation</Filter>
     </ClInclude>
     <ClInclude Include="src\HellEngine\Application.h">
@@ -66,16 +84,61 @@
     <ClInclude Include="src\HellEngine\Audio\Audio.h">
       <Filter>src\HellEngine\Audio</Filter>
     </ClInclude>
-    <ClInclude Include="src\HellEngine\Audio\al.h">
+    <ClInclude Include="src\HellEngine\Audio\common.h">
       <Filter>src\HellEngine\Audio</Filter>
     </ClInclude>
-    <ClInclude Include="src\HellEngine\Audio\alc.h">
+    <ClInclude Include="src\HellEngine\Audio\common_platform.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\extras\dr_flac.h">
+      <Filter>src\HellEngine\Audio\extras</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\extras\dr_mp3.h">
+      <Filter>src\HellEngine\Audio\extras</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\extras\dr_wav.h">
+      <Filter>src\HellEngine\Audio\extras</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod_codec.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod_common.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod_dsp.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod_dsp_effects.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod_errors.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\fmod_output.h">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Audio\miniaudio.h">
       <Filter>src\HellEngine\Audio</Filter>
     </ClInclude>
     <ClInclude Include="src\HellEngine\Camera.h">
       <Filter>src\HellEngine</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\Components\Ceiling.h">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\HellEngine\Components\Door.h">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Components\Floor.h">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Components\House.h">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Components\Room.h">
       <Filter>src\HellEngine\Components</Filter>
     </ClInclude>
     <ClInclude Include="src\HellEngine\Components\Wall.h">
@@ -99,6 +162,15 @@
     <ClInclude Include="src\HellEngine\Events\MouseEvent.h">
       <Filter>src\HellEngine\Events</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\File.h">
+      <Filter>src\HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\GameObjects\Decal.h">
+      <Filter>src\HellEngine\GameObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\GameObjects\Shell.h">
+      <Filter>src\HellEngine\GameObjects</Filter>
+    </ClInclude>
     <ClInclude Include="src\HellEngine\ImGUI\ImGuiLayer.h">
       <Filter>src\HellEngine\ImGUI</Filter>
     </ClInclude>
@@ -120,6 +192,15 @@
     <ClInclude Include="src\HellEngine\Log.h">
       <Filter>src\HellEngine</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\Logic\Header.h">
+      <Filter>src\HellEngine\Logic</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Logic\ShotgunLogic.h">
+      <Filter>src\HellEngine\Logic</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Material.h">
+      <Filter>src\HellEngine</Filter>
+    </ClInclude>
     <ClInclude Include="src\HellEngine\Model.h">
       <Filter>src\HellEngine</Filter>
     </ClInclude>
@@ -132,11 +213,29 @@
     <ClInclude Include="src\HellEngine\Player.h">
       <Filter>src\HellEngine</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\Renderer\GraphicsContext.h">
+      <Filter>src\HellEngine\Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="src\HellEngine\Timer.h">
+      <Filter>src\HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Transform.h">
+      <Filter>src\HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HellEngine\Util.h">
       <Filter>src\HellEngine</Filter>
     </ClInclude>
     <ClInclude Include="src\HellEngine\Window.h">
       <Filter>src\HellEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\BlurBuffer.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\BoundingBox.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\BoundingPlane.h">
+      <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\Cube.h">
       <Filter>src\Platform\OpenGL</Filter>
@@ -144,7 +243,16 @@
     <ClInclude Include="src\Platform\OpenGL\GBuffer.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\LightVolume.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\LightingBuffer.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\OpenGLContext.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\PBO.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\Plane.h">
@@ -174,6 +282,15 @@
     <ClInclude Include="src\Platform\OpenGL\Texture.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\TexturedMesh.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\glExtension.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\glext.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\mesh.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
@@ -185,6 +302,36 @@
     </ClInclude>
     <ClInclude Include="src\hellpch.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\common.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\common_platform.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod.hpp">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod_codec.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod_common.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod_dsp.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod_dsp_effects.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod_errors.h">
+      <Filter>vendor\fmod\include</Filter>
+    </ClInclude>
+    <ClInclude Include="vendor\fmod\include\fmod_output.h">
+      <Filter>vendor\fmod\include</Filter>
     </ClInclude>
     <ClInclude Include="vendor\glm\glm\common.hpp">
       <Filter>vendor\glm\glm</Filter>
@@ -1278,26 +1425,9 @@
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp">
       <Filter>vendor\glm\glm</Filter>
     </ClInclude>
-    <ClInclude Include="src\Platform\OpenGL\glExtension.h" />
-    <ClInclude Include="src\Platform\OpenGL\glext.h" />
-    <ClInclude Include="src\Platform\OpenGL\PBO.h" />
-    <ClInclude Include="src\HellEngine\Components\House.h" />
-    <ClInclude Include="src\Platform\OpenGL\BoundingBox.h" />
-    <ClInclude Include="src\Platform\OpenGL\BoundingPlane.h" />
-    <ClInclude Include="src\HellEngine\Util.h" />
-    <ClInclude Include="src\HellEngine\Renderer\GraphicsContext.h" />
-    <ClInclude Include="src\Platform\OpenGL\OpenGLContext.h" />
-    <ClInclude Include="src\HellEngine\Animation\Animation.h" />
-    <ClInclude Include="src\HellEngine\Animation\JointTransform.h" />
-    <ClInclude Include="src\HellEngine\Animation\Animator.h" />
-    <ClInclude Include="src\HellEngine\Animation\KeyFrameList.h" />
-    <ClInclude Include="src\HellEngine\Components\Room.h" />
-    <ClInclude Include="src\HellEngine\Components\Floor.h" />
-    <ClInclude Include="src\Platform\OpenGL\TexturedMesh.h" />
-    <ClInclude Include="src\HellEngine\Components\Ceiling.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\HellEngine\Animation\Joint.cpp">
+    <ClCompile Include="src\HellEngine\Animation\SkinnedMesh.cpp">
       <Filter>src\HellEngine\Animation</Filter>
     </ClCompile>
     <ClCompile Include="src\HellEngine\Application.cpp">
@@ -1306,11 +1436,38 @@
     <ClCompile Include="src\HellEngine\Audio\Audio.cpp">
       <Filter>src\HellEngine\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="src\HellEngine\Audio\common.cpp">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Audio\common_platform.cpp">
+      <Filter>src\HellEngine\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Components\Ceiling.cpp">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\HellEngine\Components\Door.cpp">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Components\Floor.cpp">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Components\House.cpp">
+      <Filter>src\HellEngine\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Components\Room.cpp">
       <Filter>src\HellEngine\Components</Filter>
     </ClCompile>
     <ClCompile Include="src\HellEngine\Components\Wall.cpp">
       <Filter>src\HellEngine\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\File.cpp">
+      <Filter>src\HellEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\GameObjects\Decal.cpp">
+      <Filter>src\HellEngine\GameObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\GameObjects\Shell.cpp">
+      <Filter>src\HellEngine\GameObjects</Filter>
     </ClCompile>
     <ClCompile Include="src\HellEngine\ImGUI\ImGuiBuild.cpp">
       <Filter>src\HellEngine\ImGUI</Filter>
@@ -1330,6 +1487,12 @@
     <ClCompile Include="src\HellEngine\Log.cpp">
       <Filter>src\HellEngine</Filter>
     </ClCompile>
+    <ClCompile Include="src\HellEngine\Logic\ShotgunLogic.cpp">
+      <Filter>src\HellEngine\Logic</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Material.cpp">
+      <Filter>src\HellEngine</Filter>
+    </ClCompile>
     <ClCompile Include="src\HellEngine\Model.cpp">
       <Filter>src\HellEngine</Filter>
     </ClCompile>
@@ -1342,13 +1505,37 @@
     <ClCompile Include="src\HellEngine\Timer.cpp">
       <Filter>src\HellEngine</Filter>
     </ClCompile>
+    <ClCompile Include="src\HellEngine\Transform.cpp">
+      <Filter>src\HellEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HellEngine\Util.cpp">
+      <Filter>src\HellEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\BlurBuffer.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\BoundingBox.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\BoundingPlane.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\Cube.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\GBuffer.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\LightVolume.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\LightingBuffer.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\PBO.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\Plane.cpp">
@@ -1375,6 +1562,12 @@
     <ClCompile Include="src\Platform\OpenGL\Texture.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\TexturedMesh.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\glExtension.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
     <ClCompile Include="src\Platform\Windows\WindowsInput.cpp">
       <Filter>src\Platform\Windows</Filter>
     </ClCompile>
@@ -1384,22 +1577,11 @@
     <ClCompile Include="src\hellpch.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Platform\OpenGL\glExtension.cpp">
-      <Filter>src\Platform\OpenGL</Filter>
+    <ClCompile Include="vendor\fmod\include\common.cpp">
+      <Filter>vendor\fmod\include</Filter>
     </ClCompile>
-    <ClCompile Include="src\Platform\OpenGL\PBO.cpp" />
-    <ClCompile Include="src\HellEngine\Components\House.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\BoundingBox.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\BoundingPlane.cpp" />
-    <ClCompile Include="src\HellEngine\Util.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp" />
-    <ClCompile Include="src\HellEngine\Animation\Animation.cpp" />
-    <ClCompile Include="src\HellEngine\Animation\JointTransform.cpp" />
-    <ClCompile Include="src\HellEngine\Animation\Animator.cpp" />
-    <ClCompile Include="src\HellEngine\Animation\KeyFrameList.cpp" />
-    <ClCompile Include="src\HellEngine\Components\Room.cpp" />
-    <ClCompile Include="src\HellEngine\Components\Floor.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\TexturedMesh.cpp" />
-    <ClCompile Include="src\HellEngine\Components\Ceiling.cpp" />
+    <ClCompile Include="vendor\fmod\include\common_platform.cpp">
+      <Filter>vendor\fmod\include</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -11,7 +11,7 @@ namespace HellEngine
 		~LightingBuffer();
 
 		unsigned int ID;
-		unsigned int rboDepth, gLighting, gFinal;
+		unsigned int gLighting, gComposite, gDOF;
 
 		void Configure(int width, int height);
 	};

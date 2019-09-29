@@ -32,8 +32,8 @@ ShadowCubeMapArray::ShadowCubeMapArray(int layers)
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "CubeMapArray not complete!" << std::endl;
-	else
-		std::cout << "CubeMapArray complete." << std::endl;
+	//else
+	//	std::cout << "CubeMapArray complete." << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

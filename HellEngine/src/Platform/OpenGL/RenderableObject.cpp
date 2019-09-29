@@ -5,12 +5,23 @@ namespace HellEngine
 {
 	std::vector<RenderableObject> RenderableObject::renderableObjects;
 
-	HellEngine::RenderableObject::RenderableObject(Model* model, std::string texture, glm::vec3 position, float angle, glm::vec3 scale)
+
+	HellEngine::RenderableObject::RenderableObject(Model* model, glm::vec3 position)
 	{
 		this->model = model;
-		this->position = position;
-		this->angle = angle;
-		this->scale = scale;
+		this->transform.position = position;
+	}
+
+	HellEngine::RenderableObject::RenderableObject()
+	{
+	}
+
+	HellEngine::RenderableObject::RenderableObject(Model* model, std::string texture, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
+	{
+		this->model = model;
+		this->transform.position = position;
+		this->transform.rotation = rotation;
+		this->transform.scale = scale;
 
 		this->diffuseTextureID = Texture::GetIDByName(texture);
 		this->metallicTextureID = -1;
@@ -22,8 +33,8 @@ namespace HellEngine
 	{
 		this->name = name;
 		this->model = model;
-		this->scale = glm::vec3(1);
-		this->angle = 0;
+		this->transform.scale = glm::vec3(1);
+		this->transform.rotation = glm::vec3(0);
 		this->diffuseTextureID = -1;
 		this->metallicTextureID = -1;
 		this->roughnessTextureID = -1;
@@ -42,24 +53,26 @@ namespace HellEngine
 	void RenderableObject::SetModelByName(std::string name, Model *model)
 	{
 		for (RenderableObject & r : renderableObjects)
-			if (r.name == name)
+			if (r.name == name) 
 				r.model = model;
+
+		
 	}
 
 	void RenderableObject::SetPositionByName(std::string name, glm::vec3 position)
 	{
 		for (RenderableObject & r : renderableObjects)
 			if (r.name == name)
-				r.position = position;
+				r.transform.position = position;
 	}
 
 	void RenderableObject::SetScaleByName(std::string name, glm::vec3 scale)
 	{
 		for (RenderableObject & r : renderableObjects)
 			if (r.name == name)
-				r.scale = scale;
+				r.transform.scale = scale;
 	}
-
+	/*
 	void RenderableObject::SetRotateAngleByName(std::string name, glm::vec3 rotateAngle)
 	{
 		for (RenderableObject & r : renderableObjects)
@@ -67,11 +80,27 @@ namespace HellEngine
 				r.rotateAngle = rotateAngle;
 	}
 	
-	void RenderableObject::SetAngleByName(std::string name, float angle)
+	*/void RenderableObject::SetModelYRotationByName(std::string name, float angle)
 	{
 		for (RenderableObject & r : renderableObjects)
 			if (r.name == name)
+				r.modelTransform.rotation.y = angle;
+	}
+
+	
+
+	/*void RenderableObject::SetAngleByName(std::string name, float angle)
+	{
+		for (RenderableObject& r : renderableObjects)
+			if (r.name == name)
 				r.angle = angle;
+	}*/
+	
+	void RenderableObject::SetRotationByName(std::string name, glm::vec3 rotation)
+	{
+		for (RenderableObject& r : renderableObjects)
+			if (r.name == name)
+				r.transform.rotation = rotation;
 	}
 
 	void RenderableObject::SetDiffuseTextureByName(std::string name, int textureID)
@@ -93,6 +122,15 @@ namespace HellEngine
 		for (RenderableObject & r : renderableObjects)
 			if (r.name == name)
 				r.metallicTextureID = textureID;
+	}
+
+	void RenderableObject::SetEmissiveMapByName(std::string name, int textureID)
+	{
+		for (RenderableObject & r : renderableObjects)
+			if (r.name == name) {
+				r.emissiveMapID = textureID;
+				r.hasEmissiveMap = true;
+			}
 	}
 
 	void RenderableObject::SetNormalMapByName(std::string name, int textureID)
@@ -130,13 +168,19 @@ namespace HellEngine
 	{
 		for (RenderableObject & r : renderableObjects)
 			if (r.name == name)
-				return r.position;
+				return r.transform.position;
 		
 		return glm::vec3();
 	}
 
 	void RenderableObject::Draw(Shader *shader, bool bindTextures)
 	{
+		// Has this model been loaded even?
+		if (model == nullptr) {
+			HELL_ASSERT(false, "Renderable object '{s}' has a nullptr model", name);
+			return;
+		}
+
 		if (bindTextures) {
 
 			shader->setInt("PBR", 1.0f);
@@ -159,18 +203,22 @@ namespace HellEngine
 				glActiveTexture(GL_TEXTURE3);
 				glBindTexture(GL_TEXTURE_2D, normalMapID);
 			}
-			else
-				shader->setInt("hasNormalMap", 0.0f);
+
+			// Emissive map
+			if (hasEmissiveMap)
+			{
+				shader->setInt("hasEmissiveMap", 1.0f);
+				shader->setVec3("emissiveColor", emissiveColor);
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, emissiveMapID);
+			}
 		}
 
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::translate(modelMatrix, position);
-		modelMatrix = glm::rotate(modelMatrix, angle, rotateAngle);
-		modelMatrix = glm::scale(modelMatrix, scale);
-		shader->setMat4("model", modelMatrix);
+		shader->setMat4("model", transform.to_mat4() * modelTransform.to_mat4());
 		
 		model->Draw(shader);
 		shader->setInt("PBR", 0.0f);
 		shader->setInt("hasNormalMap", 0.0f);
+		shader->setInt("hasEmissiveMap", 0.0f);
 	}
 }

@@ -1,0 +1,272 @@
+{
+    "ROOMS": [
+        {
+            "CornerA": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "CornerB": [
+                1.2000000476837159,
+                0.0,
+                6.599999904632568
+            ],
+            "WallMaterial": "Wall",
+            "FloorMaterial": "FloorBoards",
+            "CeilingMaterial": "Concrete2",
+            "RotateFloorTexture": false,
+            "RotateCeilingTexture": false,
+            "LightPosition": [
+                0.6000000238418579,
+                2.0,
+                3.299999952316284
+            ],
+            "LightColor": [
+                1.0,
+                0.7799999713897705,
+                0.5289999842643738
+            ],
+            "LightAttConstant": 4.031000137329102,
+            "LightAttLinear": 1.0,
+            "LightAttExp": 0.7329999804496765,
+            "LightStrength": 9.947999954223633
+        },
+        {
+            "CornerA": [
+                -4.099999904632568,
+                0.0,
+                0.5
+            ],
+            "CornerB": [
+                -0.10000000149011612,
+                0.0,
+                3.5
+            ],
+            "WallMaterial": "Concrete2",
+            "FloorMaterial": "Concrete2",
+            "CeilingMaterial": "Concrete2",
+            "RotateFloorTexture": true,
+            "RotateCeilingTexture": false,
+            "LightPosition": [
+                -2.0999999046325685,
+                2.0,
+                2.0
+            ],
+            "LightColor": [
+                1.0,
+                0.7799999713897705,
+                0.5289999842643738
+            ],
+            "LightAttConstant": 1.0,
+            "LightAttLinear": 1.0,
+            "LightAttExp": 1.0,
+            "LightStrength": 2.3559999465942385
+        },
+        {
+            "CornerA": [
+                -4.099999904632568,
+                0.0,
+                3.5999999046325685
+            ],
+            "CornerB": [
+                -0.10000000149011612,
+                0.0,
+                6.599999904632568
+            ],
+            "WallMaterial": "Wall",
+            "FloorMaterial": "FloorBoards",
+            "CeilingMaterial": "WoodPaintedBoards",
+            "RotateFloorTexture": true,
+            "RotateCeilingTexture": false,
+            "LightPosition": [
+                -2.0999999046325685,
+                2.0,
+                5.099999904632568
+            ],
+            "LightColor": [
+                1.0,
+                0.0,
+                0.0
+            ],
+            "LightAttConstant": 0.0,
+            "LightAttLinear": 0.4970000088214874,
+            "LightAttExp": 0.026000000536441804,
+            "LightStrength": 18.586000442504884
+        },
+        {
+            "CornerA": [
+                -1.9999998807907105,
+                0.0,
+                6.699999809265137
+            ],
+            "CornerB": [
+                3.200000047683716,
+                0.0,
+                9.600000381469727
+            ],
+            "WallMaterial": "Wall",
+            "FloorMaterial": "FloorBoards",
+            "CeilingMaterial": "Concrete2",
+            "RotateFloorTexture": false,
+            "RotateCeilingTexture": false,
+            "LightPosition": [
+                0.5999999046325684,
+                2.0,
+                8.149999618530274
+            ],
+            "LightColor": [
+                1.0,
+                0.7799999713897705,
+                0.5289999842643738
+            ],
+            "LightAttConstant": 1.0,
+            "LightAttLinear": 1.0,
+            "LightAttExp": 1.0,
+            "LightStrength": 8.114999771118164
+        },
+        {
+            "CornerA": [
+                1.3000000715255738,
+                0.0,
+                1.7000001668930054
+            ],
+            "CornerB": [
+                5.599998474121094,
+                0.0,
+                5.499998569488525
+            ],
+            "WallMaterial": "Lino",
+            "FloorMaterial": "Lino",
+            "CeilingMaterial": "Lino",
+            "RotateFloorTexture": false,
+            "RotateCeilingTexture": false,
+            "LightPosition": [
+                3.4499993324279787,
+                2.0,
+                3.299999237060547
+            ],
+            "LightColor": [
+                1.0,
+                0.8500000238418579,
+                0.6899999976158142
+            ],
+            "LightAttConstant": 1.0,
+            "LightAttLinear": 0.699999988079071,
+            "LightAttExp": 1.7999999523162842,
+            "LightStrength": 8.0
+        },
+        {
+            "CornerA": [
+                3.300001621246338,
+                0.0,
+                5.59999942779541
+            ],
+            "CornerB": [
+                4.900002956390381,
+                0.0,
+                9.000003814697266
+            ],
+            "WallMaterial": "Lino",
+            "FloorMaterial": "Lino",
+            "CeilingMaterial": "Lino",
+            "RotateFloorTexture": false,
+            "RotateCeilingTexture": false,
+            "LightPosition": [
+                4.100002288818359,
+                2.0,
+                7.300001621246338
+            ],
+            "LightColor": [
+                1.0,
+                0.8500000238418579,
+                0.6899999976158142
+            ],
+            "LightAttConstant": 5.0,
+            "LightAttLinear": 0.8899999856948853,
+            "LightAttExp": 0.2879999876022339,
+            "LightStrength": 8.114999771118164
+        }
+    ],
+    "DOORS": [
+        {
+            "Position": [
+                0.6000000238418579,
+                0.0,
+                0.0
+            ],
+            "Axis": "X",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": false
+        },
+        {
+            "Position": [
+                0.0,
+                0.0,
+                2.0
+            ],
+            "Axis": "Z_NEGATIVE",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": false
+        },
+        {
+            "Position": [
+                0.0,
+                0.0,
+                5.099999904632568
+            ],
+            "Axis": "Z_NEGATIVE",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": false
+        },
+        {
+            "Position": [
+                -3.0,
+                0.0,
+                3.5999999046325685
+            ],
+            "Axis": "X_NEGATIVE",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": true
+        },
+        {
+            "Position": [
+                0.6000000238418579,
+                0.0,
+                6.699999809265137
+            ],
+            "Axis": "X",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": false
+        },
+        {
+            "Position": [
+                1.2999999523162842,
+                0.0,
+                3.1999988555908205
+            ],
+            "Axis": "Z",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": false
+        },
+        {
+            "Position": [
+                3.299999713897705,
+                0.0,
+                8.100000381469727
+            ],
+            "Axis": "Z",
+            "FloorMaterial": "FloorBoards",
+            "RotateFloorTexture": false
+        },
+        {
+            "Position": [
+                4.099999904632568,
+                0.0,
+                5.600000381469727
+            ],
+            "Axis": "X",
+            "FloorMaterial": "Lino",
+            "RotateFloorTexture": false
+        }
+    ]
+}

@@ -2,8 +2,8 @@
 
 #include "Platform/OpenGL/mesh.h"
 #include "Platform/OpenGL/Shader.h"
-#include "HellEngine/Animation/Joint.h"
-#include "HellEngine/Animation/Animation.h"
+//#include "HellEngine/Animation/Joint.h"
+//#include "HellEngine/Animation/Animation.h"
 #include "Model.h"
 
 #include "assimp/matrix4x4.h"
@@ -25,15 +25,14 @@ namespace HellEngine
 	public: // methods
 		ModelLoader();
 		~ModelLoader();
-		Model LoadFromFile(string const &path);
+		Model LoadFromFile(string const& path);
 
 	private: // methods
-		void processNode(aiNode *node, const aiScene *scene, MeshList *meshList);
-		Mesh processMesh(aiMesh *mesh, const aiScene *scene);
-		void findBoneNames(aiNode *node, const aiScene *scene);
-		void findRootNode(aiNode *node);
-		Joint buildJointHeirachy(aiNode *node);// , Joint *parent);
-		Animation loadAnimations(const aiScene * scene);
+		void processNode(aiNode* node, const aiScene* scene, MeshList* meshList);
+		Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+		void findRootNode(aiNode* node);
+		//Joint buildJointHeirachy(aiNode* node);// , Joint *parent);
+		//Animation loadAnimations(const aiScene* scene);
 		int ModelLoader::getJointIndex(std::string name);
 
 	private: // fields
@@ -43,6 +42,16 @@ namespace HellEngine
 		aiNode* rootNode;
 
 	private: // methods
-		glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4 &from);
+		glm::mat4 aiMatrix4x4ToGlm(const aiMatrix4x4& from);
+
+
+
+	// MEW STUFF
+	public:
+		aiNode* m_rootNode;
+		std::vector<aiNode*> ai_nodes;
+
+		void ModelLoader::recursiveNodeProcess(aiNode* node);
+		//int ModelLoader::getNodeIndex(std::string name);
 	};
 }

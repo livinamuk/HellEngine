@@ -95,6 +95,8 @@ namespace HellEngine {
 	void BoundingBox::SetupPlanes()
 	{
 		frontPlane = BoundingPlane(leftTopFront, rightTopFront, rightBottomFront, leftBottomFront);
+	//	frontPlane = BoundingPlane(leftBottomFront, rightBottomFront, rightTopFront, leftTopFront);
+	
 		backPlane = BoundingPlane(rightTopBack, leftTopBack, leftBottomBack, rightBottomBack);
 		leftPlane = BoundingPlane(leftTopBack, leftTopFront, leftBottomFront, leftBottomBack);
 		rightPlane = BoundingPlane(rightTopFront, rightTopBack, rightBottomBack, rightBottomFront);

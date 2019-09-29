@@ -9,12 +9,10 @@ namespace HellEngine {
 	{
 	public:
 		Skybox();
-		Skybox(float x, float y, float z);
-		Skybox(float x, float y, float z, glm::vec3 scale);
+		Skybox(glm::vec3 position, glm::vec3 scale = glm::vec3(1));
 		virtual ~Skybox();
 
 		void Draw(Shader *shader, bool bindTextures);
-		//void Draw(Shader shader, glm::vec3 cameraPosition);
 		void Draw(Shader *shader, Camera* camera);
 
 		static void Init();

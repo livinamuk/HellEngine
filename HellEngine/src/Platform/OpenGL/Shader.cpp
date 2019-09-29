@@ -63,8 +63,8 @@ namespace HellEngine
 				glGetShaderInfoLog(geometryShader, 512, NULL, infoLog);
 				std::cout << "FAILED TO COMPILE GEOMETRY SHADER: " << name << "\n" << infoLog << std::endl;
 			}
-			else
-				std::cout << "GEOMETRY SHADER COMPILED\n";
+			//else
+			//	std::cout << "GEOMETRY SHADER COMPILED\n";
 		}
 		
 		// link shaders
@@ -80,8 +80,8 @@ namespace HellEngine
 			glGetProgramInfoLog(ID, 512, NULL, infoLog);
 			std::cout << "FAILED TO LINK SHADER: " << name << "\n" << infoLog << std::endl;
 		}
-		else
-			std::cout << "SHADER LINKING SUCCESSFUL: " << name << "\n";
+		//else
+		//	std::cout << "SHADER LINKING SUCCESSFUL: " << name << "\n";
 		glDeleteShader(vertexShader);
 		glDeleteShader(fragmentShader);
 		glDeleteShader(geometryShader);

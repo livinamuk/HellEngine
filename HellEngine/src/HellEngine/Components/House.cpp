@@ -1,5 +1,6 @@
 #include "hellpch.h"
 #include "House.h"
+#include "Platform/OpenGL/RenderableObject.h"
 
 namespace HellEngine {
 
@@ -16,120 +17,22 @@ namespace HellEngine {
 	{
 	}
 
-	void House::Init()
+	void House::RebuildRooms()
 	{
-		this->position = glm::vec3(0, 0, 0);
-
-		AddRoom(glm::vec3(0.0f, 0, 0), glm::vec3(1.2f, 0, 6.6f));		// Hall
-		AddRoom(glm::vec3(-4.1f, 0, 0.5f), glm::vec3(-0.1f, 0, 3.5f));	// Side room A
-		AddRoom(glm::vec3(-4.1f, 0, 3.6f), glm::vec3(-0.1f, 0, 6.6f));	// Side room B
-		AddRoom(glm::vec3(-2.1f, 0, 6.7f), glm::vec3(3.2f, 0, 9.6f));	// Back room
-
-		AddDoor(0.6f, 0, X);
-		AddDoor(0.0f, 2, Z_NEGATIVE);
-		AddDoor(0.0f, 5.1f, Z_NEGATIVE);
-		AddDoor(-3.0f, 3.6f, X_NEGATIVE);
-		AddDoor(0.6f, 6.7f, X);
-
 		for (Room & room : rooms)
-			room.Build(doors);
-
+			room.BuildAll(doors);
+		
 		BufferWallMatrices();
-
-
-		rooms[0].light.strength = 5.0f;
-		rooms[1].light.strength = 2.01f;
-		rooms[2].light.strength = 5.0f;
-		rooms[3].light.strength = 2.964f;
-
-		rooms[0].light.color = glm::vec3(1.0f, 0.780, 0.529f);
-		rooms[1].light.color = glm::vec3(0.819f, 0.788f, 0.784f);
-		rooms[2].light.color = glm::vec3(1.0f, 0.780, 0.529f);
-
-
-
-
-
-		/*NewDoor(0.0f, 0.0f, ROTATE_0);
-		NewWall(-2.0f, 0.0f, Axis::Z);
-		NewWall(-1.0f, 0.0f, Axis::Z);
-		NewWall(1.0f, 0.0f, Axis::Z);
-		NewWall(2.0f, 0.0f, Axis::Z);
-
-		NewWall(-1.0f, 4.0f, Z_NEGATIVE);
-		NewWall(0.0f, 4.0f, Z_NEGATIVE);
-		NewWall(1.0f, 4.0f, Z_NEGATIVE);
-		NewWall(-1.5f, 0.5f, Axis::X);
-		NewWall(-1.5f, 1.5f, Axis::X);
-		NewWall(-1.5f, 2.5f, Axis::X);
-		NewWall(-1.5f, 3.5f, Axis::X);
-		NewWall(1.5f, 0.5f, Axis::X_NEGATIVE);
-		NewWall(1.5f, 1.5f, Axis::X_NEGATIVE);
-		NewWall(1.5f, 2.5f, Axis::X_NEGATIVE);
-		NewWall(1.5f, 3.5f, Axis::X_NEGATIVE);
-
-		NewWall(-2.0f, 0.0f, Axis::Z);
-		NewDoor(-3.0f, 0.0f, ROTATE_0);
-		NewWall(-4.0f, 0.0f, Axis::Z);
-
-		NewWall(-2.0f, 4.0f, Z_NEGATIVE);
-		NewWall(-3.0f, 4.0f, Z_NEGATIVE);
-		NewWall(-4.0f, 4.0f, Z_NEGATIVE);
-
-		NewWall(-1.6f, 0.5f, Axis::X_NEGATIVE);
-		NewWall(-1.6f, 1.5f, Axis::X_NEGATIVE);
-		NewWall(-1.6f, 2.5f, Axis::X_NEGATIVE);
-		NewWall(-1.6f, 3.5f, Axis::X_NEGATIVE);
-
-		NewWall(-1.6f, 0.5f, Axis::X_NEGATIVE);
-		NewWall(-1.6f, 1.5f, Axis::X_NEGATIVE);
-		NewWall(-1.6f, 2.5f, Axis::X_NEGATIVE);
-		NewWall(-1.6f, 3.5f, Axis::X_NEGATIVE);
-
-		NewWall(-4.4f, 0.5f, Axis::X);
-		NewWall(-4.4f, 1.5f, Axis::X);
-		NewWall(-4.4f, 2.5f, Axis::X);
-		NewWall(-4.4f, 3.5f, Axis::X);
-
-		// Hall
-		NewWall(-2.0f, -0.1f, Z_NEGATIVE);
-		NewWall(-1.0f, -0.1f, Z_NEGATIVE);
-		NewWall(1.0f, -0.1f, Z_NEGATIVE);
-		NewWall(2.0f, -0.1f, Z_NEGATIVE);
-
-		NewWall(-2.0f, -0.1f, Z_NEGATIVE);
-		NewWall(-4.0f, -0.1f, Z_NEGATIVE);
-
-		NewWall(-3.7f, -0.5f, Axis::X);
-		NewWall(-3.7f, -1.5f, Axis::X);
-
-		NewWall(2.5f, -0.5f, Axis::X_NEGATIVE);
-		NewWall(2.5f, -1.5f, Axis::X_NEGATIVE);
-
-		NewWall(-2.0f, -1.3f, Axis::Z);
-		NewWall(-1.0f, -1.3f, Axis::Z);
-		NewWall(0.0f, -1.3f, Axis::Z);
-		NewWall(1.0f, -1.3f, Axis::Z);
-		NewWall(2.0f, -1.3f, Axis::Z);
-		NewWall(-2.0f, -1.3f, Axis::Z);
-		NewWall(-3.0f, -1.3f, Axis::Z);
-		NewWall(-4.0f, -1.3f, Axis::Z);*/
 	}
 
+	void House::RemoveAllContents()
+	{
+		doors.clear();
+		rooms.clear();
+	}
 
 	void House::DrawAll (Shader* shader, bool bindTextures)
 	{
-		// Draw instanced walls
-		if (bindTextures) {
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Wall_Material_BaseColor.png"));
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Wall_Material_Metallic.png"));
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Wall_Material_Roughness.png"));
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Wall_Material_NormalMap.png"));
-		}
 		/*
 		shader->setInt("instanced", true);
 		Mesh* mesh = &Wall::model->meshes[0];
@@ -148,12 +51,25 @@ namespace HellEngine {
 		// Draw doors
 		if (bindTextures) {
 			shader->setInt("PBR", true);
+			
+			/*glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_BaseColor.png"));
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_Metallic.png"));
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_Roughness.png"));
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_Normal.png"));
+			*/
+
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("door.png"));
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Door_Base_Color.png"));
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Door_Material_Metallic.png"));
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Door_Material_Roughness.png"));
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Door_NormalMap.png"));
 		}
 
 		// Non instaned doorr rendering (with colour picker)
@@ -162,7 +78,12 @@ namespace HellEngine {
 			
 			shader->setFloat("MousePickColor", (i + 1) / 256.0f);					// IMPORTANT !!!!!!!!!!!!!!!!11
 			shader->setMat4("model", doors[i].GetModelMatrix());
-			doors[i].modelDoor->Draw(shader);
+			
+
+			if (bindTextures)
+				doors[i].modelDoor->Draw(shader);
+			else
+				doors[i].modelDoorShadowCaster->Draw(shader);
 		}
 		shader->setFloat("MousePickColor", 0); // no more mouse picking
 
@@ -206,43 +127,17 @@ namespace HellEngine {
 		// Draw non instanced DOORJAMS
 		DrawDoors(shader, bindTextures);
 
-
 		// Render door floor
-
 		for (Door & door : doors)
-		{
-			if (bindTextures) {
-				shader->setInt("worldBasedTexFloorCoords", true);
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				shader->setFloat("roughness", 0.5F);
-				shader->setFloat("metallic", 0.5F);
-			}
 			door.floor.Draw(shader, bindTextures);
-		}
+
+
 
 		for (Room & room : rooms)
 		{
-			if (bindTextures) {
-				shader->setInt("worldBasedTexFloorCoords", true);
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("floor.png"));
-				shader->setFloat("roughness", 0.5F);
-				shader->setFloat("metallic", 0.5F);
-			}
-
 			// Floor and ceiling (using the door setting above)
 			room.floor.Draw(shader, bindTextures);
 			room.ceiling.Draw(shader, bindTextures);
-			shader->setInt("worldBasedTexFloorCoords", false);
 
 			// Lights
 			if (bindTextures) {
@@ -255,11 +150,23 @@ namespace HellEngine {
 				glActiveTexture(GL_TEXTURE3);
 				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Light_NormalMap.png"));
 
-				Model* lightModel = Model::GetByName("Light.obj");
-				glm::mat4 modelMatrix = glm::mat4(1.0f);
-				modelMatrix = glm::translate(modelMatrix, glm::vec3(room.light.position.x, 2.4f, room.light.position.z));
-				shader->setMat4("model", modelMatrix);
-				lightModel->Draw(shader);
+				RenderableObject lightObject = RenderableObject("Light", Model::GetByName("Light.obj"));
+				lightObject.diffuseTextureID = Texture::GetIDByName("Light_BaseColor.png");
+				lightObject.normalMapID = Texture::GetIDByName("Light_NormalMap.png");
+				lightObject.roughnessTextureID = Texture::GetIDByName("Light_Roughness.png");
+				lightObject.metallicTextureID = Texture::GetIDByName("Light_Metallic.png");
+				lightObject.emissiveMapID = Texture::GetIDByName("Light_EmissiveMap.png");
+				lightObject.transform.position = glm::vec3(room.light.position.x, 2.4f, room.light.position.z);
+				lightObject.emissiveColor = room.light.color;
+				lightObject.hasEmissiveMap = true;
+
+				//std::cout << lightObject.hasEmissiveMap << "\n";
+					
+				//Model* lightModel = Model::GetByName("Light.obj");
+				//glm::mat4 modelMatrix = glm::mat4(1.0f);
+				//modelMatrix = glm::translate(modelMatrix, glm::vec3(room.light.position.x, 2.4f, room.light.position.z));
+				//shader->setMat4("model", modelMatrix);
+				lightObject.Draw(shader, true);
 			}
 			
 		}
@@ -339,23 +246,32 @@ namespace HellEngine {
 				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Wood_Material_Metallic.png"));
 				glActiveTexture(GL_TEXTURE2);
 				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Wood_Material_Roughness.png"));
+				glActiveTexture(GL_TEXTURE3);
+				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("EmptyNormalMap.png"));
 			}
 			door.modelDoorJam->Draw(shader);
 		}
 	}
 
 
-	void House::AddDoor(float x, float z, Axis axis)
+	void House::AddDoor(float x, float z, Axis axis, std::string floorMaterialName, bool rotateFloorTexture)
 	{
-		Door door(x, z, axis);
+		Door door(x, z, axis, floorMaterialName, rotateFloorTexture);
 		doors.push_back(door);
 	}
 
-	void House::AddRoom(glm::vec3 cornerA, glm::vec3 cornerB)
+	void House::AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling)
 	{
-		Room room(cornerA, cornerB);
-		rooms.push_back(room);
+		// No light specified, so it just centers one with default settings.
+		rooms.push_back(Room(cornerA, cornerB, wallMaterialName, floorMaterialName, ceilingMaterialName, rotateFloor, rotateCeiling));
 	}
+	
+	void House::AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling, Light light)
+	{
+		// Specify light
+		rooms.push_back(Room(cornerA, cornerB, wallMaterialName, floorMaterialName, ceilingMaterialName, rotateFloor, rotateCeiling, light));
+	}
+
 	void House::BufferWallMatrices()
 	{
 		wallModelMatrices.clear();
@@ -386,5 +302,47 @@ namespace HellEngine {
 
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	void House::LoadTestScene()
+	{	
+		this->position = glm::vec3(0, 0, 0);
+		rooms.clear();
+		doors.clear();
+
+		AddRoom(glm::vec3(0.0f, 0, 0), glm::vec3(1.2f, 0, 6.6f), "Wall", "FloorBoards", "WoodPaintedBoards", false, false);		// Hall
+		AddRoom(glm::vec3(-4.1f, 0, 0.5f), glm::vec3(-0.1f, 0, 3.5f), "Wall", "WoodPaintedBoards", "WoodPaintedBoards", false, false);	// Side room A
+		AddRoom(glm::vec3(-4.1f, 0, 3.6f), glm::vec3(-0.1f, 0, 6.6f), "Wall", "Lino", "WoodPaintedBoards", false, false);	// Side room B
+		AddRoom(glm::vec3(-2.0f, 0, 6.7f), glm::vec3(3.2f, 0, 9.6f), "Wall", "FloorBoards", "WoodPaintedBoards", false, false);	// Back room
+
+		AddDoor(0.6f, 0, X, "FloorBoards", false);
+		AddDoor(0.0f, 2, Z_NEGATIVE, "FloorBoards", false);
+		AddDoor(0.0f, 5.1f, Z_NEGATIVE, "FloorBoards", false);
+		AddDoor(-3.0f, 3.6f, X_NEGATIVE, "FloorBoards", false);
+		AddDoor(0.6f, 6.7f, X, "FloorBoards", false);
+		AddDoor(1.3f, 2, Z, "FloorBoards", false);
+
+		rooms[0].light.strength = 5.0f;
+		rooms[1].light.strength = 2.01f;
+		rooms[2].light.strength = 5.0f;
+		rooms[3].light.strength = 2.964f;
+		rooms[0].light.color = glm::vec3(1.0f, 0.780, 0.529f);
+		rooms[1].light.color = glm::vec3(0.819f, 0.788f, 0.784f);
+		rooms[2].light.color = glm::vec3(1.0f, 0.780, 0.529f);
+
+		rooms[0].light.strength = 8.0f;
+		rooms[1].light.strength = 8.0f;
+		rooms[2].light.strength = 8.0f;
+		rooms[3].light.strength = 8.0;
+		rooms[0].light.color = glm::vec3(1.0f, 0.780, 0.529f);
+		rooms[1].light.color = glm::vec3(1.0f, 0.780, 0.529f);
+		rooms[2].light.color = glm::vec3(1.0f, 0.780, 0.529f);
+		rooms[3].light.color = glm::vec3(1.0f, 0.780, 0.529f);
+
+		// Red room
+		rooms[2].light.strength = 40.0f;
+		rooms[2].light.attExp = 1.8f;
+		rooms[2].light.attConstant = 0.0f;
+		rooms[2].light.attLinear = 0.0f;
+		rooms[2].light.color = glm::vec3(1.0f, 0, 0);
 	}
 }

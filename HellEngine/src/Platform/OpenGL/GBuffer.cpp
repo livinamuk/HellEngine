@@ -8,10 +8,11 @@ namespace HellEngine
 		// configure g-buffer framebuffer
 		// ------------------------------
 		glGenFramebuffers(1, &ID);
-		glGenTextures(1, &gUNUSED);
+		glGenTextures(1, &gEmmisive);
 		glGenTextures(1, &gNormal);
 		glGenTextures(1, &gAlbedoSpec);
 		glGenTextures(1, &gMousePick);
+		glGenTextures(1, &gLighting);
 		glGenRenderbuffers(1, &rboDepth);
 		glBindFramebuffer(GL_FRAMEBUFFER, ID);	
 
@@ -29,11 +30,11 @@ namespace HellEngine
 	void GBuffer::Configure(int width, int height)
 	{
 		// Final buffer
-		glBindTexture(GL_TEXTURE_2D, gUNUSED);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+		glBindTexture(GL_TEXTURE_2D, gEmmisive);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gUNUSED, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gEmmisive, 0);
 
 		// Normal buffer
 		glBindTexture(GL_TEXTURE_2D, gNormal);
@@ -56,28 +57,29 @@ namespace HellEngine
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMousePick, 0);
 
-
-		// tell OpenGL which color attachments to use (of this framebuffer) for rendering 
-		unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-		glDrawBuffers(4, attachments);
-
-		// create and attach depth buffer (render buffer)
-		//glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-		//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-		glBindTexture(GL_TEXTURE_2D, rboDepth);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		// gemiisive
+		glBindTexture(GL_TEXTURE_2D, gLighting);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, rboDepth, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, gLighting, 0);
 
-		
-		
+
+		// tell OpenGL which color attachments to use (of this framebuffer) for rendering 
+		unsigned int attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+		glDrawBuffers(5, attachments);
+
+		glBindTexture(GL_TEXTURE_2D, rboDepth);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); 
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, rboDepth, 0);
+	
 		// finally check if framebuffer is complete
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			std::cout << "G Buffer not complete!" << std::endl;
-		else
-			std::cout << "G Buffer complete." << std::endl;
+		//else
+		//	std::cout << "G Buffer complete." << std::endl;
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 }

@@ -26,7 +26,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\Fxaa.frag" />
-    <None Include="res\shaders\composite.vert" />
+    <ClInclude Include="src\Config.h" />
   </ItemGroup>
 </Project>

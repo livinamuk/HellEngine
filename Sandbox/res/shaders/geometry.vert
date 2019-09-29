@@ -30,6 +30,7 @@ void main()
 	vec4 totalLocalPos = vec4(0.0);
 	vec4 totalNormal = vec4(0.0);
     mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
+
 	
 	// Animated
 	if (animated) {
@@ -41,19 +42,22 @@ void main()
 			totalNormal += worldNormal * aBoneWeight[i];
 		}
 		worldPos = modelMatrix * totalLocalPos;
-		Normal =  normalMatrix * totalNormal.xyz;
+		Normal = totalNormal.xyz;
 	}
 
 	// Not animated
 	if (!animated) {
 		worldPos = modelMatrix * vec4(aPos, 1.0);
-		Normal = normalMatrix * aNormal;
+		Normal = aNormal;
 	}
     
 	vec3 T = normalize(vec3(modelMatrix * vec4(aTangent,   0.0)));
 	vec3 B = normalize(vec3(modelMatrix * vec4(aBitangent, 0.0)));
-	vec3 N = normalize(vec3(modelMatrix * vec4(aNormal,    0.0)));
+	vec3 N = normalize(vec3(modelMatrix * vec4(Normal,    0.0)));
 	TBN = mat3(T, B, N);
+
+	Normal = normalMatrix * Normal;
+
 	
     TexCoords = aTexCoords;
 	FragPos = worldPos.xyz;

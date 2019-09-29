@@ -14,13 +14,24 @@ namespace HellEngine
 		position = glm::vec3(x, y, z);
 		color = glm::vec3(1.0f, 0.85f, 0.69f);
 		attConstant = 1.0f;
-		attLinear = 0.09f;
-		attExp = 0.032f;
-		strength = 1.0f;
+		attLinear = 0.7f;
+		attExp = 1.8f;
+		strength = 8.0f;
 
-		attConstant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-		attLinear = 0.7;
-		attExp = 1.8;
+		//attConstant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+		//attLinear = 0.7;
+		//attExp = 1.8;
+		CalculateShadowProjectionMatricies();
+	}
+
+	Light::Light(glm::vec3 position, glm::vec3 color, float attConstant, float attLinear, float attExp, float strength)
+	{
+		this->position = position;
+		this->color = color;
+		this->attConstant = attConstant;
+		this->attLinear = attLinear;
+		this->attExp = attExp;
+		this->strength = strength;
 		CalculateShadowProjectionMatricies();
 	}
 

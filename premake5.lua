@@ -21,7 +21,9 @@ IncludeDir["glm"] = "HellEngine/vendor/glm"
 IncludeDir["stb"] = "HellEngine/vendor/stb_image"
 IncludeDir["assimp"] = "HellEngine/vendor/assimp/include"
 IncludeDir["assimpcfg"] = "HellEngine/vendor/assimp/config"
- 
+IncludeDir["rapidjson"] = "HellEngine/vendor/rapidjson/include"
+IncludeDir["fmod"] = "HellEngine/vendor/fmod/include"
+
 group "Dependencies"
 	include "HellEngine/vendor/GLFW"
 	include "HellEngine/vendor/Glad"
@@ -46,7 +48,10 @@ project "HellEngine"
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/vendor/glm/glm/**.hpp",
-		"%{prj.name}/vendor/glm/glm/**.inl"
+		"%{prj.name}/vendor/glm/glm/**.inl",
+		"%{prj.name}/vendor/fmod/include/**.h",
+		"%{prj.name}/vendor/fmod/include/**.hpp",
+		"%{prj.name}/vendor/fmod/include/**.cpp"
 	}
 
 	defines
@@ -59,13 +64,18 @@ project "HellEngine"
 		"%{prj.name}/src",
 		"%{prj.name}/vendor/spdlog/include",
 		"%{prj.name}/vendor/stb_image",
-		"%{prj.name}/vendor/OpenAL",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.assimp}",
-		"%{IncludeDir.assimpcfg}"
+		"%{IncludeDir.assimpcfg}",
+		"%{IncludeDir.rapidjson}",
+		"%{IncludeDir.fmod}"
+	}
+
+	libdirs 
+	{ 
 	}
 	
 	links 
@@ -115,7 +125,9 @@ project "Sandbox"
 	files
 	{
 		"%{prj.name}/src/**.h",
-		"%{prj.name}/src/**.cpp"
+		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/vendor/wave/**.hpp",
+		"%{prj.name}/vendor/wave/**.cpp"
 	}
 
 	includedirs
@@ -127,16 +139,22 @@ project "Sandbox"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.assimp}",
-		"%{IncludeDir.assimpcfg}"
+		"%{IncludeDir.assimpcfg}",
+		"%{IncludeDir.rapidjson}"
 	}
 	
+	libdirs 
+	{ 
+		"HellEngine/vendor/fmod/lib/x64"
+	}
 
 	links
 	{	
 		"GLFW",
 		"Glad",
 		"HellEngine",
-		"assimp"
+		"assimp",
+		"fmodL_vc.lib"
 	}	
 
 	filter "system:windows"

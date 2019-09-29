@@ -5,44 +5,26 @@ namespace HellEngine {
 
 	unsigned int Plane::VAO = -1;
 	bool Plane::initiated = false;
-
-	Plane::Plane(float x, float y, float z)
-	{
-		if (!initiated)
-			Init();
-
-		position = glm::vec3(x, y, z);
-	}
-
-	Plane::Plane(float x, float y, float z, glm::vec3(scale))
-	{
-		if (!initiated)
-			Init();
-
-		position = glm::vec3(x, y, z);
-		this->scale = scale;
-	}
-
+	
 	Plane::Plane()
 	{
 	}
-
-	Plane::Plane(glm::vec3 position, float width, float depth, float height)
+	
+	Plane::Plane(glm::vec3 position, glm::vec3(scale))
 	{
-		
+		if (!initiated) Init();
+		transform.position = position;
+		transform.scale = scale;
 	}
 
 	Plane::~Plane()
 	{
 	}
 
-
 	void Plane::Draw(Shader *shader, bool bindTextures)
 	{
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::translate(modelMatrix, position);
-		modelMatrix = glm::scale(modelMatrix, scale);
-		shader->setMat4("model", modelMatrix);
+		glm::mat4 modelMatrix = transform.to_mat4();
+		shader->setMat4("model", transform.to_mat4());
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -50,7 +32,7 @@ namespace HellEngine {
 		glm::vec3 floorPosition = glm::vec3(0);
 		modelMatrix = glm::mat4(1.0f);
 		modelMatrix = glm::translate(modelMatrix, floorPosition);
-		modelMatrix = glm::scale(modelMatrix, scale);
+		modelMatrix = glm::scale(modelMatrix, transform.scale);
 		modelMatrix = glm::rotate(modelMatrix, ROTATE_180, glm::vec3(0.0f, 0.0f, 1.0f));
 		shader->setMat4("model", modelMatrix);
 		glBindVertexArray(VAO);
