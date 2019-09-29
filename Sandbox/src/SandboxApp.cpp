@@ -1551,6 +1551,11 @@ namespace HellEngine
 			ImGui::BeginTabBar("MASTER_TAB_BAR", tab_bar_flags);
 			ImGui::Text("\n");
 
+			if (ImGui::BeginTabItem("Info")) {
+				InfoMenu();
+				ImGui::EndTabItem();
+			}
+
 			if (ImGui::BeginTabItem("Player")) {
 				PlayerMenu();
 				ImGui::EndTabItem();
@@ -1577,6 +1582,21 @@ namespace HellEngine
 			ImGui::SliderFloat("brightness", &brightness, -0.5f, 0.5f);
 			ImGui::SliderFloat("contrast", &contrast, -0.0f, 2.0f);
 			ImGui::SliderFloat("bias", &bias, -0.2f, 1.0f);*/
+		}
+
+		void InfoMenu()
+		{
+			ImGui::Text("KEYS");
+			ImGui::Text("WASD: movement");
+			ImGui::Text("Space: jump");
+			ImGui::Text("Ctrl: crouch");
+			ImGui::Text("F: toggle fullscreen");
+			ImGui::Text("B: toggle bounding boxes");
+			ImGui::Text("R: toggle raycast plane");
+			ImGui::Text("M: toggle mouse usage");
+			ImGui::Text("C: toggle clipping");
+			ImGui::Text("C: also clears decals");
+			ImGui::Text("I: hide/show this box");
 		}
 
 		void PlayerMenu()
