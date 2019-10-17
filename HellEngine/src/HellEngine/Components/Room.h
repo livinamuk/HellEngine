@@ -30,6 +30,7 @@ namespace HellEngine
 		void RecalculateWidthAndDepth();
 		void ResizeFloorAndCeiling();
 		void CenterLight();
+		void BuildBlackWalls();
 
 	public: // fields
 		Floor floor;

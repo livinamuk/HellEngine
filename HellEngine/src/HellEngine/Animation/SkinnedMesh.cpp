@@ -365,7 +365,7 @@ namespace HellEngine
 
 		//Util::weaponModelMatrix = viewMatrix * modelMatrix;
 		//Util::weaponModelMatrix = modelMatrix;
-		shader->setMat4("model", camera.Transform * Util::weaponModelMatrix);
+		shader->setMat4("model", camera.transform.to_mat4() * Util::weaponModelMatrix);
 
 
 
@@ -441,7 +441,7 @@ namespace HellEngine
 //				Util::weaponModelMatrix = glm::scale(Util::weaponModelMatrix, glm::vec3(0.04f));
 
 				
-				glm::mat4 newMatrix = camera.Transform * Util::weaponModelMatrix * animatedTransform;
+				glm::mat4 newMatrix = camera.transform.to_mat4() * Util::weaponModelMatrix * animatedTransform;
 
 				shader->setMat4("model", newMatrix);
 

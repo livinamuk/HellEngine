@@ -90,6 +90,7 @@ namespace HellEngine
 				Texture::LoadTexture(roughness);
 				Texture::LoadTexture(metallic);
 				materials.push_back(Material(textureName, baseColor, normalMap, roughness, metallic));
+				//std::cout << "MATERIAL LOADED: " << filename << "\n";
 			}
 		}
 	}

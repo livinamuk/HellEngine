@@ -17,5 +17,7 @@ public:
 
 private:
 	static std::vector<Texture> textures;
+
+	static std::vector<std::string> textureNames; // For loading
 };
 

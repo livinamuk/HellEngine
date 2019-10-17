@@ -21,7 +21,7 @@ namespace HellEngine
 		glm::vec3 B = glm::vec3(position.x + width, position.y, position.z);
 		glm::vec3 C = glm::vec3(position.x + width, position.y, position.z + depth);
 		glm::vec3 D = glm::vec3(position.x, position.y, position.z + depth);
-		this->plane = BoundingPlane(A, B, C, D, false);
+		this->plane = BoundingPlane(A, B, C, D, false, "Floor");
 	}
 
 	void Floor::Draw(Shader *shader, bool bindTextures)

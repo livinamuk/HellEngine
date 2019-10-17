@@ -86,7 +86,10 @@ namespace HellEngine {
 				std::string axis = ReadString(rooms[i], "Axis");
 				std::string floorMaterialName = ReadString(rooms[i], "FloorMaterial");
 				bool rotateFloor = ReadBool(rooms[i], "RotateFloorTexture");
-				house.AddDoor(position.x, position.z, Util::StringToAxis(axis), floorMaterialName, rotateFloor);
+				bool initiallyOpen = ReadBool(rooms[i], "InitiallyOpen");
+				bool initiallyLocked = ReadBool(rooms[i], "InitiallyLocked");
+				float maxOpenAngle = ReadFloat(rooms[i], "MaxOpenAngle");
+				house.AddDoor(position.x, position.z, Util::StringToAxis(axis), floorMaterialName, initiallyOpen, initiallyLocked, maxOpenAngle, rotateFloor);
 			}
 		}
 		return house;
@@ -128,6 +131,9 @@ namespace HellEngine {
 			SaveString(&doorObject, "Axis", Util::AxisToString(door.axis), allocator);
 			SaveString(&doorObject, "FloorMaterial", door.floor.material->name, allocator);
 			SaveBool(&doorObject, "RotateFloorTexture", door.floor.rotateTexture, allocator);
+			SaveBool(&doorObject, "InitiallyOpen", door.initiallyOpen, allocator);
+			SaveBool(&doorObject, "InitiallyLocked", door.initiallyLocked, allocator);
+			SaveFloat(&doorObject, "MaxOpenAngle", door.maxOpenAngle, allocator);
 			doorsArray.PushBack(doorObject, allocator);
 		}
 

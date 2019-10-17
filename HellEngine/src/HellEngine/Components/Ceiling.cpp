@@ -23,7 +23,7 @@ namespace HellEngine
 		glm::vec3 B = glm::vec3(transform.position.x + width, transform.position.y, transform.position.z);
 		glm::vec3 C = glm::vec3(transform.position.x + width, transform.position.y, transform.position.z - depth);
 		glm::vec3 D = glm::vec3(transform.position.x, transform.position.y, transform.position.z - depth);
-		this->plane = BoundingPlane(A, B, C, D, false);
+		this->plane = BoundingPlane(A, B, C, D, false, "Ceiling");
 	}
 
 	void Ceiling::Draw(Shader *shader, bool bindTextures)

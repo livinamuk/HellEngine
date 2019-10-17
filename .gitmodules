@@ -22,3 +22,6 @@
 [submodule "ozz-animation"]
 	path = ozz-animation
 	url = https://github.com/guillaumeblanc/ozz-animation/
+[submodule "vendor/bullet"]
+	path = vendor/bullet
+	url = https://github.com/bulletphysics/bullet3

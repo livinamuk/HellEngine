@@ -6,24 +6,31 @@
 #include "Platform/OpenGL/BoundingBox.h"
 #include "HellEngine/Model.h"
 #include "HellEngine/Transform.h"
+#include "HellEngine/Logic/Physics.h"
+#include "bullet/src/btBulletCollisionCommon.h"
+#include "bullet/src/btBulletDynamicsCommon.h"
 
 namespace HellEngine
 {
 	class RenderableObject
 	{
 	public: // methods
-		RenderableObject(Model* model, std::string texture, glm::vec3 position, glm::vec3 rotation = glm::vec3(0), glm::vec3 scale = glm::vec3(1));
-		RenderableObject(std::string name, Model* model);
-		RenderableObject(Model* model, glm::vec3 position);
+	//	RenderableObject(Model* model, std::string texture, glm::vec3 position, glm::vec3 rotation = glm::vec3(0), glm::vec3 scale = glm::vec3(1));
+		RenderableObject(std::string name, Model* model, Physics* physics);
 		RenderableObject();
 		~RenderableObject();
 		void Draw(Shader *shader, bool bindTextures);
+		void DrawBoundingBox(Shader* shader);
+		void CreateRigidBodyFromModel(Physics* physics);
+		void UpdateRigidBodyWorldTransform();
 
 	public: // fields
 		std::string name;
 
 		Transform transform;
 		Transform modelTransform;
+
+		btRigidBody* rigidBody;
 
 		glm::vec3 emissiveColor = glm::vec3(1);
 		float angle;
@@ -39,9 +46,11 @@ namespace HellEngine
 		unsigned int normalMapID;
 		unsigned int emissiveMapID;
 
+		static Physics* physics;
+
 		static std::vector<RenderableObject> RenderableObject::renderableObjects;
-		static void RenderableObject::NewObject(std::string name, Model *model);
-		static void SetModelByName(std::string name, Model *model);
+		static void RenderableObject::NewObject(std::string name, Model* model, Physics* physics);
+		//static void SetModelByName(std::string name, Model *model);
 		static void SetPositionByName(std::string name, glm::vec3 position);
 		static void SetScaleByName(std::string name, glm::vec3 scale);
 		//static void SetRotateAngleByName(std::string name, glm::vec3 scale);

@@ -23,6 +23,8 @@ IncludeDir["assimp"] = "HellEngine/vendor/assimp/include"
 IncludeDir["assimpcfg"] = "HellEngine/vendor/assimp/config"
 IncludeDir["rapidjson"] = "HellEngine/vendor/rapidjson/include"
 IncludeDir["fmod"] = "HellEngine/vendor/fmod/include"
+IncludeDir["react"] = "HellEngine/vendor/react/include"
+IncludeDir["react"] = "HellEngine/vendor/bullet/"
 
 group "Dependencies"
 	include "HellEngine/vendor/GLFW"
@@ -71,11 +73,15 @@ project "HellEngine"
 		"%{IncludeDir.assimp}",
 		"%{IncludeDir.assimpcfg}",
 		"%{IncludeDir.rapidjson}",
-		"%{IncludeDir.fmod}"
+		"%{IncludeDir.fmod}",
+		"%{IncludeDir.react}",
+		"%{IncludeDir.bullet}"
 	}
 
 	libdirs 
 	{ 
+		--"HellEngine/vendor/react/lib",
+		--"HellEngine/vendor/bullet/lib/debug/"
 	}
 	
 	links 
@@ -84,7 +90,12 @@ project "HellEngine"
 		"Glad",
 		"ImGui",
 		"opengl32.lib",
-		"assimp"
+		"assimp",
+		--"reactphysics3d.lib",
+		--"Bullet3Dynamics_Debug.lib",
+		--"BulletCollision_Debug.lib",
+		--"LinearMath_Debug.lib",
+		--"reactphysics3d.lib"
 	}
 
 	filter "system:windows"
@@ -140,12 +151,16 @@ project "Sandbox"
 		"%{IncludeDir.Glad}",
 		"%{IncludeDir.assimp}",
 		"%{IncludeDir.assimpcfg}",
-		"%{IncludeDir.rapidjson}"
+		"%{IncludeDir.rapidjson}",
+		"%{IncludeDir.react}",
+		"%{IncludeDir.bullet}"
 	}
 	
 	libdirs 
 	{ 
-		"HellEngine/vendor/fmod/lib/x64"
+		"HellEngine/vendor/fmod/lib/x64",
+		"HellEngine/vendor/react/lib",
+		"HellEngine/vendor/bullet/bullet/lib/release/"
 	}
 
 	links
@@ -154,7 +169,32 @@ project "Sandbox"
 		"Glad",
 		"HellEngine",
 		"assimp",
-		"fmodL_vc.lib"
+		"fmodL_vc.lib",
+		"reactphysics3d.lib",
+
+		"Bullet3Dynamics.lib",
+		"BulletDynamics.lib",
+		"BulletCollision.lib",
+		"LinearMath.lib",
+		--"Bullet2FileLoader.lib",
+		--"Bullet3Collision.lib",
+		--"Bullet3Common.lib",
+		--"Bullet3Dynamics.lib",
+		--"Bullet3Geometry.lib",
+		--"Bullet3OpenCL_clew.lib",
+		--"BulletCollision.lib",
+		--"BulletDynamics.lib",
+	--	"BulletExampleBrowserLib.lib",
+	--	"BulletFileLoader.lib",
+	--	"BulletInverseDynamics.lib",
+	--	"BulletInverseDynamicsUtils.lib",
+	--	"BulletRobotics.lib",
+	--	"BulletSoftBody.lib",
+		--"BulletWorldImporter.lib",
+		--"BulletXmlWorldImporter.lib",
+		--"BussIK.lib"
+
+
 	}	
 
 	filter "system:windows"

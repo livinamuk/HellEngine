@@ -14,13 +14,12 @@ namespace HellEngine {
 		void DrawAll(Shader* shader, bool bindTextures);
 		//void DrawWalls(Shader* shader, bool bindTextures);
 		void DrawDoors(Shader* shader, bool bindTextures);
-		void AddDoor(float x, float z, Axis axis, std::string floorMaterialName, bool rotateFloorTexture);
+		void AddDoor(float x, float z, Axis axis, std::string floorMaterialName, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloorTexture);
 		void AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling);
 		void AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling, Light light);
 		void BufferWallMatrices();
 		void LoadTestScene();
 		void RemoveAllContents();
-
 
 	public: // fields
 		//std::vector<Wall> walls;

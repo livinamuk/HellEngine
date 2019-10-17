@@ -1,6 +1,7 @@
 #include "hellpch.h"
 #include "House.h"
 #include "Platform/OpenGL/RenderableObject.h"
+#include "HellEngine/Util.h"
 
 namespace HellEngine {
 
@@ -16,6 +17,8 @@ namespace HellEngine {
 	House::~House()
 	{
 	}
+
+	
 
 	void House::RebuildRooms()
 	{
@@ -44,24 +47,17 @@ namespace HellEngine {
 		*/ 
 		// Draw non instanced wall holes (plus the walls cause iv uncommented it coz instancing is too less of a gain to warrent adding texture coords
 		shader->setInt("hasNormalMap", true); 
-			for (Room & room : rooms)
+		for (Room& room : rooms)
+		{
 			room.DrawWalls(shader, bindTextures);
-		shader->setInt("hasNormalMap", false);
+	
+		}
+			shader->setInt("hasNormalMap", false);
 
 		// Draw doors
 		if (bindTextures) {
 			shader->setInt("PBR", true);
 			
-			/*glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_BaseColor.png"));
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_Metallic.png"));
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_Roughness.png"));
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("DoorFinal_DefaultMaterial_Normal.png"));
-			*/
-
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Door_Base_Color.png"));
 			glActiveTexture(GL_TEXTURE1);
@@ -80,10 +76,10 @@ namespace HellEngine {
 			shader->setMat4("model", doors[i].GetModelMatrix());
 			
 
-			if (bindTextures)
+			//if (bindTextures)
 				doors[i].modelDoor->Draw(shader);
-			else
-				doors[i].modelDoorShadowCaster->Draw(shader);
+			//else
+			//	doors[i].modelDoorShadowCaster->Draw(shader);
 		}
 		shader->setFloat("MousePickColor", 0); // no more mouse picking
 
@@ -150,13 +146,13 @@ namespace HellEngine {
 				glActiveTexture(GL_TEXTURE3);
 				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Light_NormalMap.png"));
 
-				RenderableObject lightObject = RenderableObject("Light", Model::GetByName("Light.obj"));
+				RenderableObject lightObject = RenderableObject("Light", Model::GetByName("Light.obj"), NULL);
 				lightObject.diffuseTextureID = Texture::GetIDByName("Light_BaseColor.png");
 				lightObject.normalMapID = Texture::GetIDByName("Light_NormalMap.png");
 				lightObject.roughnessTextureID = Texture::GetIDByName("Light_Roughness.png");
 				lightObject.metallicTextureID = Texture::GetIDByName("Light_Metallic.png");
 				lightObject.emissiveMapID = Texture::GetIDByName("Light_EmissiveMap.png");
-				lightObject.transform.position = glm::vec3(room.light.position.x, 2.4f, room.light.position.z);
+				lightObject.transform.position = glm::vec3(room.light.position.x, 2.4125f, room.light.position.z);
 				lightObject.emissiveColor = room.light.color;
 				lightObject.hasEmissiveMap = true;
 
@@ -254,9 +250,9 @@ namespace HellEngine {
 	}
 
 
-	void House::AddDoor(float x, float z, Axis axis, std::string floorMaterialName, bool rotateFloorTexture)
+	void House::AddDoor(float x, float z, Axis axis, std::string floorMaterialName, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloorTexture)
 	{
-		Door door(x, z, axis, floorMaterialName, rotateFloorTexture);
+		Door door(x, z, axis, floorMaterialName, initiallyOpen, initiallyLocked, maxOpenAngle, rotateFloorTexture);
 		doors.push_back(door);
 	}
 
@@ -314,12 +310,12 @@ namespace HellEngine {
 		AddRoom(glm::vec3(-4.1f, 0, 3.6f), glm::vec3(-0.1f, 0, 6.6f), "Wall", "Lino", "WoodPaintedBoards", false, false);	// Side room B
 		AddRoom(glm::vec3(-2.0f, 0, 6.7f), glm::vec3(3.2f, 0, 9.6f), "Wall", "FloorBoards", "WoodPaintedBoards", false, false);	// Back room
 
-		AddDoor(0.6f, 0, X, "FloorBoards", false);
+		/*AddDoor(0.6f, 0, X, "FloorBoards", false);
 		AddDoor(0.0f, 2, Z_NEGATIVE, "FloorBoards", false);
 		AddDoor(0.0f, 5.1f, Z_NEGATIVE, "FloorBoards", false);
 		AddDoor(-3.0f, 3.6f, X_NEGATIVE, "FloorBoards", false);
 		AddDoor(0.6f, 6.7f, X, "FloorBoards", false);
-		AddDoor(1.3f, 2, Z, "FloorBoards", false);
+		AddDoor(1.3f, 2, Z, "FloorBoards", false);*/
 
 		rooms[0].light.strength = 5.0f;
 		rooms[1].light.strength = 2.01f;

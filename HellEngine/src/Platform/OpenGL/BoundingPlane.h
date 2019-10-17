@@ -8,9 +8,10 @@ namespace HellEngine {
 	{
 	public: // methods
 		BoundingPlane();
-		BoundingPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C, glm::vec3 D, bool testCollisions = true);	// A & B are on top. 
+		BoundingPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C, glm::vec3 D, bool testCollisions, std::string name);	// A & B are on top.  
 		~BoundingPlane();
-		void Draw(Shader *shader);
+		void Draw(Shader* shader);
+		void DrawSolid(Shader* shader);
 		void SetAngle(float angle);
 		float GetAngle();
 		void BufferData();
@@ -23,6 +24,7 @@ namespace HellEngine {
 		glm::vec3 scale;
 		unsigned int VAO = -1;
 		bool testCollisions = true;
+		std::string name = "None";
 		//glm::vec3 vertices[4];
 
 	private: //fields

@@ -23,6 +23,8 @@ namespace HellEngine
 
 	Model ModelLoader::LoadFromFile(string const& path)
 	{
+		HELL_ERROR("LOADING " + path);
+
 		// read file via ASSIMP
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile("res/objects/" + path,
@@ -243,27 +245,21 @@ namespace HellEngine
 		// data to fill
 		vector<Vertex> vertices;
 		vector<unsigned int> indices;
-		vector<Texture> textures;
 
-		// Is it animated?
-		bool animated = false;
-		if (mesh->HasBones())
-			animated = true;
+		glm::vec3 lowestPositionValues = glm::vec3(10000);
+		glm::vec3 highestPositionValues = glm::vec3(-10000);
 
 		// Walk through each of the mesh's vertices
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 		{
 			Vertex vertex;
 
-			// Set default bone IDs and weights
-			vertex.BoneIDs = glm::ivec4(-1, -1, -1, -1);
-			vertex.BoneWeights = glm::vec4(0, 0, 0, 0);
-
 			glm::vec3 vector;
 			// positions
 			vector.x = mesh->mVertices[i].x;
 			vector.y = mesh->mVertices[i].y;
 			vector.z = mesh->mVertices[i].z;
+
 			vertex.Position = vector;
 			// normals
 			vector.x = mesh->mNormals[i].x;
@@ -295,6 +291,15 @@ namespace HellEngine
 
 			vertex.Bitangent = vector;
 			vertices.push_back(vertex);
+
+
+			// Store bounding box data
+			lowestPositionValues.x = std::min(lowestPositionValues.x, vertex.Position.x);
+			lowestPositionValues.y = std::min(lowestPositionValues.y, vertex.Position.y);
+			lowestPositionValues.z = std::min(lowestPositionValues.z, vertex.Position.z);
+			highestPositionValues.x = std::max(highestPositionValues.x, vertex.Position.x);
+			highestPositionValues.y = std::max(highestPositionValues.y, vertex.Position.y);
+			highestPositionValues.z = std::max(highestPositionValues.z, vertex.Position.z);
 		}
 		// walk through each of the mesh's faces and retrieve the corresponding vertex indices.
 		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
@@ -305,54 +310,11 @@ namespace HellEngine
 				indices.push_back(face.mIndices[j]);
 		}
 
-		//std::cout << "INDICES SIZE: " << indices.size();
-		// process materials
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+		// Build bounding box
+		BoundingBox boundingBox = BoundingBox(lowestPositionValues, highestPositionValues);
 
-		// == Process bones
-		if (mesh->HasBones()) {
-			// If the mesh has bones, iterate through them and record the name of each bone in this->boneNames
-
-			std::vector<int> vertexBoneWeightCount;
-			vertexBoneWeightCount.resize(mesh->mNumVertices, 0);
-
-			for (int i = 0; i < mesh->mNumBones; i++) {
-				auto bone = mesh->mBones[i];
-
-				boneNames.push_back(bone->mName);
-
-				// Find the bone's matching ai_node and get it's transformation matrix. Gonna try calculating manually instead of from bone->mOffsetMatrix
-				//for (aiNode* node : ai_nodes)
-				//	if (node->mName == bone->mName)
-				//		boneMatrices.push_back(aiMatrix4x4ToGlm(node->mTransformation));
-				
-				boneMatrices.push_back(aiMatrix4x4ToGlm(bone->mOffsetMatrix));
-										
-				// Now iterate all weights for this bone
-				for (int j = 0; j < bone->mNumWeights; j++) {
-					// Find an empty slot in the vector and record the bone index and weight
-					if (vertices[bone->mWeights[j].mVertexId].BoneIDs.x == -1) {
-						vertices[bone->mWeights[j].mVertexId].BoneIDs.x = i;
-						vertices[bone->mWeights[j].mVertexId].BoneWeights.x = bone->mWeights[j].mWeight;
-					}
-					else if (vertices[bone->mWeights[j].mVertexId].BoneIDs.y == -1) {
-						vertices[bone->mWeights[j].mVertexId].BoneIDs.y = i;
-						vertices[bone->mWeights[j].mVertexId].BoneWeights.y = bone->mWeights[j].mWeight;
-					}
-					else if (vertices[bone->mWeights[j].mVertexId].BoneIDs.z == -1) {
-						vertices[bone->mWeights[j].mVertexId].BoneIDs.z = i;
-						vertices[bone->mWeights[j].mVertexId].BoneWeights.z = bone->mWeights[j].mWeight;
-					}
-					else if (vertices[bone->mWeights[j].mVertexId].BoneIDs.w == -1) {
-						vertices[bone->mWeights[j].mVertexId].BoneIDs.w = i;
-						vertices[bone->mWeights[j].mVertexId].BoneWeights.w = bone->mWeights[j].mWeight;
-					}
-				}
-			}
-		}
-
-		// return a mesh object created from the extracted mesh data
-		return Mesh(vertices, indices, textures, animated);
+		
+		return Mesh(vertices, indices, boundingBox);
 	}
 
 	glm::mat4 ModelLoader::aiMatrix4x4ToGlm(const aiMatrix4x4& from)

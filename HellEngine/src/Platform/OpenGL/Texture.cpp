@@ -26,12 +26,15 @@ void Texture::Init()
 	LoadTexture("BulletHole1_Black.png");
 
 
+	LoadTexture("Key_BaseColor.png");
+	LoadTexture("Key_NormalMap.png");
 
 	LoadTexture("Shotgun_BaseColor.png");
 	LoadTexture("Shotgun_Metallic.png");
 	LoadTexture("Shotgun_Roughness.png");
 	LoadTexture("Shotgun_NormalMap.png");
 
+	LoadTexture("PictureFrame2_BaseColor.png");
 	LoadTexture("PictureFrame_BaseColor.png");
 	LoadTexture("PictureFrame_Metallic.png");
 	LoadTexture("PictureFrame_Roughness.png");
@@ -52,6 +55,10 @@ void Texture::Init()
 //	LoadTexture("bebop.png");
 	LoadTexture("eye.png");
 	LoadTexture("red.png");
+
+	LoadTexture("CharSheet.png");
+
+	LoadTexture("Note_BaseColor.png");
 
 	LoadTexture("crosshair_cross.png");
 
@@ -83,15 +90,16 @@ void Texture::Init()
 	LoadTexture("DefaultMaterial_NormalMap.png");
 	LoadTexture("DefaultMaterial_Normal.png");
 
+	LoadTexture("REDoor_BaseColor.png");
+	LoadTexture("REDoor_Metallic.png");
+	LoadTexture("REDoor_Roughness.png");
+	LoadTexture("REDoor_NormalMap.png");
+
 	/*LoadTexture("DoorFinal_DefaultMaterial_BaseColor.png");
 	LoadTexture("DoorFinal_DefaultMaterial_Metallic.png");
 	LoadTexture("DoorFinal_DefaultMaterial_Roughness.png");
 	LoadTexture("DoorFinal_DefaultMaterial_Normal.png");
 
-	LoadTexture("REDoor_BaseColor.png");
-	LoadTexture("REDoor_Metallic.png");
-	LoadTexture("REDoor_Roughness.png");
-	LoadTexture("REDoor_NormalMap.png");
 	
 
 	LoadTexture("DoorNormalNEW.png");

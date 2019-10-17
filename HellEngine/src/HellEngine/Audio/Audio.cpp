@@ -6,16 +6,24 @@ namespace HellEngine
 {
 	std::vector<Audio> Audio::loadedAudioFiles;
 	Audio Audio::stream;
+	FMOD::System* Audio::system;
+	void* Audio::extradriverdata = 0;
+	FMOD_RESULT Audio::result;
 
-	Audio::Audio(std::string fileName)
-	{	
-		name = fileName;
-
+	void Audio::Init()
+	{
 		Common_Init(&extradriverdata);
 		result = FMOD::System_Create(&system);
 		ERRCHECK(result);
+		//HELL_ERROR("FMOD: " + fileName + " " + std::to_string(result));
+
 		result = system->init(32, FMOD_INIT_NORMAL, extradriverdata);
 		ERRCHECK(result);
+		//HELL_ERROR("FMOD: " + fileName + " " + std::to_string(result));
+	}
+	Audio::Audio(std::string fileName)
+	{	
+		name = fileName;
 	}
 
 	Audio::~Audio()

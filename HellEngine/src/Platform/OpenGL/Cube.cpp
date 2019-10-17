@@ -4,7 +4,7 @@
 
 namespace HellEngine {
 
-	unsigned int Cube::VAO = -1;
+	unsigned int Cube::VAO = 0;
 	bool Cube::initiated = false;
 
 	Cube::Cube()
@@ -23,7 +23,7 @@ namespace HellEngine {
 	{
 	}
 
-	void Cube::Draw(Shader *shader, bool bindTextures)
+	void Cube::Draw(Shader* shader, bool bindTextures)
 	{
 		shader->setMat4("model", transform.to_mat4());
 		glBindVertexArray(VAO);
@@ -40,7 +40,7 @@ namespace HellEngine {
 		float angle = glm::acos(glm::dot(normal, squareNormal));
 		if (angle > 0.001f)
 		{
-			if (angle == PI)
+			if (angle == HELL_PI)
 				modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(0, 1, 0));
 			else {
 				glm::vec3 axis = glm::normalize(glm::cross(squareNormal, normal));
@@ -48,7 +48,7 @@ namespace HellEngine {
 				modelMatrix = glm::rotate(modelMatrix, angle, axis);
 			}
 		}
-	
+
 
 
 
@@ -62,9 +62,13 @@ namespace HellEngine {
 	}
 
 
+
 //	modelMatrix = glm::rotate(modelMatrix, squareNormal.z, glm::vec3(0, 0, 1));
 //	modelMatrix = glm::rotate(modelMatrix, squareNormal.y, glm::vec3(0, 1, 0));
 //	modelMatrix = glm::rotate(modelMatrix, squareNormal.x, glm::vec3(1, 0, 0));
+
+
+
 
 
 
@@ -116,7 +120,7 @@ float vertices[] = {
 };
 		
 		unsigned int VBO;
-		glGenVertexArrays(1, &VAO);
+		glGenVertexArrays(1, &VAO);	
 		glGenBuffers(1, &VBO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);

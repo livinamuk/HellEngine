@@ -19,7 +19,7 @@ namespace HellEngine
 	{
 		this->model = model;
 		transform.position = position;
-		transform.rotation = camera->Rotation;
+		transform.rotation = camera->transform.rotation;
 
 		modelTransform.rotation.y = ROTATE_180;
 		modelTransform.scale = glm::vec3(0.01f);

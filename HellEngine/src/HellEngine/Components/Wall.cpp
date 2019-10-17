@@ -80,6 +80,6 @@ namespace HellEngine {
 		bottomLeft = glm::vec3(model * glm::vec4(bottomLeft, 1));
 		bottomRight = glm::vec3(model * glm::vec4(bottomRight, 1));
 
-		boundingPlane = BoundingPlane(topLeft, topRight, bottomRight, bottomLeft);
+		boundingPlane = BoundingPlane(topLeft, topRight, bottomRight, bottomLeft, true, "Wall");
 	}
 }

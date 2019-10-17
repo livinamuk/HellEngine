@@ -27,9 +27,9 @@
                 0.5289999842643738
             ],
             "LightAttConstant": 4.031000137329102,
-            "LightAttLinear": 1.0,
+            "LightAttLinear": 5.0,
             "LightAttExp": 0.6809999942779541,
-            "LightStrength": 9.947999954223633
+            "LightStrength": 6.806000232696533
         },
         {
             "CornerA": [
@@ -42,9 +42,9 @@
                 0.0,
                 3.5
             ],
-            "WallMaterial": "Concrete2",
-            "FloorMaterial": "Concrete2",
-            "CeilingMaterial": "Concrete2",
+            "WallMaterial": "Wall",
+            "FloorMaterial": "FloorBoards",
+            "CeilingMaterial": "FloorBoards",
             "RotateFloorTexture": true,
             "RotateCeilingTexture": false,
             "LightPosition": [
@@ -53,14 +53,14 @@
                 2.0
             ],
             "LightColor": [
-                1.0,
-                0.7799999713897705,
-                0.5289999842643738
+                9.999999974752428e-7,
+                9.999953363148962e-7,
+                9.999899930335233e-7
             ],
             "LightAttConstant": 1.0,
             "LightAttLinear": 1.0,
             "LightAttExp": 1.0,
-            "LightStrength": 2.3559999465942385
+            "LightStrength": 0.0
         },
         {
             "CornerA": [
@@ -91,7 +91,7 @@
             "LightAttConstant": 0.0,
             "LightAttLinear": 0.4970000088214874,
             "LightAttExp": 0.026000000536441804,
-            "LightStrength": 18.586000442504884
+            "LightStrength": 6.806000232696533
         },
         {
             "CornerA": [
@@ -122,7 +122,7 @@
             "LightAttConstant": 1.0,
             "LightAttLinear": 1.0,
             "LightAttExp": 1.0,
-            "LightStrength": 8.114999771118164
+            "LightStrength": 7.067999839782715
         },
         {
             "CornerA": [
@@ -135,9 +135,9 @@
                 0.0,
                 5.499998569488525
             ],
-            "WallMaterial": "FloorBoards",
-            "FloorMaterial": "FloorBoards",
-            "CeilingMaterial": "FloorBoards",
+            "WallMaterial": "WoodPaintedBoards",
+            "FloorMaterial": "Concrete2",
+            "CeilingMaterial": "Concrete2",
             "RotateFloorTexture": false,
             "RotateCeilingTexture": false,
             "LightPosition": [
@@ -166,9 +166,9 @@
                 0.0,
                 9.000003814697266
             ],
-            "WallMaterial": "FloorBoards",
-            "FloorMaterial": "FloorBoards",
-            "CeilingMaterial": "FloorBoards",
+            "WallMaterial": "WoodPaintedBoards",
+            "FloorMaterial": "Concrete2",
+            "CeilingMaterial": "Concrete2",
             "RotateFloorTexture": false,
             "RotateCeilingTexture": false,
             "LightPosition": [
@@ -192,31 +192,40 @@
             "Position": [
                 0.6000000238418579,
                 0.0,
-                0.0
+                1.4901161415892262e-9
             ],
             "Axis": "X",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "RotateFloorTexture": false,
+            "InitiallyOpen": false,
+            "InitiallyLocked": false,
+            "MaxOpenAngle": 1.7000000476837159
         },
         {
             "Position": [
+                1.4901161415892262e-9,
                 0.0,
-                0.0,
-                2.0
+                1.8999998569488526
             ],
             "Axis": "Z_NEGATIVE",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "RotateFloorTexture": false,
+            "InitiallyOpen": false,
+            "InitiallyLocked": true,
+            "MaxOpenAngle": 2.0
         },
         {
             "Position": [
-                0.0,
+                1.4901161415892262e-9,
                 0.0,
                 5.099999904632568
             ],
             "Axis": "Z_NEGATIVE",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "RotateFloorTexture": false,
+            "InitiallyOpen": true,
+            "InitiallyLocked": false,
+            "MaxOpenAngle": 2.0
         },
         {
             "Position": [
@@ -226,7 +235,10 @@
             ],
             "Axis": "X_NEGATIVE",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": true
+            "RotateFloorTexture": true,
+            "InitiallyOpen": true,
+            "InitiallyLocked": false,
+            "MaxOpenAngle": 2.0
         },
         {
             "Position": [
@@ -236,7 +248,10 @@
             ],
             "Axis": "X",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "RotateFloorTexture": false,
+            "InitiallyOpen": false,
+            "InitiallyLocked": false,
+            "MaxOpenAngle": 2.0
         },
         {
             "Position": [
@@ -246,7 +261,10 @@
             ],
             "Axis": "Z",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "RotateFloorTexture": false,
+            "InitiallyOpen": false,
+            "InitiallyLocked": false,
+            "MaxOpenAngle": 2.0
         },
         {
             "Position": [
@@ -256,7 +274,10 @@
             ],
             "Axis": "Z",
             "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "RotateFloorTexture": false,
+            "InitiallyOpen": false,
+            "InitiallyLocked": true,
+            "MaxOpenAngle": 2.0
         },
         {
             "Position": [
@@ -265,8 +286,11 @@
                 5.600000381469727
             ],
             "Axis": "X",
-            "FloorMaterial": "FloorBoards",
-            "RotateFloorTexture": false
+            "FloorMaterial": "Concrete2",
+            "RotateFloorTexture": false,
+            "InitiallyOpen": false,
+            "InitiallyLocked": false,
+            "MaxOpenAngle": 2.0
         }
     ]
 }

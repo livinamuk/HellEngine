@@ -6,7 +6,9 @@
 #include "HellEngine/Animation/SkinnedMesh.h"
 #include "HellEngine/Audio/Audio.h"
 #include "HellEngine/GameObjects/Decal.h"
+#include "HellEngine/Logic/Physics.h"
 #include "HellEngine/GameObjects/Shell.h"
+#include "HellEngine/Core.h"
 
 namespace HellEngine
 {
@@ -26,37 +28,53 @@ namespace HellEngine
 
 	class ExampleLayer : public HellEngine::Layer
 	{
+
+
 	public:
 
-		const int MAX_LIGHTS = 8;
+		const int MAX_LIGHTS = 8;	
+
+		//static Physics physics;
+		
+		Physics physics;
+
+		std::vector<StaticEntity*> staticEntities;
 
 		int SCR_WIDTH, SCR_HEIGHT;
 		bool _IMGUI_RUN_ONCE = true;
-
+		
+		bool showRigidBodies = false;
 		bool showBoundingBoxes = false;
 		bool showBuffers = false;
 		bool showVolumes = false;
 		bool showLights = false;
-		bool showImGUI = true;
+		bool showImGUI = false;
 		bool optimise = false;
-		bool NoClip = false;
 		bool showRaycastPlane = false;
 
 		glm::vec3 ray_direction;
-		RaycastData raycastData;
+		//RaycastData raycastData;
+		BulletRaycastData cameraRaycastData;
+		//BulletRaycastData bulletRaycastData;
+
 
 		bool shellEjected = false;
 		bool shotgunFiring = false;
+
+		float interactDistance = 1.6f;
+
+		int RayCastWorldArrayIndex = -1;
+		btVector3 RayCastOffsetFromCOM = btVector3(0,0,0);
 
 		Camera camera;
 		float deltaTime;
 		float lastFrame;
 
+		float WORLD_TIME = 0;
+		bool OpenedDoorAtStartOfLevel = false;
+
 		File file;
-
-		vector<MousePickInfo> mousePickIndices;
-		MousePickInfo mousePicked{ MousePickType::NotFound, -1 };
-
+		
 		House house;
 		Player player;
 
@@ -69,11 +87,17 @@ namespace HellEngine
 		Plane plane2;
 		Cube lightCube;
 
-		PBO pBuffer;
 		GBuffer gBuffer;
 		LightingBuffer lightingBuffer;
 		std::vector<BlurBuffer> blurBuffers;
 		ShadowCubeMapArray shadowCubeMapArray;
+
+		BoundingPlane OuterWallPlane_0;
+		BoundingPlane OuterWallPlane_1;
+		BoundingPlane OuterWallPlane_2;
+		BoundingPlane OuterWallPlane_3;
+		BoundingPlane OuterWallPlane_4;
+		BoundingPlane OuterWallPlane_5;
 
 		float roughness = 0.077f;
 		float metallic = 0.546f;
@@ -95,7 +119,6 @@ namespace HellEngine
 		vector<Decal> decals;
 		vector<Shell> shells;
 
-
 		Model* bebop;
 
 		float time = 0;
@@ -104,26 +127,12 @@ namespace HellEngine
 
 		SkinnedMesh skinnedMesh;
 
+		ModelLoader loader;
+
 		ExampleLayer() : Layer("Example")
 		{
-			Audio::LoadAudio("Door1.wav");
-			Audio::LoadAudio("Shotgun.wav");
-			Audio::LoadAudio("ShellBounce.wav");
-		//	Audio::LoadAudio("Music.mp3");
-			//Audio::LoadAudio("Music2.mp3");
-			//Audio::LoadAudio("Music3.mp3");
-			Audio::LoadAudio("player_step_1.wav");
-			Audio::LoadAudio("player_step_2.wav");
-			Audio::LoadAudio("player_step_3.wav");
-			Audio::LoadAudio("player_step_4.wav");
-
-
-			//ozz = Ozz_Animation("res/objects/seymour_skeleton.ozz"); 
-
 			deltaTime = 0.0f;
 			lastFrame = 0.0f;
-
-			WorkBenchPosition = glm::vec3(5.25f, 0, 2.8f);
 
 			// App setup
 			Application& app = Application::Get();
@@ -132,77 +141,24 @@ namespace HellEngine
 
 			GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
 
-
-			// pbo
-			pBuffer = PBO(SCR_WIDTH, SCR_HEIGHT);
-
 			// setup
 			Config::Load();
-
-			//Audio audio;
-
-			// MODELS: load files
-			ModelLoader loader;
-			//Model::models.push_back(loader.LoadFromFile("AnimatedShotgun.FBX"));
-			//Model::models.push_back(loader.LoadFromFile("AnimatedShotgun.dae"));
-			//Model::models.push_back(loader.LoadFromFile("model.dae"));
-			//Model::models.push_back(loader.LoadFromFile("Shotgun.dae"));
-			Model::models.push_back(loader.LoadFromFile("Wall.obj"));
-			Model::models.push_back(loader.LoadFromFile("Door.obj"));
-			Model::models.push_back(loader.LoadFromFile("DoorShadowCaster.obj"));
-			Model::models.push_back(loader.LoadFromFile("Door_jam.obj"));
-			Model::models.push_back(loader.LoadFromFile("Wall_DoorHole.obj"));
-			Model::models.push_back(loader.LoadFromFile("UnitPlane.obj"));
-			Model::models.push_back(loader.LoadFromFile("Light.obj"));
-			Model::models.push_back(loader.LoadFromFile("SphereLight.obj"));
-			Model::models.push_back(loader.LoadFromFile("sphere.obj"));
-			Model::models.push_back(loader.LoadFromFile("Shell.fbx"));
-			Model::models.push_back(loader.LoadFromFile("Old_Cotton_Couch.obj"));
-			Model::models.push_back(loader.LoadFromFile("PictureFrame.FBX"));
-
-			//Model::models.push_back(loader.LoadFromFile("DoorFinal.obj"));
-
+	
 			Material::BuildMaterialList();
+			Audio::Init();
 
-			// Temporary commented out to speed up load time
-			if (true) {
-				Texture::Init();
+			Audio::LoadAudio("player_step_1.wav");
+			Audio::LoadAudio("player_step_2.wav");
+			Audio::LoadAudio("player_step_3.wav");
+			Audio::LoadAudio("player_step_4.wav");
+			Audio::LoadAudio("PickUp.wav");
+			Audio::LoadAudio("Door_Open.wav");
+			Audio::LoadAudio("Door_Locked.wav");
+			Audio::LoadAudio("Door_Unlock.wav");
+			Audio::LoadAudio("Shotgun.wav");
+			Audio::LoadAudio("ShellBounce.wav");
 
-				//
-
-
-				//Model::models.push_back(loader.LoadFromFile("Mannequin.obj"));
-				/*
-				Model::models.push_back(loader.LoadFromFile("Shotgun.obj"));
-				Model::models.push_back(loader.LoadFromFile("Shotgun2.obj"));
-				Model::models.push_back(loader.LoadFromFile("knight.dae"));
-				Model::models.push_back(loader.LoadFromFile("Colt45.obj"));
-				Model::models.push_back(loader.LoadFromFile("Bench.obj"));
-				Model::models.push_back(loader.LoadFromFile("SM_Shotgun_01a.FBX"));
-
-				Model::models.push_back(loader.LoadFromFile("Shotgun3.obj"));
-				Model::models.push_back(loader.LoadFromFile("Handgun.obj"));
-				Model::models.push_back(loader.LoadFromFile("REDoor.obj"));
-				*/
-			}
-
-
-
-			// MODELS: set pointers
-			Wall::model = Model::GetByName("Wall.obj");
-			//Door::modelDoor = Model::GetByName("DoorFinal.obj");
-			Door::modelDoor = Model::GetByName("Door.obj");
-			Door::modelDoorShadowCaster = Model::GetByName("DoorShadowCaster.obj");
-			Door::modelDoorJam = Model::GetByName("Door_jam.obj");
-			Door::modelWallHole = Model::GetByName("Wall_DoorHole.obj");
-
-			File::LoadMapNames();
-
-			//house.LoadTestScene();
-			house = File::LoadMap("Level2.map");
-			house.RebuildRooms();
-			RebuildMap();
-
+		
 
 			// OPENGL
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -241,360 +197,15 @@ namespace HellEngine
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 			// Camera
-			camera.Position = glm::vec3(0.6f, 0.0f, 9.45f);
+			camera.transform.position = glm::vec3(0.6f, 0.0f, 9.45f);
 			camera.CalculateProjectionMatrix(SCR_WIDTH, SCR_HEIGHT);
 
-			// Shaders
-			Shader::LoadShader("LampShader", "white.vert", "white.frag", "NONE");
-			Shader::LoadShader("debugFboShader", "fbo_debug.vert", "fbo_debug.frag", "NONE");
-			Shader::LoadShader("Geometry", "geometry.vert", "geometry.frag", "NONE");
-			Shader::LoadShader("Shadow", "shadow.vert", "shadow.frag", "NONE");
-			Shader::LoadShader("SimpleDepth", "shadowDepth.vert", "shadowDepth.frag", "shadowDepth.geom");
-			Shader::LoadShader("Skybox", "skybox.vert", "skybox.frag", "NONE");
-			Shader::LoadShader("Lighting", "lighting.vert", "lighting.frag", "NONE");
-			Shader::LoadShader("DEBUG", "test.vert", "test.frag", "NONE");
-			Shader::LoadShader("Composite", "composite.vert", "composite.frag", "NONE");
-			Shader::LoadShader("NullTechnique", "null_technique.vert", "null_technique.frag", "NONE");
-			Shader::LoadShader("BlurHorizontal", "blurHorizontal.vert", "blur.frag", "NONE");
-			Shader::LoadShader("BlurVertical", "blurVertical.vert", "blur.frag", "NONE");
-			Shader::LoadShader("Final", "final.vert", "final.frag", "NONE");
-			Shader::LoadShader("DownScale", "downScale.vert", "downScale.frag", "NONE");
-			Shader::LoadShader("Final", "final.vert", "final.frag", "NONE");
-			Shader::LoadShader("DOF", "DOF.vert", "DOF.frag", "NONE");
-			Shader::LoadShader("Decals", "decals.vert", "decals.frag", "NONE");
-			//Shader::LoadShader("Fxaa", "debugFboShader.vert", "Fxaa.frag", "NONE");
-
-			Shader* lampShader = Shader::GetShaderByName("LampShader");
-			Shader* shadowShader = Shader::GetShaderByName("Shadow");
-			Shader* simpleDepthShader = Shader::GetShaderByName("SimpleDepth");
-
-			Shader* geometryShader = Shader::GetShaderByName("Geometry");
-			geometryShader->use();
-			geometryShader->setInt("diffuseTexture", 0);
-			geometryShader->setInt("roughnessTexture", 1);
-			geometryShader->setInt("metallicTexture", 2);
-			geometryShader->setInt("normalMap", 3);
-			geometryShader->setInt("emissiveMap", 4);
-			geometryShader->setMat4("projection", camera.projectionMatrix);
-
-			Shader* decalShader = Shader::GetShaderByName("Decals");
-			decalShader->use();
-			decalShader->setInt("depthTexture", 0);
-			decalShader->setInt("diffuseTexture", 1);
-			decalShader->setInt("normalTexture", 2);
-
-
-			//for (int i = 0; i < 50; i++)
-			//	geometryShader->setMat4("jointTransforms[" + std::to_string(i) + "]", glm::mat4(1));
-
-
-			shadowShader->use();
-			shadowShader->setInt("diffuseTexture", 0);
-			shadowShader->setInt("depthMap", 1);
-			//simpleDepthShader.setInt("lightIndex", 1);
-
-
-			//glUseProgram(lampShader->ID);
-			lampShader->use();
-			lampShader->setMat4("projection", camera.projectionMatrix);
-
-			Shader* DEBUGShader = Shader::GetShaderByName("DEBUG");
-			DEBUGShader->use();
-			DEBUGShader->setMat4("projection", camera.projectionMatrix);
-
-			Shader* skyboxShader = Shader::GetShaderByName("Skybox");
-			skyboxShader->use();
-			skyboxShader->setInt("cubeMap", 0);
-			skyboxShader->setMat4("projection", camera.projectionMatrix);
-
-
-			Shader* lightingShader = Shader::GetShaderByName("Lighting");
-			lightingShader->use();
-			lightingShader->setInt("albedoTexture", 0);
-			lightingShader->setInt("normalTexture", 1);
-			lightingShader->setInt("depthTexture", 2);
-			lightingShader->setInt("emissiveTexture", 3);
-			lightingShader->setInt("shadowMaps", 4);
-
-			Shader* compositeShader = Shader::GetShaderByName("Composite");
-			compositeShader->use();
-			compositeShader->setInt("albedoTexture", 0);
-			compositeShader->setInt("accumulatedLighting", 1);
-
-			Shader* blurHorizontalShader = Shader::GetShaderByName("BlurHorizontal");
-			blurHorizontalShader->use();
-			blurHorizontalShader->setInt("image", 0);
-
-			Shader* blurVerticalShader = Shader::GetShaderByName("BlurVertical");
-			blurVerticalShader->use();
-			blurVerticalShader->setInt("image", 0);
-
-			Shader* downScaleShader = Shader::GetShaderByName("DownScale");
-			downScaleShader->use();
-			downScaleShader->setInt("inputTexture", 0);
-
-			Shader* DOFShader = Shader::GetShaderByName("DOF");
-			DOFShader->use();
-			DOFShader->setInt("renderTexture", 0);
-			DOFShader->setInt("depthTexture", 1);
-
-			Shader* finalShader = Shader::GetShaderByName("Final");
-			finalShader->use();
-			finalShader->setInt("scene", 0);
-			finalShader->setInt("blur0", 1);
-			finalShader->setInt("blur1", 2);
-			finalShader->setInt("blur2", 3);
-			finalShader->setInt("blur3", 4);
-
-
-
-
-			glm::vec3 couchPosition = glm::vec3(-2.9f, 0, 6.1f);
-			RenderableObject::NewObject("Couch", Model::GetByName("Old_Cotton_Couch.obj"));
-			RenderableObject::SetPositionByName("Couch", couchPosition);
-			RenderableObject::SetScaleByName("Couch", glm::vec3(0.07));
-			//RenderableObject::SetAngleByName("Couch", PI);
-			RenderableObject::SetRotationByName("Couch", glm::vec3(0, PI, 0));
-			RenderableObject::SetDiffuseTextureByName("Couch", Texture::GetIDByName("Couch_A_Base_Color.png"));
-			RenderableObject::SetRoughnessTextureByName("Couch", Texture::GetIDByName("Couch_A_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Couch", Texture::GetIDByName("Couch_A_Metallic.png"));
-			RenderableObject::SetNormalMapByName("Couch", Texture::GetIDByName("Couch_A_NormalMap.png"));
-			BoundingBox bb = BoundingBox(couchPosition, glm::vec3(2.1f, 0.8f, 0.9f), BOTTOM_CENTERED);
-			RenderableObject::SetBoundingBoxByName("Couch", bb);
-
-
-
-
-			glm::vec3 framePosition = glm::vec3(0, 1.6f, 3.25f);
-			RenderableObject::NewObject("PictureFrame", Model::GetByName("PictureFrame.FBX"));
-			RenderableObject::SetPositionByName("PictureFrame", framePosition);
-			RenderableObject::SetScaleByName("PictureFrame", glm::vec3(0.9));
-			RenderableObject::SetRotationByName("PictureFrame", glm::vec3(ROTATE_270, ROTATE_90, 0));
-			RenderableObject::SetDiffuseTextureByName("PictureFrame", Texture::GetIDByName("PictureFrame_BaseColor.png"));
-			RenderableObject::SetRoughnessTextureByName("PictureFrame", Texture::GetIDByName("PictureFrame_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("PictureFrame", Texture::GetIDByName("PictureFrame_Metallic.png"));
-			RenderableObject::SetNormalMapByName("PictureFrame", Texture::GetIDByName("PictureFrame_NormalMap.png"));
-			BoundingBox bb2 = BoundingBox(framePosition, glm::vec3(0.05, 0.5f, 0.08f), ObjectOrigin::BOTTOM_CENTERED);
-			RenderableObject::SetBoundingBoxByName("PictureFrame", bb2);
-
-
-
-
-			//auto loader = ModelLoader();
-			//bebop = loader.LoadFromFile("COWBOY", "model.dae");
-
-
-
-			//ModelLoader::LoadModel("Door.obj");
-
-			
+			SetupShaderLocations();
 		
 
-
-			if (false) {
-				//RenderableObject::NewObject("Cowboy", Model::GetByName("Shotgun.dae"));
-				RenderableObject::NewObject("Cowboy", Model::GetByName("model.dae"));
-				//RenderableObject::NewObject("Cowboy", Model::GetByName("AnimatedShotgun.FBX")); 
-				RenderableObject::SetPositionByName("Cowboy", glm::vec3(0, 0, 1.10f));
-				RenderableObject::SetScaleByName("Cowboy", glm::vec3(0.2));
-				//RenderableObject::SetRotateAngleByName("Cowboy", glm::vec3(1, 0, 0));
-				//RenderableObject::SetAngleByName("Cowboy", PI * 1.5f);
-				RenderableObject::SetDiffuseTextureByName("Cowboy", Texture::GetIDByName("eye.png"));
-			}
-
-
-
-			/*if (false) {
-				RenderableObject::NewObject("Cowboy", Model::GetByName("model.dae"));
-				//RenderableObject::NewObject("Cowboy", Model::GetByName("AnimatedShotgun.dae"));
-				RenderableObject::SetPositionByName("Cowboy", glm::vec3(0, 0, 1.00f));
-				RenderableObject::SetScaleByName("Cowboy", glm::vec3(0.01));
-				RenderableObject::SetDiffuseTextureByName("Cowboy", Texture::GetIDByName("eye.png"));
-			}*/
-
-
-			//RenderableObject::SetScaleByName("Cowboy", glm::vec3(1));
-			//RenderableObject::SetAngleByName("Cowboy", 0);
-			//RenderableObject::SetPositionByName("Cowboy", glm::vec3(0, 0, 0));
-
-			/*RenderableObject::NewObject("Shepherd", Model::GetByName("Shepherd.fbx"));
-			RenderableObject::NewObject("Shepherd", Model::GetByName("Old_Cotton_Couch.obj"));
-			RenderableObject::SetPositionByName("Shepherd", glm::vec3(0, 0, 3.5f));
-			RenderableObject::SetScaleByName("Shepherd", glm::vec3(0.01));
-			RenderableObject::SetAngleByName("Shepherd", PI);
-			RenderableObject::SetDiffuseTextureByName("Shepherd", Texture::GetIDByName("Couch_A_Base_Color.png"));
-			RenderableObject::SetRoughnessTextureByName("Shepherd", Texture::GetIDByName("Couch_A_Roughness.png"));
-			RenderableObject::SetMetallicTextureByName("Shepherd", Texture::GetIDByName("Couch_A_Metallic.png"));*/
-
-
-			if (false)
-			{
-
-				RenderableObject::NewObject("REDoor", Model::GetByName("REDoor.obj"));
-				RenderableObject::SetPositionByName("REDoor", glm::vec3(3, 0, 2));
-				RenderableObject::SetScaleByName("REDoor", glm::vec3(0.9f));
-				//RenderableObject::SetRotateAngleByName("REDoor", glm::vec3(1, 0, 0));
-				//RenderableObject::SetAngleByName("REDoor", PI * 1.5f);
-				RenderableObject::SetDiffuseTextureByName("REDoor", Texture::GetIDByName("REDoor_BaseColor.png"));
-				RenderableObject::SetRoughnessTextureByName("REDoor", Texture::GetIDByName("REDoor_Roughness.png"));
-				RenderableObject::SetMetallicTextureByName("REDoor", Texture::GetIDByName("REDoor_Metallic.png"));
-				RenderableObject::SetNormalMapByName("REDoor", Texture::GetIDByName("REDoor_NormalMap.png"));
-
-
-
-				RenderableObject::NewObject("Bench", Model::GetByName("Bench.obj"));
-				RenderableObject::SetPositionByName("Bench", glm::vec3(5.25f, 0, 2.8f));
-				//RenderableObject::SetAngleByName("Bench", PI * 1.5f);
-				RenderableObject::SetDiffuseTextureByName("Bench", Texture::GetIDByName("Workbench_Base_Color.png"));
-				RenderableObject::SetRoughnessTextureByName("Bench", Texture::GetIDByName("EmptyMetallic.png"));
-				RenderableObject::SetMetallicTextureByName("Bench", Texture::GetIDByName("Workbench_Metallic.png"));
-				RenderableObject::SetNormalMapByName("Bench", Texture::GetIDByName("Workbench_NormalMap.png"));
-				BoundingBox bb2 = BoundingBox(WorkBenchPosition, glm::vec3(0.5f, 0.98f, 2.2f), BOTTOM_CENTERED);
-				RenderableObject::SetBoundingBoxByName("Bench", bb2);
-
-				RenderableObject::NewObject("Shotty2", Model::GetByName("Shotgun3.obj"));
-				RenderableObject::SetPositionByName("Shotty2", glm::vec3(5.20f, 0, 2.8f));
-				//RenderableObject::SetAngleByName("Shotty2", PI * 1.5f);
-				RenderableObject::SetDiffuseTextureByName("Shotty2", Texture::GetIDByName("Shotgun2_BaseColor.png"));
-				RenderableObject::SetRoughnessTextureByName("Shotty2", Texture::GetIDByName("Shotgun2_Roughness.png"));
-				RenderableObject::SetMetallicTextureByName("Shotty2", Texture::GetIDByName("Shotgun2_Metallic.png"));
-				RenderableObject::SetNormalMapByName("Shotty2", Texture::GetIDByName("Shotgun2_NormalMap.png"));
-
-				/*	RenderableObject::NewObject("Handgun", Model::GetByName("Handgun.obj"));
-					RenderableObject::SetPositionByName("Handgun", glm::vec3(5.25f, 0, 2.8f));
-					RenderableObject::SetAngleByName("Handgun", PI * 1.5f);
-					RenderableObject::SetDiffuseTextureByName("Handgun", Texture::GetIDByName("M1911_BaseColor.png"));
-					RenderableObject::SetRoughnessTextureByName("Handgun", Texture::GetIDByName("M1911_Roughness.png"));
-					RenderableObject::SetMetallicTextureByName("Handgun", Texture::GetIDByName("M1911_Metallic.png"));
-					RenderableObject::SetNormalMapByName("Handgun", Texture::GetIDByName("EmptyNormalMap.png"));*/
-
-					/*float mannequinAngle = 2.0f;
-					glm::vec3 mannequinPosition = glm::vec3(-1, 0, 2.0f);
-					RenderableObject::NewObject("Mannequin", Model::GetByName("Mannequin.obj"));
-					RenderableObject::SetPositionByName("Mannequin", mannequinPosition);
-					RenderableObject::SetAngleByName("Mannequin", mannequinAngle);
-					RenderableObject::SetDiffuseTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
-					RenderableObject::SetRoughnessTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
-					RenderableObject::SetMetallicTextureByName("Mannequin", Texture::GetIDByName("Plastic2.png"));
-					BoundingBox bb2 = BoundingBox(mannequinPosition, glm::vec3(0.3f, 1.8f, 0.3f), BOTTOM_CENTERED);
-					bb2.SetAngle(mannequinAngle);
-					RenderableObject::SetBoundingBoxByName("Mannequin", bb2);
-					*/
-
-				/*RenderableObject::NewObject("Weapon", Model::GetByName("SM_Shotgun_01a.FBX"));
-				RenderableObject::SetPositionByName("Weapon", glm::vec3(0, 1.2f, 2.2f));
-				RenderableObject::SetScaleByName("Weapon", glm::vec3(0.2f));
-				RenderableObject::SetAngleByName("Weapon", ROTATE_90);
-				RenderableObject::SetDiffuseTextureByName("Weapon", Texture::GetIDByName("Shotgun2_BaseColor.png"));
-				RenderableObject::SetRoughnessTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Roughness.png"));
-				RenderableObject::SetMetallicTextureByName("Weapon", Texture::GetIDByName("Shotgun2_Metallic.png"));
-				RenderableObject::SetNormalMapByName("Weapon", Texture::GetIDByName("Shotgun2_NormalMap.png"));*/
-
-			
-
-				//	RenderableObject::NewObject("Weapon", Model::GetByName("Colt45.obj"));
-
-					/*RenderableObject::NewObject("Shotgun", Model::GetByName("Shotgun.obj"));
-					RenderableObject::SetPositionByName("Shotgun", glm::vec3(0, 1, 2.2f));
-					RenderableObject::SetScaleByName("Shotgun", glm::vec3(1));`
-					RenderableObject::SetAngleByName("Shotgun", 0);
-					RenderableObject::SetDiffuseTextureByName("Shotgun", Texture::GetIDByName("Shotgun_BaseColor.png"));
-					RenderableObject::SetRoughnessTextureByName("Shotgun", Texture::GetIDByName("Shotgun_Roughness.png"));
-					RenderableObject::SetMetallicTextureByName("Shotgun", Texture::GetIDByName("Shotgun_Metallic.png"));
-					RenderableObject::SetNormalMapByName("Shotgun", Texture::GetIDByName("Shotgun_NormalMap.png"));*/
-
-
-					//shader->setFloat("texScale", 10.0f);
-					//shader->setFloat("roughness", 0.1f);
-					//shader->setFloat("metallic", 0.1f);
-					//RenderableObject m = RenderableObject(Model::GetByName("Mannequin.obj"), "Plastic2.png", mannequinPosition,2.0f, glm::vec3(0.9f));
-					//m.Draw(shader, bindTextures);
-					//shader->setFloat("texScale", 1);
-
-					/*RenderableObject::NewObject("Sphere", Model::GetByName("sphere.obj"));
-					RenderableObject::SetScaleByName("Sphere", glm::vec3(0.1));
-					RenderableObject::SetDiffuseTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));
-					RenderableObject::SetMetallicTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));
-					RenderableObject::SetRoughnessTextureByName("Sphere", Texture::GetIDByName("Couch_A_Roughness.png"));*/
-
-					/*RenderableObject::NewObject("Shells", Model::GetByName("Shells.obj"));
-					RenderableObject::SetPositionByName("Shells", glm::vec3(0, 0, 0));
-					RenderableObject::SetScaleByName("Shells", glm::vec3(0.01f));
-					RenderableObject::SetAngleByName("Shells", PI);
-					RenderableObject::SetDiffuseTextureByName("Shells", Texture::GetIDByName("Couch_A_Base_Color.png"));
-					RenderableObject::SetRoughnessTextureByName("Shells", Texture::GetIDByName("Couch_A_Roughness.png"));
-					RenderableObject::SetMetallicTextureByName("Shells", Texture::GetIDByName("Couch_A_Metallic.png"));*/
-			}
-
-			// My objects
-			skybox = Skybox(glm::vec3(0));
-			/*cube = Cube(-0.75f, 0.5f, 3.25f);
-			plane = Plane(0, 2.4f, 0, glm::vec3(20));
-			lightCube = Cube(0, 0, 0, glm::vec3(0.1));
-
-			cube.angle = -0.25f;
-			cube.scale = glm::vec3(0.8);*/
-
-			// Setup house
-			RebuildMap();
-
-			std::cout << "\n";
-
-			/////////////////////////////////////
-			// LOAD THE MOTHER FUCKING SHOTGUN //
-			/////////////////////////////////////
-
-			if (!skinnedMesh.LoadMesh("res/objects/AnimatedShotgun.FBX"))
-				HELL_ERROR("Mesh load failed\n");
-			else
-				HELL_ERROR("Mesh loaded!\n");
-
-			// Begin music
-			Audio::StreamAudio("Music.mp3");
 		}
 
-		vector<BoundingBox*> CreateBoudingBoxPtrsVector()
-		{
-			vector<BoundingBox*> b;
-
-			for (Door & d : house.doors)
-				b.push_back(&d.boundingBox);
-			for (RenderableObject & r : RenderableObject::renderableObjects)
-				if (r.hasCollision)
-					b.push_back(&r.boundingBox);
-
-			return b;
-		}
-
-		vector<BoundingPlane*> CreateBoudingPlanePtrsVector()
-		{
-			vector<BoundingPlane*> planes;
-			
-			// Iterate over ever room in the house, add the walls
-			for (Room& room : house.rooms)
-			{
-				for (Wall& w : room.walls)
-					planes.push_back(&w.boundingPlane);
-				planes.push_back(&room.floor.plane);
-				planes.push_back(&room.ceiling.plane);
-			}
-			HELL_ERROR("planes: " + std::to_string(planes.size()));
-
-			for (BoundingBox* box : boundingBoxPtrs)
-			{
-				BoundingPlane* p0 = &box->frontPlane;
-				BoundingPlane* p1 = &box->backPlane;
-				BoundingPlane* p2 = &box->leftPlane;
-				BoundingPlane* p3 = &box->rightPlane;
-
-				planes.push_back(p0);
-				planes.push_back(p1);
-				planes.push_back(p2);
-				planes.push_back(p3);
-			}
-
-			return planes;
-		}
+		
 
 		float RandomFloat(float a, float b) {
 			float random = ((float)rand()) / (float)RAND_MAX;
@@ -605,7 +216,8 @@ namespace HellEngine
 
 		float test = 0;
 
-
+		bool FirstFrameHasRan = false;
+		bool GameLoaded = false;
 
 		void OnUpdate() override
 		{
@@ -613,16 +225,163 @@ namespace HellEngine
 			GLFWwindow* window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
 			glfwGetWindowSize(window, &SCR_WIDTH, &SCR_HEIGHT);
 			app.GetWindow().SetVSync(true);
+			
+			if (!GameLoaded)
+				LoadGame();
+			else
+				MainRenderLoop();
+		}
 
+		void LoadGame()
+		{			
+			Texture::Init();
+
+			Model::models.push_back(loader.LoadFromFile("cube.obj"));
+			Model::models.push_back(loader.LoadFromFile("Wall.obj"));
+			Model::models.push_back(loader.LoadFromFile("Door.obj"));
+			Model::models.push_back(loader.LoadFromFile("DoorShadowCaster.obj"));
+			Model::models.push_back(loader.LoadFromFile("Door_jam.obj"));
+			Model::models.push_back(loader.LoadFromFile("Wall_DoorHole.obj"));
+			Model::models.push_back(loader.LoadFromFile("UnitPlane.obj"));
+			Model::models.push_back(loader.LoadFromFile("Light.obj"));
+			Model::models.push_back(loader.LoadFromFile("SphereLight.obj"));
+			Model::models.push_back(loader.LoadFromFile("sphere.obj"));
+			Model::models.push_back(loader.LoadFromFile("Shell.fbx"));
+			Model::models.push_back(loader.LoadFromFile("Old_Cotton_Couch.obj"));
+			Model::models.push_back(loader.LoadFromFile("PictureFrame.FBX"));
+			Model::models.push_back(loader.LoadFromFile("Key.fbx")); 
+			Model::models.push_back(loader.LoadFromFile("cylinder.obj")); 
+			
+			// MODELS: set pointers
+			Wall::model = Model::GetByName("Wall.obj");
+			Door::modelDoor = Model::GetByName("Door.obj");
+			Door::modelDoorShadowCaster = Model::GetByName("DoorShadowCaster.obj");
+			Door::modelDoorJam = Model::GetByName("Door_jam.obj");
+			Door::modelWallHole = Model::GetByName("Wall_DoorHole.obj");
+
+			
+			SetupHardcodedObjects();
+			
+			// Load house house
+			house = File::LoadMap("Level2.map");
+			house.RebuildRooms();
+			RebuildMap();
+			house.doors[5].doorStatus = LOCKED_FROM_THE_OTHER_SIDE;
+
+
+			// Load shotgun
+			if (!skinnedMesh.LoadMesh("res/objects/AnimatedShotgun.FBX"))
+				HELL_ERROR("Mesh load failed\n");
+			else
+				HELL_ERROR("Mesh loaded!\n");
+
+			// Music
+			//Audio::StreamAudio("Music3.mp3");
+
+			GameLoaded = true;
+
+			Application& app = Application::Get();
+			GLFWwindow * window = static_cast<GLFWwindow*>(app.GetWindow().GetNativeWindow());
+			glfwGetWindowSize(window, &SCR_WIDTH, &SCR_HEIGHT);
+			app.GetWindow().SetVSync(true);
+			app.GetWindow().SetFullscreen();
+			ReCreateFBOs();
+
+			glfwSetTime(0);
+
+			//RenderableObject::physics = &physics;
+
+			physics.AddWallsToPhysicsWorld(boundingPlanePtrs);
+			physics.AddHouse(&house);
+			//house.AddToPhysicsEngine(physics);
+		}
+
+		void SetupHardcodedObjects()
+		{
+			Material mat = Material();
+			mat.name = "PictureFrame";
+			mat.baseColor = "PictureFrame_BaseColor.png";
+			mat.roughness = "PictureFrame_Roughness.png";
+			mat.metallic = "PictureFrame_Metallic.png";
+			mat.normalMap = "PictureFrame_NormalMap.png";
+			Material::materials.push_back(mat);
+
+			mat.name = "Note";
+			mat.baseColor = "Note_BaseColor.png";
+			mat.roughness = "Black.png";
+			mat.metallic = "Black.png";
+			mat.normalMap = "Hands_NormalMap.png";
+			Material::materials.push_back(mat);
+
+			mat.name = "Key";
+			mat.baseColor = "Key_BaseColor.png";
+			mat.roughness = "White.png";
+			mat.metallic = "Black.png";
+			mat.normalMap = "Key_NormalMap.png";
+			Material::materials.push_back(mat);
+
+			mat.name = "PictureFrame2";
+			mat.baseColor = "PictureFrame2_BaseColor.png";
+			mat.roughness = "PictureFrame_Roughness.png";
+			mat.metallic = "PictureFrame_Metallic.png";
+			mat.normalMap = "PictureFrame_NormalMap.png";
+			Material::materials.push_back(mat);
+
+			mat.name = "Couch";
+			mat.baseColor = "Couch_A_Base_Color.png";
+			mat.roughness = "Couch_A_Roughness.png";
+			mat.metallic = "Couch_A_Metallic.png";
+			mat.normalMap = "Couch_A_NormalMap.png";
+			Material::materials.push_back(mat);
+	
+			StaticEntity* entity5 = CreateStaticEntity("NOTE", "UnitPlane.obj", glm::vec3(3.55f, 0.01f, 8.9f));
+			entity5->SetRotation(glm::vec3(0, 2.5f, 0));
+			entity5->SetScale(glm::vec3(0.2f, 0.1f, 0.1f));
+			entity5->material = Material::GetMaterialByName("Couch");
+
+			StaticEntity* entity4 = CreateStaticEntity("COUCH", "Old_Cotton_Couch.obj", glm::vec3(-2.9f, 0, 6.1f));
+			entity4->SetRotation(glm::vec3(0, HELL_PI, 0));
+			entity4->SetScale(glm::vec3(0.07f));
+			entity4->material = Material::GetMaterialByName("Couch");
+
+			StaticEntity* entity3 = CreateStaticEntity("PICTURE_FRAME_2", "PictureFrame.FBX", glm::vec3(2.2f, 1.6f, 6.7));
+			entity3->SetRotation(glm::vec3(ROTATE_270, 0, ROTATE_90));
+			entity3->SetScale(glm::vec3(0.87f));
+			entity3->material = Material::GetMaterialByName("PictureFrame2");
+
+			StaticEntity* entity = CreateStaticEntity("PICTURE_FRAME", "PictureFrame.FBX", glm::vec3(0, 1.6f, 3.25f));
+			entity->SetRotation(glm::vec3(ROTATE_270, ROTATE_90, 0));
+			entity->SetScale(glm::vec3(0.9));
+			entity->material = Material::GetMaterialByName("PictureFrame");
+
+			StaticEntity* entity2 = CreateStaticEntity("KEY", "Key.fbx", glm::vec3(-3.75f, 0.05f, 0.8f));
+			entity2->SetRotation(glm::vec3(ROTATE_270, 5.5f, 0));
+			entity2->SetScale(glm::vec3(0.0015));
+			entity2->material = Material::GetMaterialByName("Key");
+		}
+
+		StaticEntity* CreateStaticEntity(std::string entityName, std::string modelName, glm::vec3 position)
+		{
+			StaticEntity* e = new StaticEntity(Model::GetByName(modelName), position, entityName);
+			staticEntities.push_back(e);
+			return e;
+		}
+
+		void MainRenderLoop()
+		{
 			float currentFrame = (float)glfwGetTime();
 			deltaTime = currentFrame - lastFrame;
 			lastFrame = currentFrame;
 			camera.Update(deltaTime);
 			skinnedMesh.Update(deltaTime, &camera);
-
+					   			
+			Quad2D::UpdateBlitter(deltaTime);
 			Audio::MainUpdate();
 			
+			physics.Update(deltaTime);
+
 			time += deltaTime;
+			WORLD_TIME += deltaTime;
 
 			if (player.walking)
 				skinnedMesh.headBobCounter += deltaTime * skinnedMesh.headBobSpeed;
@@ -631,12 +390,14 @@ namespace HellEngine
 			for (Shell& shell : shells)
 				shell.Update(deltaTime);
 
-			raycastData = GetRaycastData(0);
-		
+			cameraRaycastData = GetRaycastData(0);
 
-			//ShotgunLogic::Update(deltaTime, &shells, &skinnedMesh, &camera);
+			if (!OpenedDoorAtStartOfLevel && WORLD_TIME > 0.5f) {
+				OpenedDoorAtStartOfLevel = true;
+				//house.doors[0].doorStatus = DoorStatus::DOOR_OPENING;
+				house.doors[0].Interact(player.position);
+			}
 
-			
 			if (!shellEjected && time > 0.45f)
 			{
 				shellEjected = true;
@@ -646,32 +407,16 @@ namespace HellEngine
 			if (time > skinnedMesh.totalAnimationTime)
 				shotgunFiring = false;
 
+			
+			player.Update(&camera, deltaTime, boundingBoxPtrs, boundingPlanePtrs);
 
-
-
-			//player.position = camera.Position;
-			player.Update(&camera, deltaTime);
-
-
-			// Check collisions
-			if (!NoClip)
-			{
-				player.HandleBoundingBoxCollisions(boundingBoxPtrs);
-				player.HandleBoundingPlaneCollisions(boundingPlanePtrs);
-			}
 
 			RenderableObject::SetPositionByName("Sphere", player.position);
-
-
-
-
-			//camera.Position = player.position;
 			camera.CalculateviewPosition(player.GetViewPosition());
 			camera.CalculateMatrices();
 
-
 			// DOORS
-			for (Door & door : house.doors)
+			for (Door& door : house.doors)
 				door.Update(deltaTime);
 
 			Shader* lampShader = Shader::GetShaderByName("LampShader");
@@ -690,17 +435,18 @@ namespace HellEngine
 			Shader* blurHorizontalShader = Shader::GetShaderByName("BlurHorizontal");
 			Shader* blurVerticalShader = Shader::GetShaderByName("BlurVertical");
 			Shader* debugShader = Shader::GetShaderByName("DEBUG");
-			Shader* DOFShader = Shader::GetShaderByName("DOF"); 
+			Shader* DOFShader = Shader::GetShaderByName("DOF");
 			Shader* decalShader = Shader::GetShaderByName("Decals");
-
-		
-
 
 			// Clear default buffer
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+			/////////////////////////////////////////////////////////////////
+			//						Ray casting House					   //
+			/////////////////////////////////////////////////////////////////
 
 			/////////////////////////////////////////////////////////////////
 			//						Prepare House						   //
@@ -717,31 +463,32 @@ namespace HellEngine
 					Light::lights.push_back(&room.light);
 				}
 			}
-			
 
 
-		/////////////////////////////////////////////////////////////////
-		//						Render passes						//
-		/////////////////////////////////////////////////////////////////
 
-		ShadowMapPass(simpleDepthShader);
-		GeometryPass(geometryShader);
-		DecalPass(decalShader);
+			//////////////////////////////////////////////////////////////
+			//						Render passes						//
+			//////////////////////////////////////////////////////////////
 
-		glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
-		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			ShadowMapPass(simpleDepthShader);
+			GeometryPass(geometryShader);
+			DecalPass(decalShader);
 
-		for (int i = 0; i < Light::lights.size(); i++) {
-			StencilPass(nullTechniqueShader, i);
-			LightingPass(lightingShader, i);
-		}
+			glBindFramebuffer(GL_FRAMEBUFFER, lightingBuffer.ID);
+			glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		CompositePass(compositeShader);
-			
-		BlurPass(blurVerticalShader, blurHorizontalShader);
-		FinalPass(finalShader);
-		DOFPass(DOFShader);
+			for (int i = 0; i < Light::lights.size(); i++) {
+				StencilPass(nullTechniqueShader, i);
+				LightingPass(lightingShader, i);
+			}
+
+			CompositePass(compositeShader);
+
+			BlurPass(blurVerticalShader, blurHorizontalShader);
+			FinalPass(finalShader);
+			DOFPass(DOFShader);
+
 
 
 			//////////////////////////////////////////////////////
@@ -770,40 +517,7 @@ namespace HellEngine
 				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gDOF);
 				glViewport(SCR_WIDTH / 2, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
 				Quad2D::RenderQuad(debugFboShader);
-
-
-		/*		glBindTexture(GL_TEXTURE_2D, blurBuffers[0].textureA);
-				glViewport(0, SCR_HEIGHT / 2, SCR_WIDTH / 2, SCR_HEIGHT / 2);
-				Quad2D::RenderQuad(debugFboShader);
-				glBindTexture(GL_TEXTURE_2D, blurBuffers[1].textureA);
-				glViewport(SCR_WIDTH / 2, SCR_HEIGHT / 2, SCR_WIDTH / 2, SCR_HEIGHT / 2);
-				Quad2D::RenderQuad(debugFboShader);
-				glBindTexture(GL_TEXTURE_2D, blurBuffers[2].textureA);
-				glViewport(0, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
-				Quad2D::RenderQuad(debugFboShader);
-				glBindTexture(GL_TEXTURE_2D, blurBuffers[3].textureA);
-				glViewport(SCR_WIDTH / 2, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2);
-				Quad2D::RenderQuad(debugFboShader);*/
-
-
-			/*	for (int x = 0; x < 4; x++)
-				{
-					glBindTexture(GL_TEXTURE_2D, blurBuffers[x].textureA);
-					glViewport(SCR_WIDTH / 4 * x, 0, SCR_WIDTH / 4 - 1, SCR_HEIGHT / 4);
-					Quad2D::RenderQuad(debugFboShader);
-
-					glBindTexture(GL_TEXTURE_2D, blurBuffers[x].textureB);
-					glViewport(SCR_WIDTH / 4 * x, SCR_HEIGHT / 4 + 1, SCR_WIDTH / 4 - 1, SCR_HEIGHT / 4);
-					Quad2D::RenderQuad(debugFboShader);
-				}*.
-
-				/*glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, blurBuffers[1].textureA);
-				Quad2D::RenderQuad(debugFboShader);*/
 			}
-
-
 
 			// Draw final image
 			else
@@ -813,43 +527,39 @@ namespace HellEngine
 				debugFboShader->use();
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gLighting);
-				//glBindTexture(GL_TEXTURE_2D, gBuffer.gAlbedoSpec);
 				glBindTexture(GL_TEXTURE_2D, lightingBuffer.gDOF);
-				//glBindTexture(GL_TEXTURE_2D, gBuffer.gEmmisive);
-				//glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("bebop.png"));
-				glDisable(GL_DEPTH_TEST); 
+				glDisable(GL_DEPTH_TEST);
 				Quad2D::RenderQuad(debugFboShader);
 				glEnable(GL_DEPTH_TEST);
 
+					/*
+					graphiteToday at 07:56
+						Honestly, having written four engines now, two personal, two professional.For shadow mapping what you want is two position - only buffers, one for static geometryand one for dynamic geometry.Things in the environment that are staticand will never move, like your worldand map models, those you bake directly down into the static buffer.Doing the vertex* matrix transform on the CPU, shoving it into that buffer.Dynamic stuff you just put all inside the dynamic position - only buffer as - is.When you do your shadow mapping pass, you calculate an index list of the geometry in the range of the light(only if the light moves, keep the same index list if the light did not move) and you render all your statics thenand there as one draw call.Now you enumerate the dynamic objects in the dynamic bufferand just render all of them(after frustum culling) those have to be rendered regardless even if the light does not move because they can end up inside any light volume.
+						This is the only method that scalesand works.
+						So the cost is basically one draw call for static geometry per light(or 6 for omni - directional point lights) + n draw calls for the dynamic objects
+						Which is pretty much unbeatable without using multiple viewports
+						So you can set an upper bound on your scene complexity this way too.Shadow draw calls will be(numSpotLights + numDirectionalLights + numPointLights * 6)* (nDynamicObjectsInView - 1)
+						Which is really not that bad
+						Oh yeah, those are lights in view too of course
+						*/
 
-			/*	glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.ID);
-				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-				glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST); 
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-				*/
-
-				/*
-				graphiteToday at 07:56
-					Honestly, having written four engines now, two personal, two professional.For shadow mapping what you want is two position - only buffers, one for static geometryand one for dynamic geometry.Things in the environment that are staticand will never move, like your worldand map models, those you bake directly down into the static buffer.Doing the vertex* matrix transform on the CPU, shoving it into that buffer.Dynamic stuff you just put all inside the dynamic position - only buffer as - is.When you do your shadow mapping pass, you calculate an index list of the geometry in the range of the light(only if the light moves, keep the same index list if the light did not move) and you render all your statics thenand there as one draw call.Now you enumerate the dynamic objects in the dynamic bufferand just render all of them(after frustum culling) those have to be rendered regardless even if the light does not move because they can end up inside any light volume.
-					This is the only method that scalesand works.
-					So the cost is basically one draw call for static geometry per light(or 6 for omni - directional point lights) + n draw calls for the dynamic objects
-					Which is pretty much unbeatable without using multiple viewports
-					So you can set an upper bound on your scene complexity this way too.Shadow draw calls will be(numSpotLights + numDirectionalLights + numPointLights * 6)* (nDynamicObjectsInView - 1)
-					Which is really not that bad
-					Oh yeah, those are lights in view too of course
-					*/
 				// Show lights
 				lampShader->use();
 				lampShader->setMat4("projection", camera.projectionMatrix);
 				lampShader->setMat4("view", camera.viewMatrix);
 
+				//reactphysics3d::Transform transform = physics.body->getTransform();
+				//float x = transform.getPosition().x;
+				//float y = transform.getPosition().y;
+				//float z = transform.getPosition().z;
 
-			//	DrawPoint(lampShader, finalShellPos, glm::mat4(1), glm::vec3(0, 1, 1));
-				//DrawPoint(lampShader, skinnedMesh.boltPos, glm::mat4(1), glm::vec3(0, 1, 1));
+
+			
+				// DrawPoint(lampShader, skinnedMesh.boltPos, glm::mat4(1), glm::vec3(0, 1, 1));
 
 				// Draw lights
 				if (showLights) {
-					for (Light * light : Light::lights)
+					for (Light* light : Light::lights)
 					{
 						lightCube.transform.position = light->position;
 
@@ -857,27 +567,51 @@ namespace HellEngine
 						lightCube.Draw(lampShader, false);
 					}
 				}
-
-				if (showRaycastPlane && raycastData.planeIndex != -1)
-				{
-					lampShader->setVec3("color", HELL_YELLOW);
-					boundingPlanePtrs[raycastData.planeIndex]->Draw(lampShader);
-				}
-
+				//if (showRaycastPlane && raycastData.planeIndex != -1)
+				//{
+			//		lampShader->setVec3("color", HELL_YELLOW);
+		//			boundingPlanePtrs[raycastData.planeIndex]->Draw(lampShader);
+		//		}
 				// Draw bounding boxes
 				if (showBoundingBoxes) {
 					lampShader->setVec3("color", HELL_YELLOW);
 					glDisable(GL_DEPTH_TEST);
 
-					for (BoundingBox* & b : boundingBoxPtrs)
-						b->Draw(lampShader);
+					//for (BoundingBox*& b : boundingBoxPtrs)
+					//	b->Draw(lampShader);
 
-					for (BoundingPlane* & p : boundingPlanePtrs)
+					//Model* model = Model::GetByName("Door.obj");
+					//model->meshes[0].Draw(lampShader);
+
+					//BoundingBox b = model->meshes[0].boundingBox;
+					//b.Draw(lampShader);
+
+
+					////////////////////
+					// BOUNDING BOXES //
+					////////////////////
+					for (StaticEntity * staticEntity : staticEntities)
+						staticEntity->DrawBoundingBox(lampShader);
+
+
+					for (RenderableObject r : RenderableObject::renderableObjects)
+						r.DrawBoundingBox(lampShader);
+
+					lampShader->setVec3("color", glm::vec3(0.4f, 0.5f, 0.5f));
+					for (Door d : house.doors)
+						d.DrawBoundingBox(lampShader);
+
+					////////////////////
+
+
+					lampShader->setMat4("model", glm::mat4(1));
+					lampShader->setVec3("color", glm::vec3(0.4f, 0.3f, 0.3f));
+					for (BoundingPlane*& p : boundingPlanePtrs)
 						p->Draw(lampShader);
-					
+
 					// player sphere
-					RenderableObject r = RenderableObject(Model::GetByName("sphere.obj"), "NO TEXTURE", player.position, glm::vec3(0), glm::vec3(0.1f));
-					r.Draw(lampShader, false);
+					//RenderableObject r = RenderableObject(Model::GetByName("sphere.obj"), "NO TEXTURE", player.position, glm::vec3(0), glm::vec3(0.1f));
+					//r.Draw(lampShader, false);
 
 					glEnable(GL_DEPTH_TEST);
 				}
@@ -887,16 +621,13 @@ namespace HellEngine
 					glDisable(GL_DEPTH_TEST);
 					glEnable(GL_CULL_FACE);
 
-					//glDisable(GL_CULL_FACE);
-
-
 					lampShader->setVec3("color", glm::vec3(1, 0, 0));
 
 					// Render main room
 					house.rooms[0].lightVolume.Draw(lampShader, GL_TRIANGLES);
 
 					// Render door way volumes
-					for (Room & room : house.rooms)
+					for (Room& room : house.rooms)
 					{
 						for (int i = 0; i < room.doors_BackWall.size(); i++)
 							if (room.doors_BackWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
@@ -914,25 +645,13 @@ namespace HellEngine
 							if (room.doors_RightWall[i]->doorStatus != DoorStatus::DOOR_CLOSED)
 								room.rightWallDoorwayLightVolumes[i].Draw(lampShader, GL_TRIANGLES);
 					}
-
-
-					//glEnable(GL_CULL_FACE);
 					glEnable(GL_DEPTH_TEST);
 				}
-
-				// CROSSHAIR
+				// 2D Rendering
+				TextBlitterPass(debugFboShader, 14);
 				CrosshairPass(debugFboShader, 14);
 			}
-
-			// SKYBOX DEBUG
-			//DrawSkybox(skyboxShader);
-
-			// Update Mouse Pick ID
-			mousePicked = GetMousePicked();
-
-			//std::cout << Texture::GetIDByName("door.png") << ": YEH WHAT\n";
 		}
-
 
 		void FxaaPass(Shader *shader)
 		{
@@ -950,6 +669,7 @@ namespace HellEngine
 			shader->use();
 			shader->setMat4("gWVP", gWVP);
 			
+
 			glBindFramebuffer(GL_FRAMEBUFFER, gBuffer.ID);
 			glDrawBuffer(GL_NONE);
 
@@ -1004,7 +724,7 @@ namespace HellEngine
 			shader->use();
 			shader->setMat4("inverseProjectionMatrix", glm::inverse(camera.projectionMatrix));
 			shader->setMat4("inverseViewMatrix", glm::inverse(camera.viewMatrix));
-			shader->setVec3("viewPos", camera.Position);
+			shader->setVec3("viewPos", camera.transform.position);
 			shader->setFloat("screenWidth", SCR_WIDTH);
 			shader->setFloat("screenHeight", SCR_HEIGHT);
 			shader->setInt("shadows", true);
@@ -1043,7 +763,10 @@ namespace HellEngine
 			glm::mat4 gWVP = camera.projectionMatrix * camera.viewMatrix * modelMatrix;
 			shader->setInt("lightIndex", i);
 			shader->setMat4("gWVP", gWVP);
-			RenderableObject sphere = RenderableObject(Model::GetByName("SphereLight.obj"), "red.png", light->position, glm::vec3(0), glm::vec3(light->radius));
+			RenderableObject sphere = RenderableObject("Light", Model::GetByName("SphereLight.obj"), &physics);
+			sphere.transform.position = light->position;
+			sphere.transform.rotation = glm::vec3(0);
+			sphere.transform.scale = glm::vec3(light->radius);
 			sphere.Draw(shader, false);
 
 			glCullFace(GL_BACK);
@@ -1346,13 +1069,33 @@ namespace HellEngine
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 
+		void TextBlitterPass(Shader* shader, int crosshairSize)
+		{
+			glEnable(GL_BLEND);
+			glDisable(GL_DEPTH_TEST);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			shader->use();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("CharSheet.png"));
+
+
+			Quad2D::DrawTextBlit(shader);
+		}
+
 		void CrosshairPass(Shader *shader, int crosshairSize)
 		{
-			int texID = -1;
-			if (mousePicked.type == MousePickType::Door)
-				texID = Texture::GetIDByName("crosshair_interact.png");
-			else
-				texID = Texture::GetIDByName("crosshair_cross.png");
+
+
+			int texID = Texture::GetIDByName("crosshair_cross.png");
+			
+			if (cameraRaycastData.distance < interactDistance)
+			{
+				if (cameraRaycastData.name == "DOOR"
+					|| (!Door::PlayerHasKey && cameraRaycastData.name == "KEY")
+					|| (cameraRaycastData.name == "NOTE"))
+					texID = Texture::GetIDByName("crosshair_interact.png");
+			}
 
 			glEnable(GL_BLEND);
 			glDisable(GL_DEPTH_TEST);
@@ -1385,13 +1128,16 @@ namespace HellEngine
 			glDepthFunc(GL_LESS);
 		}
 
-		void DrawScene(Shader *shader, bool bindTextures)
+		void DrawScene(Shader* shader, bool bindTextures)
 		{
 			house.DrawAll(shader, bindTextures);
-			RenderableObject::DrawAll(shader, bindTextures);
+			//RenderableObject::DrawAll(shader, bindTextures);
 
-			RenderableObject r;
-			r.model == Model::GetByName("Shell.fbx");
+			//RenderableObject r;
+			//r.model == Model::GetByName("Shell.fbx");
+
+			for (StaticEntity * staticEntity : staticEntities)
+				staticEntity->Draw(shader, bindTextures);
 
 
 			for (Shell shell : shells)
@@ -1403,6 +1149,29 @@ namespace HellEngine
 			{
 				Util::OUTPUT_TEXT = "";
 				Util::OUTPUT("Time: " + std::to_string(time));
+
+				/*
+				std::string name = "NONE";
+				int index = bulletRaycastData.index;
+				if (bulletRaycastData.type == RigidBodyType::NONE)
+					name = "NONE";
+				if (bulletRaycastData.type == RigidBodyType::DOOR)
+					name = "Door";
+				if (bulletRaycastData.type == RigidBodyType::STATIC_ENTITY)
+					name = bulletRaycastData.name;
+					*/
+
+				Util::OUTPUT("RAYCAST: " + cameraRaycastData.name);
+				Util::OUTPUT("Index:   " + std::to_string(cameraRaycastData.index));
+
+				btVector3 pos = player.rigidBody->getCenterOfMassPosition();
+				glm::vec3 pos2 = Util::btVec3_to_glmVec3(pos);
+
+
+				Util::OUTPUT("Rigid Pos: " + Util::Vec3ToString(pos2));
+				Util::OUTPUT("target vel:  " + Util::Vec3ToString(player.targetVelocity));
+				Util::OUTPUT("current vel: " + Util::Vec3ToString(player.currentVelocity));
+
 
 				vector<glm::mat4> Transforms;
 
@@ -1419,11 +1188,84 @@ namespace HellEngine
 				shader->setInt("animated", false);
 				//////////////////////////////////////////////////////////////////////////////////
 			}
+
+			// Draw outside of house
+			/*if (bindTextures) {
+				glFrontFace(GL_CW);
+				OuterWallPlane_0.DrawSolid(shader);
+				OuterWallPlane_1.DrawSolid(shader);
+				OuterWallPlane_2.DrawSolid(shader);
+				OuterWallPlane_3.DrawSolid(shader);
+				OuterWallPlane_4.DrawSolid(shader);
+				OuterWallPlane_5.DrawSolid(shader);
+				glFrontFace(GL_CCW);
+			}*/
+
+			RenderableObject cube = RenderableObject("Cube", Model::GetByName("cube.obj"), NULL);
+			cube.diffuseTextureID = Texture::GetIDByName("eye.png");
+			cube.metallicTextureID = Texture::GetIDByName("Hands_Metallic.png");
+			cube.roughnessTextureID = Texture::GetIDByName("Hands_Roughness.png");
+			cube.normalMapID = Texture::GetIDByName("Hands_NormalMap.png");
+			
+			RenderableObject cylinder = RenderableObject("Cylinder", Model::GetByName("cylinder.obj"), NULL);
+			cylinder.diffuseTextureID = Texture::GetIDByName("eye.png");
+			cylinder.metallicTextureID = Texture::GetIDByName("Hands_Metallic.png");
+			cylinder.roughnessTextureID = Texture::GetIDByName("Hands_Roughness.png");
+			cylinder.normalMapID = Texture::GetIDByName("Hands_NormalMap.png");
+			cylinder.transform.scale = glm::vec3(player.radius, player.height * 0.5f, player.radius);
+
+
+			if (showRigidBodies)
+			{
+				// PLAYER	
+				cylinder.diffuseTextureID = Texture::GetIDByName("White.png");
+				cylinder.diffuseTextureID = Texture::GetIDByName("eye.png");
+				float playerX = player.rigidBody->getCenterOfMassPosition().x();
+				float playerY = player.rigidBody->getCenterOfMassPosition().y();
+				float playerZ = player.rigidBody->getCenterOfMassPosition().z();
+				cylinder.transform.position = glm::vec3(playerX, playerY, playerZ);
+				cylinder.Draw(shader, true);
+
+				for (int i = 0; i < physics.m_rigidBodies.size(); i++)
+				{				
+					if (physics.m_rigidBodies[i]->getWorldArrayIndex() == RayCastWorldArrayIndex)
+						cube.diffuseTextureID = Texture::GetIDByName("White.png");
+					else
+						cube.diffuseTextureID = Texture::GetIDByName("eye.png");
+
+					float xpos = (float)physics.m_rigidBodies[i]->getCenterOfMassPosition().x();
+					float ypos = (float)physics.m_rigidBodies[i]->getCenterOfMassPosition().y();
+					float zpos = (float)physics.m_rigidBodies[i]->getCenterOfMassPosition().z();
+
+					cube.transform.position = glm::vec3(xpos, ypos, zpos);
+
+					btCollisionShape* col = physics.m_rigidBodies[i]->getCollisionShape();
+					btVector3 scale = col->getLocalScaling();
+
+					auto quat = physics.m_rigidBodies[i]->getWorldTransform().getRotation();
+
+					btMatrix3x3 ori = btMatrix3x3(quat);
+
+					btQuaternion q;
+					ori.getRotation(q);
+
+					btScalar x, y, z;
+					physics.m_rigidBodies[i]->getWorldTransform().getRotation().getEulerZYX(x, y, z);
+
+					cube.transform.rotation = glm::vec3(z, y, x);
+					cube.transform.scale = glm::vec3(scale.x(), scale.y(), scale.z());
+			
+					cube.Draw(shader, true);
+				}
+			}
 		}
 
 		
 		virtual void OnImGuiRender() override
 		{
+			if (!GameLoaded)
+				return;
+
 			if (!showImGUI)
 				return;
 
@@ -1449,11 +1291,12 @@ namespace HellEngine
 
 			// Player pos
 			std::string p = "Player Pos: " + std::to_string(player.position.x) + ", " + std::to_string(player.position.y) + ", " + std::to_string(player.position.z);
+			//std::string p = "Camera Rot: " + std::to_string(camera.Rotation.x) + ", " + std::to_string(camera.Rotation.y) + ", " + std::to_string(camera.Rotation.z);
 			ImGui::Text(p.c_str());
 			ImGui::Text(" ");
 
-			if (raycastData.planeIndex != -1)
-			Util::OUTPUT("raycast plane: " + Util::Vec3ToString(boundingPlanePtrs[raycastData.planeIndex]->normal));
+			//if (raycastData.planeIndex != -1)
+			//Util::OUTPUT("raycast plane: " + Util::Vec3ToString(boundingPlanePtrs[raycastData.planeIndex]->normal));
 
 			ImGui::Text(Util::OUTPUT_TEXT.c_str());
 
@@ -1590,13 +1433,27 @@ namespace HellEngine
 			ImGui::Text("WASD: movement");
 			ImGui::Text("Space: jump");
 			ImGui::Text("Ctrl: crouch");
+			ImGui::Text("Left mouse: fire");
+			ImGui::Text("E: interact");
+			ImGui::Text("Caps: show buffers");
 			ImGui::Text("F: toggle fullscreen");
 			ImGui::Text("B: toggle bounding boxes");
 			ImGui::Text("R: toggle raycast plane");
-			ImGui::Text("M: toggle mouse usage");
 			ImGui::Text("C: toggle clipping");
-			ImGui::Text("C: also clears decals");
+			ImGui::Text("T: clears decals");
+			ImGui::Text("L: recalculate light volumes");
+			ImGui::Text("M: toggle mouse control");
 			ImGui::Text("I: hide/show this box");
+			ImGui::Text("Esc: Quit");
+
+
+
+
+		//	if (ImGui::InputFloat3("POS ##dggB", glm::value_ptr(notePosition), 10, 10));
+		//	if (ImGui::InputFloat3("ROT ##dgfB", glm::value_ptr(noteRotation), 10, 10));
+		//	if (ImGui::InputFloat3("SCA ##dagB", glm::value_ptr(noteScale), 10, 10));
+
+			
 		}
 
 		void PlayerMenu()
@@ -1751,7 +1608,7 @@ namespace HellEngine
 				house.RebuildRooms();
 				RebuildMap();
 
-				camera.Position = glm::vec3(0.6f, 0.0f, 9.45f);
+				camera.transform.position = glm::vec3(0.6f, 0.0f, 9.45f);
 				player.position = glm::vec3(0.6f, 0.0f, 9.45f);
 				camera.TargetYaw = 270.0f;
 				camera.TargetPitch = -6.0f;
@@ -1769,7 +1626,7 @@ namespace HellEngine
 			ImGui::PushItemWidth(75);
 
 			if (ImGui::Button("New Door")) {
-				house.AddDoor(house.newDoorPosition.x, house.newDoorPosition.y, Axis::X, "FloorBoards", false);
+				house.AddDoor(house.newDoorPosition.x, house.newDoorPosition.y, Axis::X, "FloorBoards", false, false, 2, false);
 				RebuildMap();
 			}
 			ImGui::SameLine(); ImGui::Text("At");
@@ -2049,6 +1906,12 @@ namespace HellEngine
 							ImGui::Text("Floor Rotate  ");
 							ImGui::SameLine(); ImGui::Checkbox("##checkBox3", &house.doors[i].floor.rotateTexture);
 
+							ImGui::Text("Initially open   ");
+							ImGui::SameLine(); ImGui::Checkbox("##checkBox4", &house.doors[i].initiallyOpen);
+							ImGui::Text("Initially locked ");
+							ImGui::SameLine(); ImGui::Checkbox("##checkBox5", &house.doors[i].initiallyLocked);
+							ImGui::Text("Max open angle  ");
+							ImGui::SameLine(); if (ImGui::SliderFloat("##gg", &house.doors[i].maxOpenAngle, 0.0f, 4.0f));
 						}
 						ImGui::EndTabItem();
 					}
@@ -2057,6 +1920,7 @@ namespace HellEngine
 			}
 		}
 
+		bool FIRST_E_KEY_PRESS = true;
 
 		void OnEvent(HellEngine::Event& event) override
 		{
@@ -2069,10 +1933,25 @@ namespace HellEngine
 					shellEjected = false;
 					shotgunFiring = true;
 
+					BulletRaycastData bulletRaycastData;
+
 					for (int i = 0; i < 12; i++) {
-						raycastData = GetRaycastData(0.125f);
-						if (raycastData.planeIndex != -1)
-						decals.push_back(Decal(DecalType::BULLET_HOLE, raycastData.intersectionPoint, boundingPlanePtrs[raycastData.planeIndex]->normal));
+						bulletRaycastData = GetRaycastData(0.125f);
+						decals.push_back(Decal(DecalType::BULLET_HOLE, bulletRaycastData.hitPoint, bulletRaycastData.surfaceNormal));
+					}
+
+					btVector3 direction = btVector3(-camera.Front.x, -camera.Front.y, -camera.Front.z);
+					btVector3 offsetFromCOM = btVector3(0, 0, 0);
+					
+
+					for (int i = 0; i < physics.m_rigidBodies.size(); i++)
+					{
+						if (physics.m_rigidBodies[i]->getWorldArrayIndex() == RayCastWorldArrayIndex)
+						{
+							physics.m_rigidBodies[i]->activate();
+							physics.m_rigidBodies[i]->applyForce(direction * 500, RayCastOffsetFromCOM);
+							physics.m_rigidBodies[i]->applyImpulse(direction, RayCastOffsetFromCOM);
+						}
 					}
 				}
 			}
@@ -2082,24 +1961,22 @@ namespace HellEngine
 			{
 				HellEngine::KeyPressedEvent& e = (HellEngine::KeyPressedEvent&)event;
 
+				//// RESET TIME
+				//if (e.GetKeyCode() == HELL_KEY_T)
+				//	time = 0;
 
-				/*if (e.GetKeyCode() == HELL_KEY_1)
-					Audio::LoadAudio("Music.mp3");
-				if (e.GetKeyCode() == HELL_KEY_2)
-					Audio::LoadAudio("Music2.mp3");
-				if (e.GetKeyCode() == HELL_KEY_3)
-					Audio::LoadAudio("Music3.mp3");*/
-
-					// RESET TIME
+				// RESET DECALS
 				if (e.GetKeyCode() == HELL_KEY_T)
-					time = 0;
-
-				// RESET TIME
-				if (e.GetKeyCode() == HELL_KEY_C)
 				{
 					decals.clear();
 				}
-					
+
+				// RESET TEXT BLIT
+				//if (e.GetKeyCode() == HELL_KEY_K)
+				//{
+				//	Door::PlayerHasKey = true;
+				//}
+
 				// toggle fullscreen
 				if (e.GetKeyCode() == HELL_KEY_F)
 				{
@@ -2109,7 +1986,7 @@ namespace HellEngine
 				}
 				// No Clip
 				if (e.GetKeyCode() == HELL_KEY_C)
-					NoClip = !NoClip;
+					player.NoClip = !player.NoClip;
 				// show bounding boxes
 				if (e.GetKeyCode() == HELL_KEY_B)
 					showBoundingBoxes = !showBoundingBoxes;
@@ -2117,36 +1994,46 @@ namespace HellEngine
 				if (e.GetKeyCode() == HELL_KEY_CAPS_LOCK)
 					showBuffers = true;
 				// show lights
-				if (e.GetKeyCode() == HELL_KEY_L)
-					showLights = !showLights;
+				//if (e.GetKeyCode() == HELL_KEY_L)
+				//	showLights = !showLights;
 				// show ImGui
-				if (e.GetKeyCode() == HELL_KEY_I)
+				if (e.GetKeyCode() == HELL_KEY_I) {
+
 					showImGUI = !showImGUI;
+					//HellEngine::Application::Get().GetWindow().ToggleMouseEnabled();
+				}
 				// Optimize
 				if (e.GetKeyCode() == HELL_KEY_O)
 					optimise = !optimise;
-				// Toggle mouse control
+				
+				// Physics
+				if (e.GetKeyCode() == HELL_KEY_P)
+					showRigidBodies = !showRigidBodies;
+
+				//Toggle mouse control
 				if (e.GetKeyCode() == HELL_KEY_M)
 					HellEngine::Application::Get().GetWindow().ToggleMouseEnabled();
+				
 				// Recalculate shit
-				if (e.GetKeyCode() == HELL_KEY_R) {
+				if (e.GetKeyCode() == HELL_KEY_L) {
 					for (Light * light : Light::lights)
 						light->CalculateShadowProjectionMatricies();
-
 
 					for (Room & room : house.rooms)
 						room.CreateLightVolumes();
 				}
 				// Light Volumes
-				if (e.GetKeyCode() == HELL_KEY_V)
-					showVolumes = !showVolumes;	
-				
+				//if (e.GetKeyCode() == HELL_KEY_V)
+				//	showVolumes = !showVolumes;	
+
 				// Raycast Plane
 				if (e.GetKeyCode() == HELL_KEY_R)
 					showRaycastPlane = !showRaycastPlane;
 
+
+			
 				// Weapons
-				if (e.GetKeyCode() == HELL_KEY_1)
+				/*if (e.GetKeyCode() == HELL_KEY_1)
 					selectedWeapon = 1;
 				if (e.GetKeyCode() == HELL_KEY_2)
 					selectedWeapon = 2;
@@ -2155,17 +2042,15 @@ namespace HellEngine
 				if (e.GetKeyCode() == HELL_KEY_4)
 					selectedWeapon = 4;
 				if (e.GetKeyCode() == HELL_KEY_5)
-					selectedWeapon = 5;
+					selectedWeapon = 5;*/
 
 				if (e.GetKeyCode() == HELL_KEY_E)
 				{
-					Interact();
-				}
-
-				if (e.GetKeyCode() == HELL_KEY_Q)
-					for (Door& door : house.doors)
-						door.Interact();
-					
+					if (FIRST_E_KEY_PRESS) {
+						FIRST_E_KEY_PRESS = false;
+						Interact();
+					}
+				}				
 			}
 			//Key released
 			if (event.GetEventType() == HellEngine::EventType::KeyReleased)
@@ -2175,6 +2060,10 @@ namespace HellEngine
 				// stop showing buffers
 				if (e.GetKeyCode() == HELL_KEY_CAPS_LOCK)
 					showBuffers = false;
+
+
+			if (e.GetKeyCode() == HELL_KEY_E)
+					FIRST_E_KEY_PRESS = true;
 			}
 		}
 
@@ -2241,82 +2130,149 @@ namespace HellEngine
 			glDeleteBuffers(1, &VBO);
 		}
 
-		void AssingMousePickIDs()
-		{
-			mousePickIndices.clear();
-			mousePickIndices.push_back(MousePickInfo{ MousePickType::NotFound, -1 }); // Prevent 0 being a colour, it's reserved for background.
-
-			for (int i = -0; i < house.doors.size(); i++)
-				mousePickIndices.push_back(MousePickInfo{ MousePickType::Door, i });
-
-//			for (int i = -0; i < house.walls.size(); i++)
-//				mousePickIndices.push_back(MousePickInfo{ MousePickType::Wall, i });
-		}
-
 		void Interact()
 		{
-			int i = mousePicked.indexInVector;
-			MousePickType type = mousePicked.type;
-
-			if (type == MousePickType::Door)
-				house.doors.at(i).Interact();
-		}
-
-		MousePickInfo GetMousePicked()
-		{			
-			int i = GetPixelColorAtMouse();
-
-			if (i >= 0 && i < mousePickIndices.size())
-				return MousePickInfo{ mousePickIndices[i].type, mousePickIndices[i].indexInVector };
-			else
-				return MousePickInfo{ MousePickType::NotFound, -1 };
-		}
-
-		int GetPixelColorAtMouse()
-		{
-			// PBO stuff
-			pBuffer.index = (pBuffer.index + 1) % 2;
-			pBuffer.nextIndex = (pBuffer.index + 1) % 2;
-
-			GLubyte* src;
-			int result = -1;
-			// READ PIXELS + 2 ALTERNATING PBOs
-			if (true)
+			if (cameraRaycastData.distance < interactDistance)
 			{
-				glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.ID);
+				// Open doors
+				if (cameraRaycastData.name == "DOOR")
+					house.doors[cameraRaycastData.index].Interact(player.position);
 
-				glBindBuffer(GL_PIXEL_PACK_BUFFER, pBuffer.pboIds[pBuffer.index]);
-				glReadBuffer(GL_COLOR_ATTACHMENT3);
-				glReadPixels(SCR_WIDTH / 2, SCR_HEIGHT / 2, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-				// map the PBO that contain framebuffer pixels before processing it
-				glBindBuffer(GL_PIXEL_PACK_BUFFER, pBuffer.pboIds[pBuffer.nextIndex]);
-				GLubyte* src = (GLubyte*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-				if (src)
+				// Take key
+				if (!Door::PlayerHasKey && cameraRaycastData.name == "KEY")
 				{
-					//result = *((int*)src); unsafe apparently
-					result = *reinterpret_cast<int *>(src);
-					glUnmapBuffer(GL_PIXEL_PACK_BUFFER); // // release pointer to the mapped buffer
+					Audio::PlayAudio("PickUp.wav");
+					Door::PlayerHasKey = true;
+					Quad2D::TypeText("YOU TOOK THE HOUSE KEY.", true);
+					DeleteEntity("KEY");
+				}
+				// Take Note
+				if (cameraRaycastData.name == "NOTE")
+				{
+					Audio::PlayAudio("PickUp.wav");
+					Quad2D::TypeText("WE ARE ALL ALONE ON LIFE'S JOURNEY, HELD CAPTIVE_BY THE LIMITATIONS OF HUMAN CONSCIOUSNESS.", true);
+					DeleteEntity("NOTE");
 				}
 			}
-			// GET TEXTURE SUB IMAGE
-			/*if (false)
-				glGetTextureSubImage(gBuffer.gMousePick, 0, SCR_WIDTH / 2, SCR_HEIGHT / 2, 0, 1, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, 4, &pixelData);
+		}
 
-			// PLANE OLD PLEB READ PIXELS
-			if (false)
+		void DeleteEntity(std::string name)
+		{
+			for (int i = 0; i < staticEntities.size(); i++)
 			{
-				glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer.ID);
-				glReadBuffer(GL_COLOR_ATTACHMENT3);
-				glReadPixels(SCR_WIDTH / 2, SCR_HEIGHT / 2, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, &pixelData);
+				if (staticEntities[i]->name == name)
+				{
+					// Remove from memory (which calls the construcor which deletes from Bullet)
+					delete staticEntities[i];
+					// Remove pointer from vector
+					staticEntities.erase(staticEntities.begin() + i);
+				}
+			}
+		}
+
+		vector<BoundingBox*> CreateBoudingBoxPtrsVector()
+		{
+			vector<BoundingBox*> b;
+
+//			for (Door& d : house.doors)
+//				b.push_back(&d.boundingBox);
+			for (RenderableObject& r : RenderableObject::renderableObjects)
+				if (r.hasCollision)
+					b.push_back(&r.boundingBox);
+
+			return b;
+		}
+
+		vector<BoundingPlane*> CreateBoudingPlanePtrsVector()
+		{
+			vector<BoundingPlane*> planes;
+
+			// Iterate over ever room in the house, add the walls
+			for (Room& room : house.rooms)
+			{
+				for (Wall& w : room.walls)
+					planes.push_back(&w.boundingPlane);
+				planes.push_back(&room.floor.plane);
+				planes.push_back(&room.ceiling.plane);
+			}
+			/*for (BoundingBox* box : boundingBoxPtrs)
+			{
+				BoundingPlane* p0 = &box->frontPlane;
+				BoundingPlane* p1 = &box->backPlane;
+				BoundingPlane* p2 = &box->leftPlane;
+				BoundingPlane* p3 = &box->rightPlane;
+				BoundingPlane* p4 = &box->topPlane;
+				p0->testCollisions = false;
+				p1->testCollisions = false;
+				p2->testCollisions = false;
+				p3->testCollisions = false;
+				p4->testCollisions = false;
+
+				planes.push_back(p0);
+				planes.push_back(p1);
+				planes.push_back(p2);
+				planes.push_back(p3);
+				planes.push_back(p4);
 			}*/
-			return result;
+
+			// Hack the outside of the house a collision wall
+			glm::vec3 HouseCornerA = glm::vec3(5.6f, 0, -0.1f);
+			glm::vec3 HouseCornerB = glm::vec3(-4.2f, 0, -0.1f);
+			glm::vec3 HouseCornerC = glm::vec3(5.6f, 0, 9.7f);
+			glm::vec3 HouseCornerD = glm::vec3(-4.2f, 0, 9.7f);
+
+			// Back wall of house
+			OuterWallPlane_4 = BoundingPlane(glm::vec3(HouseCornerB.x, 2.4f, HouseCornerD.z),
+				glm::vec3(HouseCornerA.x, 2.4f, HouseCornerD.z),
+				glm::vec3(HouseCornerA.x, 0, HouseCornerD.z),
+				glm::vec3(HouseCornerB.x, 0, HouseCornerD.z), true, "Outside_Wall");
+			planes.push_back(&OuterWallPlane_4);
+
+			// One of the side wall
+			OuterWallPlane_2 = BoundingPlane(glm::vec3(HouseCornerB.x, 2.4f, HouseCornerB.z),
+				glm::vec3(HouseCornerD.x, 2.4f, HouseCornerD.z),
+				glm::vec3(HouseCornerD.x, 0, HouseCornerD.z),
+				glm::vec3(HouseCornerB.x, 0, HouseCornerB.z), true, "Outside_Wall");
+			planes.push_back(&OuterWallPlane_2);
+
+			// One of the side wall
+			OuterWallPlane_3 = BoundingPlane(glm::vec3(HouseCornerC.x, 2.4f, HouseCornerC.z),
+				glm::vec3(HouseCornerA.x, 2.4f, HouseCornerA.z),
+				glm::vec3(HouseCornerA.x, 0, HouseCornerA.z),
+				glm::vec3(HouseCornerC.x, 0, HouseCornerC.z), true, "Outside_Wall");
+			planes.push_back(&OuterWallPlane_3);
+
+			// Front wall 
+			OuterWallPlane_0 = BoundingPlane(glm::vec3(HouseCornerA.x, 2.4f, HouseCornerA.z),
+				glm::vec3(1.0f, 2.4f, HouseCornerA.z),
+				glm::vec3(1.0f, 0, HouseCornerA.z),
+				glm::vec3(HouseCornerA.x, 0, HouseCornerA.z), true, "Outside_Wall");
+			planes.push_back(&OuterWallPlane_0);
+
+			// Front wall
+			OuterWallPlane_1 = BoundingPlane(glm::vec3(0.2f, 2.4f, HouseCornerA.z),
+				glm::vec3(HouseCornerB.x, 2.4f, HouseCornerA.z),
+				glm::vec3(HouseCornerB.x, 0, HouseCornerA.z),
+				glm::vec3(0.2f, 0, HouseCornerA.z), true, "Outside_Wall");
+			planes.push_back(&OuterWallPlane_1);
+
+			// Front wall top part above door
+			OuterWallPlane_5 = BoundingPlane(glm::vec3(1, 2.4f, HouseCornerA.z),
+				glm::vec3(0.2f, 2.4f, HouseCornerA.z),
+				glm::vec3(0.2f, 2.1f, HouseCornerA.z),
+				glm::vec3(1, 2.1f, HouseCornerA.z), false, "Outside_Wall");
+			planes.push_back(&OuterWallPlane_5);
+
+			//RenderableObject::SetPositionByName("OuterWall_0", glm::vec3(-4.2, 1, -0.1f));
+			///RenderableObject::SetRotationByName("OuterWall_0", glm::vec3(ROTATE_90, 0, 0));
+			//RenderableObject::SetScaleByName("OuterWall_0", glm::vec3(9.7, 2.4f, 1));
+
+			return planes;
 		}
 
 		void RebuildMap()
 		{
 			house.RebuildRooms();
-			AssingMousePickIDs();
 			boundingBoxPtrs = CreateBoudingBoxPtrsVector();
 			boundingPlanePtrs = CreateBoudingPlanePtrsVector();
 			_IMGUI_RUN_ONCE = true;
@@ -2334,52 +2290,166 @@ namespace HellEngine
 
 		}
 
-		RaycastData GetRaycastData(float variance)
+		BulletRaycastData GetRaycastData(float variance)
 		{
-			 
-			// RAYCASTING
+			// Calculate ray direction
 			glm::vec3 ray_nds = glm::vec3(0, 0, 0);
 			glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, -1.0f, 1.0f);
 			glm::vec4 ray_eye = glm::inverse(camera.projectionMatrix) * ray_clip;
 			ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0f, 0.0f);
 			glm::vec3 r = glm::inverse(camera.viewMatrix) * ray_eye;
 			ray_direction = glm::vec3(r.x, r.y, r.z);
-			
+
+			glm::vec3 direction = camera.Front;
+
+			// Variance
 			float offset = (variance * 0.5) - RandomFloat(0, variance);
-			ray_direction.x += offset;
+			direction.x += offset;
 			offset = (variance * 0.5) - RandomFloat(0, variance);
-			ray_direction.y += offset;
+			direction.y += offset;
 			offset = (variance * 0.5) - RandomFloat(0, variance);
-			ray_direction.z += offset;
+			direction.z += offset;
+			direction = glm::normalize(direction);
 
-			ray_direction = glm::normalize(ray_direction);
-			
-			glm::vec3 ray_origin = camera.Position;
+			// Begining and end of ray
+			glm::vec3 out_origin = camera.transform.position;
+			glm::vec3 out_end = out_origin + (direction * glm::vec3(-100));
 
-			RaycastData raycastData;
-			raycastData.distance = 1000;
-			raycastData.planeIndex = -1;
-			raycastData.intersectionPoint = glm::vec3(0);
+			btCollisionWorld::ClosestRayResultCallback RayCallback(
+				btVector3(out_origin.x, out_origin.y, out_origin.z),
+				btVector3(out_end.x, out_end.y, out_end.z)
+			);
+			physics.m_dynamicsWorld->rayTest(
+				btVector3(out_origin.x, out_origin.y, out_origin.z),
+				btVector3(out_end.x, out_end.y, out_end.z),
+				RayCallback
+			);
 
-			for (int i = 0; i < boundingPlanePtrs.size(); i++)
+			BulletRaycastData raycastData;
+			raycastData.index = -1;
+			raycastData.hitPoint = glm::vec3(0);
+			raycastData.surfaceNormal = glm::vec3(0);
+			raycastData.distance = 0;
+			raycastData.name = "UNKNOWN";
+
+			if (RayCallback.hasHit())
 			{
-				BoundingPlane* plane = boundingPlanePtrs[i];
-				// Check first triangle
-				CollisionData collision = Util::RayTriangleIntersect(ray_origin, ray_direction, plane->A, plane->B, plane->C);
-				if (collision.occured && collision.distance < raycastData.distance) {
-					raycastData.intersectionPoint = collision.location;
-					raycastData.distance = collision.distance;
-					raycastData.planeIndex = i;
-				}
-				// Check second triangle
-				collision = Util::RayTriangleIntersect(ray_origin, ray_direction, plane->C, plane->D, plane->A);
-				if (collision.occured && collision.distance < raycastData.distance) {
-					raycastData.intersectionPoint = collision.location;
-					raycastData.distance = collision.distance;
-					raycastData.planeIndex = i;
+				// Collision object
+				btVector3 objectCOM = RayCallback.m_collisionObject->getWorldTransform().getOrigin();
+				RayCastOffsetFromCOM = objectCOM - RayCallback.m_hitPointWorld;
+
+				// Find rigid body
+				RayCastWorldArrayIndex = (int)RayCallback.m_collisionObject->getWorldArrayIndex();
+
+				btRigidBody* rigidBody = (btRigidBody*)RayCallback.m_collisionObject;
+
+				raycastData.hitPoint = Util::btVec3_to_glmVec3(RayCallback.m_hitPointWorld);
+				raycastData.distance = (RayCallback.m_hitPointWorld - Util::glmVec3_to_btVec3(camera.transform.position)).length();
+				raycastData.surfaceNormal = Util::btVec3_to_glmVec3(RayCallback.m_hitNormalWorld);
+
+				EntityData* entityData = (EntityData*)rigidBody->getUserPointer();
+				if (entityData) {
+					raycastData.index = entityData->vectorIndex;
+					raycastData.name = entityData->name;
 				}
 			}
 			return raycastData;
+		}
+
+		void SetupShaderLocations()
+		{
+			// Shaders
+			Shader::LoadShader("LampShader", "white.vert", "white.frag", "NONE");
+			Shader::LoadShader("debugFboShader", "fbo_debug.vert", "fbo_debug.frag", "NONE");
+			Shader::LoadShader("Geometry", "geometry.vert", "geometry.frag", "NONE");
+			Shader::LoadShader("Shadow", "shadow.vert", "shadow.frag", "NONE");
+			Shader::LoadShader("SimpleDepth", "shadowDepth.vert", "shadowDepth.frag", "shadowDepth.geom");
+			Shader::LoadShader("Skybox", "skybox.vert", "skybox.frag", "NONE");
+			Shader::LoadShader("Lighting", "lighting.vert", "lighting.frag", "NONE");
+			Shader::LoadShader("DEBUG", "test.vert", "test.frag", "NONE");
+			Shader::LoadShader("Composite", "composite.vert", "composite.frag", "NONE");
+			Shader::LoadShader("NullTechnique", "null_technique.vert", "null_technique.frag", "NONE");
+			Shader::LoadShader("BlurHorizontal", "blurHorizontal.vert", "blur.frag", "NONE");
+			Shader::LoadShader("BlurVertical", "blurVertical.vert", "blur.frag", "NONE");
+			Shader::LoadShader("Final", "final.vert", "final.frag", "NONE");
+			Shader::LoadShader("DownScale", "downScale.vert", "downScale.frag", "NONE");
+			Shader::LoadShader("Final", "final.vert", "final.frag", "NONE");
+			Shader::LoadShader("DOF", "DOF.vert", "DOF.frag", "NONE");
+			Shader::LoadShader("Decals", "decals.vert", "decals.frag", "NONE");
+
+			Shader* simpleDepthShader = Shader::GetShaderByName("SimpleDepth");
+
+			Shader* geometryShader = Shader::GetShaderByName("Geometry");
+			geometryShader->use();
+			geometryShader->setInt("diffuseTexture", 0);
+			geometryShader->setInt("roughnessTexture", 1);
+			geometryShader->setInt("metallicTexture", 2);
+			geometryShader->setInt("normalMap", 3);
+			geometryShader->setInt("emissiveMap", 4);
+			geometryShader->setMat4("projection", camera.projectionMatrix);
+
+			Shader* decalShader = Shader::GetShaderByName("Decals");
+			decalShader->use();
+			decalShader->setInt("depthTexture", 0);
+			decalShader->setInt("diffuseTexture", 1);
+			decalShader->setInt("normalTexture", 2);
+
+			Shader* shadowShader = Shader::GetShaderByName("Shadow");
+			shadowShader->use();
+			shadowShader->setInt("diffuseTexture", 0);
+			shadowShader->setInt("depthMap", 1);
+
+			Shader* lampShader = Shader::GetShaderByName("LampShader");
+			lampShader->use();
+			lampShader->setMat4("projection", camera.projectionMatrix);
+
+			Shader* DEBUGShader = Shader::GetShaderByName("DEBUG");
+			DEBUGShader->use();
+			DEBUGShader->setMat4("projection", camera.projectionMatrix);
+
+			Shader* skyboxShader = Shader::GetShaderByName("Skybox");
+			skyboxShader->use();
+			skyboxShader->setInt("cubeMap", 0);
+			skyboxShader->setMat4("projection", camera.projectionMatrix);
+
+
+			Shader* lightingShader = Shader::GetShaderByName("Lighting");
+			lightingShader->use();
+			lightingShader->setInt("albedoTexture", 0);
+			lightingShader->setInt("normalTexture", 1);
+			lightingShader->setInt("depthTexture", 2);
+			lightingShader->setInt("emissiveTexture", 3);
+			lightingShader->setInt("shadowMaps", 4);
+
+			Shader* compositeShader = Shader::GetShaderByName("Composite");
+			compositeShader->use();
+			compositeShader->setInt("albedoTexture", 0);
+			compositeShader->setInt("accumulatedLighting", 1);
+
+			Shader* blurHorizontalShader = Shader::GetShaderByName("BlurHorizontal");
+			blurHorizontalShader->use();
+			blurHorizontalShader->setInt("image", 0);
+
+			Shader* blurVerticalShader = Shader::GetShaderByName("BlurVertical");
+			blurVerticalShader->use();
+			blurVerticalShader->setInt("image", 0);
+
+			Shader* downScaleShader = Shader::GetShaderByName("DownScale");
+			downScaleShader->use();
+			downScaleShader->setInt("inputTexture", 0);
+
+			Shader* DOFShader = Shader::GetShaderByName("DOF");
+			DOFShader->use();
+			DOFShader->setInt("renderTexture", 0);
+			DOFShader->setInt("depthTexture", 1);
+
+			Shader* finalShader = Shader::GetShaderByName("Final");
+			finalShader->use();
+			finalShader->setInt("scene", 0);
+			finalShader->setInt("blur0", 1);
+			finalShader->setInt("blur1", 2);
+			finalShader->setInt("blur2", 3);
+			finalShader->setInt("blur3", 4);
 		}
 	};
 

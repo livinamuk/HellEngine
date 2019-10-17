@@ -6,6 +6,10 @@
 #include "Platform/OpenGL/BoundingPlane.h"
 #include "HellEngine/Components/Floor.h"
 #include "HellEngine/Components/Ceiling.h"
+#include "bullet/src/btBulletCollisionCommon.h"
+#include "bullet/src/btBulletDynamicsCommon.h"
+#include "bullet/src/LinearMath/btVector3.h"
+#include "bullet/src/LinearMath/btAlignedObjectArray.h"
 
 namespace HellEngine 
 {
@@ -23,6 +27,7 @@ namespace HellEngine
 
 
 	public: // methods
+		static PlayerPlaneCollisionData Util::PlayerPlaneCollision(glm::vec3 playerPosition, float playerRadius, BoundingPlane* plane);
 		static float Util::RandomFloat(float a, float b);
 		static glm::mat4 QuarternionToRotationMatrix(glm::quat q);
 		static bool CircleIntersectsLine(glm::vec3 circleCenter, glm::vec3 point1, glm::vec3 point2, float circleRadius);
@@ -51,6 +56,7 @@ namespace HellEngine
 		static std::string OUTPUT_TEXT;
 		static void OUTPUT(std::string text);
 
+
 		static std::string Vec3_to_String(glm::vec3 vector);
 		static std::string Mat4_to_String(glm::mat4 matrix);
 		static glm::mat4 Normal_To_Rotation_Matrix(glm::vec3 normal);
@@ -64,7 +70,8 @@ namespace HellEngine
 		static CollisionData RayTriangleIntersect(glm::vec3 orig, glm::vec3 dir, glm::vec3 vert0, glm::vec3 vert1, glm::vec3 vert2);
 
 		//static void ImguiFloat3(std::string text, glm::vec3* vector);
-
+		static btVector3 glmVec3_to_btVec3(glm::vec3);
+		static glm::vec3 btVec3_to_glmVec3(btVector3);
 
 	public: // fields
 		//static float SMALL_NUMBER = 9.99999993922529e-9;

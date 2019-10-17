@@ -50,6 +50,7 @@ namespace HellEngine {
 		virtual bool IsVSync() const = 0;
 		virtual void SetWindowMode(const WindowMode& mode, unsigned int width = 0, unsigned int height = 0) = 0;
 		virtual void ToggleFullscreen() = 0;
+		virtual void SetFullscreen() = 0;
 		virtual void ToggleMouseEnabled() = 0;
 		virtual bool IsMouseEnabled() = 0;
 

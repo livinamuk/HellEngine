@@ -10,6 +10,7 @@ namespace HellEngine
 	glm::mat4 Util::weaponModelMatrix;
 	
 
+
 	glm::mat4 Util::Normal_To_Rotation_Matrix(glm::vec3 normal)
 	{
 			// Find a vector in the plane
@@ -482,11 +483,49 @@ namespace HellEngine
 		else // This means that there is a line intersection but not a ray intersection.
 			return collision;
 	}
+
+	PlayerPlaneCollisionData Util::PlayerPlaneCollision(glm::vec3 playerPosition, float playerRadius, BoundingPlane* plane)
+	{
+		PlayerPlaneCollisionData data;
+		data.occured = false;
+		data.distance = 0;
+		data.newPlayerPosition = playerPosition;
+
+		if (Util::CircleIntersectsLine(playerPosition, plane->A, plane->C, playerRadius))
+		{
+			data.occured = true;
+
+			glm::vec2 planeNormal = glm::vec2(plane->normal.x, plane->normal.z);
+			glm::vec2 spherePosition = glm::vec2(playerPosition.x, playerPosition.z);
+			glm::vec2 planePosition = glm::vec2(plane->A.x, plane->A.z);
+			float sphereRadius = playerRadius;
+
+			float distToPlane = glm::dot(planeNormal, spherePosition - planePosition);
+
+			if (distToPlane < sphereRadius) {
+				glm::vec2 contactPoint = spherePosition - planeNormal * distToPlane;
+				float penetrationDepth = sphereRadius - distToPlane;
+				glm::vec2 penetrationNormal = planeNormal;
+				spherePosition += penetrationNormal * penetrationDepth;
+
+				//HELL_ERROR(std::to_string(distToPlane));
+			}
+			data.newPlayerPosition.x = spherePosition.x;
+			data.newPlayerPosition.z = spherePosition.y;
+		}
+		return data;
+	}
+
+
+	btVector3 Util::glmVec3_to_btVec3(glm::vec3 vector)
+	{
+		return btVector3(vector.x, vector.y, vector.z);
+	}
+	glm::vec3 Util::btVec3_to_glmVec3(btVector3 vector)
+	{
+		return glm::vec3(vector.x(), vector.y(), vector.z());
+	}
 }
-
-
-
-
 
 /*
 glm::vec2 a(boundingPlane->A.x, boundingPlane->A.z);

@@ -24,6 +24,7 @@ namespace HellEngine {
 		void SetWindowMode(const WindowMode& mode, unsigned int width, unsigned int height) override;
 		void ToggleFullscreen() override;
 		void ToggleMouseEnabled() override;
+		void SetFullscreen() override;
 		bool IsMouseEnabled() override;
 
 		inline virtual void* GetNativeWindow() const { return m_Window; }
@@ -34,7 +35,7 @@ namespace HellEngine {
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
 	private:
-		bool m_fullscreen = false;
+		bool m_fullscreen = true;
 		bool m_mouseEnabled = false;
 		GLFWwindow * m_Window;
 		GLFWmonitor* m_PrimaryMonitor; // Stores a reference to the primary monitor

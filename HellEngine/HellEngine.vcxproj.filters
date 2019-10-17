@@ -195,6 +195,9 @@
     <ClInclude Include="src\HellEngine\Logic\Header.h">
       <Filter>src\HellEngine\Logic</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\Logic\Physics.h">
+      <Filter>src\HellEngine\Logic</Filter>
+    </ClInclude>
     <ClInclude Include="src\HellEngine\Logic\ShotgunLogic.h">
       <Filter>src\HellEngine\Logic</Filter>
     </ClInclude>
@@ -252,9 +255,6 @@
     <ClInclude Include="src\Platform\OpenGL\OpenGLContext.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
-    <ClInclude Include="src\Platform\OpenGL\PBO.h">
-      <Filter>src\Platform\OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\Plane.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
@@ -277,6 +277,9 @@
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\Skybox.h">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Platform\OpenGL\TextBlitter.h">
       <Filter>src\Platform\OpenGL</Filter>
     </ClInclude>
     <ClInclude Include="src\Platform\OpenGL\Texture.h">
@@ -1425,6 +1428,8 @@
     <ClInclude Include="vendor\glm\glm\vector_relational.hpp">
       <Filter>vendor\glm\glm</Filter>
     </ClInclude>
+    <ClInclude Include="src\HellEngine\Physics\PhysicsObject.h" />
+    <ClInclude Include="src\HellEngine\GameObjects\StaticEntity.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\HellEngine\Animation\SkinnedMesh.cpp">
@@ -1487,6 +1492,9 @@
     <ClCompile Include="src\HellEngine\Log.cpp">
       <Filter>src\HellEngine</Filter>
     </ClCompile>
+    <ClCompile Include="src\HellEngine\Logic\Physics.cpp">
+      <Filter>src\HellEngine\Logic</Filter>
+    </ClCompile>
     <ClCompile Include="src\HellEngine\Logic\ShotgunLogic.cpp">
       <Filter>src\HellEngine\Logic</Filter>
     </ClCompile>
@@ -1535,9 +1543,6 @@
     <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
-    <ClCompile Include="src\Platform\OpenGL\PBO.cpp">
-      <Filter>src\Platform\OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\Plane.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
@@ -1557,6 +1562,9 @@
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\Skybox.cpp">
+      <Filter>src\Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\OpenGL\TextBlitter.cpp">
       <Filter>src\Platform\OpenGL</Filter>
     </ClCompile>
     <ClCompile Include="src\Platform\OpenGL\Texture.cpp">
@@ -1583,5 +1591,7 @@
     <ClCompile Include="vendor\fmod\include\common_platform.cpp">
       <Filter>vendor\fmod\include</Filter>
     </ClCompile>
+    <ClCompile Include="src\HellEngine\Physics\PhysicsObject.cpp" />
+    <ClCompile Include="src\HellEngine\GameObjects\StaticEntity.cpp" />
   </ItemGroup>
 </Project>

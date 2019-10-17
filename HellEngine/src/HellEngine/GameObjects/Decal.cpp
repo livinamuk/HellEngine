@@ -10,7 +10,7 @@ namespace HellEngine
 		this->decalType = decalType;
 		this->transform.position = position;
 		this->normal = normal * glm::vec3(-1);
-		this->randomRotation = Util::RandomFloat(0, PI * 2);
+		this->randomRotation = Util::RandomFloat(0, HELL_PI * 2);
 
 		if (decalType == DecalType::BULLET_HOLE)
 			transform.scale = glm::vec3(0.025f);
@@ -24,7 +24,7 @@ namespace HellEngine
 		float angle = glm::acos(glm::dot(normal, squareNormal));
 		if (angle > 0.001f)
 		{
-			if (angle == PI)
+			if (angle == HELL_PI)
 				modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(0, 1, 0));
 			else {
 				glm::vec3 axis = glm::normalize(glm::cross(squareNormal, normal));

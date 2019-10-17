@@ -22,16 +22,18 @@ namespace HellEngine
 		static void PlayAudio(std::string fileName);
 		static void LoadAudio(std::string fileName);
 		static void StreamAudio(std::string fileName);
+		static void Init();
 
 		static Audio stream;
 
+		bool initliased = false;
 		std::string name;
-		FMOD::System* system;
+		static FMOD::System* system;
 		FMOD::Sound* sound1;
 		FMOD::Channel* channel = 0;
-		FMOD_RESULT       result;
+		static FMOD_RESULT       result;
 		unsigned int      version;
-		void* extradriverdata = 0;
+		static void* extradriverdata;// = 0;
 
 		// for stream
 		FMOD::Sound* sound_to_play;

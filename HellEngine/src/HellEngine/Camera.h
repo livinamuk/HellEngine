@@ -9,6 +9,7 @@
 #include "HellEngine/Input.h"
 #include "HellEngine/Application.h"
 #include "HellEngine/Util.h"
+#include "HellEngine/Transform.h"
 
 namespace HellEngine {
 
@@ -28,12 +29,11 @@ namespace HellEngine {
 
 		float xoffset, yoffset;
 
-
 		// Camera Attributes
-		glm::vec3 Position;
-		glm::vec3 Rotation  = glm::vec3(0);;
-		glm::vec3 Scale = glm::vec3(1);
-		glm::mat4 Transform;
+	//	glm::vec3 Position;
+		//glm::vec3 Rotation  = glm::vec3(-0.13f, ROTATE_180, 0);
+		//glm::vec3 Scale = glm::vec3(1);
+		Transform transform;
 
 		glm::vec3 Front;
 		glm::vec3 Up;
@@ -67,27 +67,11 @@ namespace HellEngine {
 
 		float rotationSpeed = 90.0f;
 
-
-		// Constructor with vectors
-		Camera(glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+		Camera()
 		{
-			//Position = position;
-			WorldUp = up;
-			TargetYaw = yaw;
-			TargetPitch = pitch;
-			CurrentYaw = yaw;
-			CurrentPitch = pitch;
-			//position.y = viewHeight;
-		}
-		// Constructor with scalar values
-		Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
-		{
-			Position = glm::vec3(posX, posY, posZ);
-			WorldUp = glm::vec3(upX, upY, upZ);
-			TargetYaw = yaw;
-			TargetPitch = pitch;
-			CurrentYaw = yaw;
-			CurrentPitch = pitch;
+			transform.position = glm::vec3(0);
+			transform.rotation = glm::vec3(-0.13f, ROTATE_180, 0);
+			transform.scale = glm::vec3(1);
 		}
 
 		float CalculateHeadBob()
@@ -99,38 +83,26 @@ namespace HellEngine {
 		{
 			glm::vec3 p = playerViewHeight;
 			//p.y = CalculateHeadBob();
-			this->Position = p;
+			transform.position = p;
 		}
 
-		// Calculates the view matrix calculated using Euler Angles and the LookAt Matrix
 		void CalculateMatrices()
 		{
-			viewMatrix = glm::lookAt(this->Position, this->Position + Front, Up);
+			glm::mat4 transform = this->transform.to_mat4();
 
-			Transform = glm::translate(glm::mat4(1), Position);
-			Transform = glm::rotate(Transform, Rotation.z, glm::vec3(0, 0, 1));
-			Transform = glm::rotate(Transform, Rotation.y, glm::vec3(0, 1, 0));
-			Transform = glm::rotate(Transform, Rotation.x, glm::vec3(1, 0, 0));
-			Transform = glm::scale(Transform, Scale);
-
-			viewMatrix = glm::inverse(Transform);
-
+			viewMatrix = glm::inverse(transform);
 			projectionViewMatrix = projectionMatrix * viewMatrix;
 
-			Right = glm::vec3(Transform[0]);
-			Up = glm::vec3(Transform[1]);
-			Front = glm::vec3(Transform[2]);
+			Right = glm::vec3(transform[0]);
+			Up = glm::vec3(transform[1]);
+			Front = glm::vec3(transform[2]);
 		}
 
 		void CalculateProjectionMatrix(int screenWidth, int screenHeight)
 		{
-			//projectionMatrix = glm::perspective(glm::radians(Zoom), (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
 			projectionMatrix = glm::perspective(1.00f, (float)screenWidth / (float)screenHeight, 0.02f, 100.0f);
-
-			//HellEngine::Util::printMat4(projectionMatrix);
 		}
 
-		// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
 		void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
 		{
 			HellEngine::Application& app = HellEngine::Application::Get();
@@ -181,7 +153,10 @@ namespace HellEngine {
 		if (app.GetWindow().IsMouseEnabled())
 			return;
 
-		Rotation += glm::vec3(yoffset, -xoffset, 0.0) / glm::vec3(200);
+		transform.rotation += glm::vec3(yoffset, -xoffset, 0.0) / glm::vec3(200);
+
+		transform.rotation.x = min(transform.rotation.x, 1.5f);
+		transform.rotation.x = max(transform.rotation.x, -1.5f);
 		}
 
 		void Update(float deltaTime)
@@ -190,16 +165,8 @@ namespace HellEngine {
 			auto[x, y] = HellEngine::Input::GetMousePosition();
 			this->updateMouse(x, y);
 
+			// Headbob
 			headBobCounter += headBobSpeed * deltaTime;
-
-			// Update Rotation Interpolation
-			UpdateRotation(deltaTime);
-		}
-
-		void UpdateRotation(float deltaTime)
-		{
-			CurrentYaw = Util::FInterpTo(CurrentYaw, TargetYaw, deltaTime, rotationSpeed);
-			CurrentPitch = Util::FInterpTo(CurrentPitch, TargetPitch, deltaTime, rotationSpeed);
 		}
 	};
 }

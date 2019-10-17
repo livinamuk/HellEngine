@@ -42,6 +42,13 @@ namespace HellEngine {
 			SetWindowMode(WindowMode::WINDOWED, m_Data.WindowedWidth, m_Data.WindowedHeight);
 
 		glViewport(0, 0, GetWidth(), GetHeight());
+	}	
+	
+	void WindowsWindow::SetFullscreen()
+	{
+		m_fullscreen = true;;
+		SetWindowMode(WindowMode::FULL_SCREEN, m_BaseVideoMode.width, m_BaseVideoMode.height);
+		glViewport(0, 0, GetWidth(), GetHeight());
 	}
 	
 

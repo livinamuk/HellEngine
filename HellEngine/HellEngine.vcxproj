@@ -19,26 +19,26 @@
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HellEngine</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -77,7 +77,7 @@
       <PrecompiledHeaderFile>hellpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HELL_PLATFORM_WINDOWS;HELL_BUILD_DLL;GLFW_INCLUDE_NONE;HELL_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\stb_image;vendor\GLFW\include;vendor\Glad\include;vendor\imgui;vendor\glm;vendor\assimp\include;vendor\assimp\config;vendor\rapidjson\include;vendor\fmod\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\stb_image;vendor\GLFW\include;vendor\Glad\include;vendor\imgui;vendor\glm;vendor\assimp\include;vendor\assimp\config;vendor\rapidjson\include;vendor\fmod\include;vendor\bullet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -97,7 +97,7 @@
       <PrecompiledHeaderFile>hellpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HELL_PLATFORM_WINDOWS;HELL_BUILD_DLL;GLFW_INCLUDE_NONE;HELL_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\stb_image;vendor\GLFW\include;vendor\Glad\include;vendor\imgui;vendor\glm;vendor\assimp\include;vendor\assimp\config;vendor\rapidjson\include;vendor\fmod\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\stb_image;vendor\GLFW\include;vendor\Glad\include;vendor\imgui;vendor\glm;vendor\assimp\include;vendor\assimp\config;vendor\rapidjson\include;vendor\fmod\include;vendor\bullet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -121,7 +121,7 @@
       <PrecompiledHeaderFile>hellpch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HELL_PLATFORM_WINDOWS;HELL_BUILD_DLL;GLFW_INCLUDE_NONE;HELL_DIST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\stb_image;vendor\GLFW\include;vendor\Glad\include;vendor\imgui;vendor\glm;vendor\assimp\include;vendor\assimp\config;vendor\rapidjson\include;vendor\fmod\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;vendor\spdlog\include;vendor\stb_image;vendor\GLFW\include;vendor\Glad\include;vendor\imgui;vendor\glm;vendor\assimp\include;vendor\assimp\config;vendor\rapidjson\include;vendor\fmod\include;vendor\bullet;..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -172,6 +172,7 @@
     <ClInclude Include="src\HellEngine\Events\MouseEvent.h" />
     <ClInclude Include="src\HellEngine\File.h" />
     <ClInclude Include="src\HellEngine\GameObjects\Decal.h" />
+    <ClInclude Include="src\HellEngine\GameObjects\StaticEntity.h" />
     <ClInclude Include="src\HellEngine\GameObjects\Shell.h" />
     <ClInclude Include="src\HellEngine\ImGUI\ImGuiLayer.h" />
     <ClInclude Include="src\HellEngine\Input.h" />
@@ -181,11 +182,13 @@
     <ClInclude Include="src\HellEngine\Light.h" />
     <ClInclude Include="src\HellEngine\Log.h" />
     <ClInclude Include="src\HellEngine\Logic\Header.h" />
+    <ClInclude Include="src\HellEngine\Logic\Physics.h" />
     <ClInclude Include="src\HellEngine\Logic\ShotgunLogic.h" />
     <ClInclude Include="src\HellEngine\Material.h" />
     <ClInclude Include="src\HellEngine\Model.h" />
     <ClInclude Include="src\HellEngine\ModelLoader.h" />
     <ClInclude Include="src\HellEngine\MouseButtonCodes.h" />
+    <ClInclude Include="src\HellEngine\Physics\PhysicsObject.h" />
     <ClInclude Include="src\HellEngine\Player.h" />
     <ClInclude Include="src\HellEngine\Renderer\GraphicsContext.h" />
     <ClInclude Include="src\HellEngine\Timer.h" />
@@ -200,7 +203,6 @@
     <ClInclude Include="src\Platform\OpenGL\LightVolume.h" />
     <ClInclude Include="src\Platform\OpenGL\LightingBuffer.h" />
     <ClInclude Include="src\Platform\OpenGL\OpenGLContext.h" />
-    <ClInclude Include="src\Platform\OpenGL\PBO.h" />
     <ClInclude Include="src\Platform\OpenGL\Plane.h" />
     <ClInclude Include="src\Platform\OpenGL\Quad2D.h" />
     <ClInclude Include="src\Platform\OpenGL\RenderableObject.h" />
@@ -209,6 +211,7 @@
     <ClInclude Include="src\Platform\OpenGL\ShadowBuffer.h" />
     <ClInclude Include="src\Platform\OpenGL\ShadowCubeMapArray.h" />
     <ClInclude Include="src\Platform\OpenGL\Skybox.h" />
+    <ClInclude Include="src\Platform\OpenGL\TextBlitter.h" />
     <ClInclude Include="src\Platform\OpenGL\Texture.h" />
     <ClInclude Include="src\Platform\OpenGL\TexturedMesh.h" />
     <ClInclude Include="src\Platform\OpenGL\glExtension.h" />
@@ -607,16 +610,19 @@
     <ClCompile Include="src\HellEngine\File.cpp" />
     <ClCompile Include="src\HellEngine\GameObjects\Decal.cpp" />
     <ClCompile Include="src\HellEngine\GameObjects\Shell.cpp" />
+    <ClCompile Include="src\HellEngine\GameObjects\StaticEntity.cpp" />
     <ClCompile Include="src\HellEngine\ImGUI\ImGuiBuild.cpp" />
     <ClCompile Include="src\HellEngine\ImGUI\ImGuiLayer.cpp" />
     <ClCompile Include="src\HellEngine\Layer.cpp" />
     <ClCompile Include="src\HellEngine\LayerStack.cpp" />
     <ClCompile Include="src\HellEngine\Light.cpp" />
     <ClCompile Include="src\HellEngine\Log.cpp" />
+    <ClCompile Include="src\HellEngine\Logic\Physics.cpp" />
     <ClCompile Include="src\HellEngine\Logic\ShotgunLogic.cpp" />
     <ClCompile Include="src\HellEngine\Material.cpp" />
     <ClCompile Include="src\HellEngine\Model.cpp" />
     <ClCompile Include="src\HellEngine\ModelLoader.cpp" />
+    <ClCompile Include="src\HellEngine\Physics\PhysicsObject.cpp" />
     <ClCompile Include="src\HellEngine\Player.cpp" />
     <ClCompile Include="src\HellEngine\Timer.cpp" />
     <ClCompile Include="src\HellEngine\Transform.cpp" />
@@ -629,7 +635,6 @@
     <ClCompile Include="src\Platform\OpenGL\LightVolume.cpp" />
     <ClCompile Include="src\Platform\OpenGL\LightingBuffer.cpp" />
     <ClCompile Include="src\Platform\OpenGL\OpenGLContext.cpp" />
-    <ClCompile Include="src\Platform\OpenGL\PBO.cpp" />
     <ClCompile Include="src\Platform\OpenGL\Plane.cpp" />
     <ClCompile Include="src\Platform\OpenGL\Quad2D.cpp" />
     <ClCompile Include="src\Platform\OpenGL\RenderableObject.cpp" />
@@ -637,6 +642,7 @@
     <ClCompile Include="src\Platform\OpenGL\ShadowBuffer.cpp" />
     <ClCompile Include="src\Platform\OpenGL\ShadowCubeMapArray.cpp" />
     <ClCompile Include="src\Platform\OpenGL\Skybox.cpp" />
+    <ClCompile Include="src\Platform\OpenGL\TextBlitter.cpp" />
     <ClCompile Include="src\Platform\OpenGL\Texture.cpp" />
     <ClCompile Include="src\Platform\OpenGL\TexturedMesh.cpp" />
     <ClCompile Include="src\Platform\OpenGL\glExtension.cpp" />

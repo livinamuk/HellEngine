@@ -70,28 +70,9 @@ namespace HellEngine {
 	{
 		this->name = path;
 		this->meshes = meshList;
-		//std::cout << "'" << path << "' loaded\n";
 
-		//this->rootJoint = Joint(-1, "UNDEFINED", glm::mat4(0));
+
 	}
-
-	/*Model::Model(std::string const & path, MeshList meshList, Joint rootJoint, int jointCount, Animation animation, glm::mat4 sceneRootTransformationMatrix)
-	{
-		this->name = path;
-		this->meshes = meshList;
-		this->rootJoint = rootJoint;
-		this->jointCount = jointCount;
-		this->animation = animation;
-		//std::cout << "'" << path << "' loaded (has skeleton)\n";
-
-		//Util::printMat4(sceneRootTransformationMatrix);
-
-		///std::cout << "FUCK\n";
-
-		//rootJoint.calcInverseBindTransforms(glm::inverse(sceneRootTransformationMatrix));
-		//rootJoint.calcInverseBindTransforms(sceneRootTransformationMatrix);
-		//rootJoint.printHierarchyNames(rootJoint, 0);
-	}*/
 
 	Model::~Model()
 	{

@@ -9,9 +9,9 @@ namespace HellEngine {
 	{
 	}
 
-	BoundingPlane::BoundingPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C, glm::vec3 D, bool testCollisions)
+	BoundingPlane::BoundingPlane(glm::vec3 A, glm::vec3 B, glm::vec3 C, glm::vec3 D, bool testCollisions, std::string name)
 	{
-		if (VAO = -1)
+		if (VAO == -1)
 			glGenVertexArrays(1, &VAO);
 
 		this->A = A;
@@ -21,6 +21,7 @@ namespace HellEngine {
 		//this->D.z += 1;
 		//this->C.z += 1;
 		this->testCollisions = testCollisions;
+		this->name = name;
 
 		BufferData();
 
@@ -33,16 +34,24 @@ namespace HellEngine {
 	{
 	}
 
-	void BoundingPlane::Draw(Shader *shader)
+	void BoundingPlane::Draw(Shader* shader)
 	{
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
+		//glm::mat4 modelMatrix = glm::mat4(1.0f);
 		//modelMatrix = glm::translate(modelMatrix, position);
 		//modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
-		shader->setMat4("model", modelMatrix);
+		//shader->setMat4("model", modelMatrix);
 
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_LINE_LOOP, 0, 4);
+	}
+
+	void BoundingPlane::DrawSolid(Shader* shader)
+	{
+		glm::mat4 modelMatrix = glm::mat4(1.0f);
+		shader->setMat4("model", modelMatrix);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	}
 
 	void BoundingPlane::SetAngle(float angle)
