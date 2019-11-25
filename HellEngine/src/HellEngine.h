@@ -13,7 +13,7 @@
 #include "HellEngine/KeyCodes.h"
 #include "HellEngine/MouseButtonCodes.h"
 
-#include "HellEngine/ModelLoader.h"
+#include "HellEngine/AssetManager.h"
 
 #include "HellEngine/GameObjects/StaticEntity.h"
 

@@ -38,9 +38,16 @@ namespace HellEngine
 
 		glActiveTexture(GL_TEXTURE1);
 		if (!blackOnly)
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("BulletHole1.png"));
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("BulletHole1_BaseColor"));
 		else
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("BulletHole1_Black.png"));
+			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("BulletHole1Black_BaseColor"));
+
+
+	//	if (!blackOnly)
+	//		AssetManager::BindMaterial(AssetManager::GetMaterialIDByName("BulletHole1"));
+	//	else
+	//		AssetManager::BindMaterial(AssetManager::GetMaterialIDByName("BulletHole1Black"));
+
 
 		glBindVertexArray(Cube::VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HellEngine/Util.h"
+#include "HellEngine/Material.h"
 #include "HellEngine/Logic/Physics.h"
 #include "Platform/OpenGL/Shader.h"
 #include "HellEngine/Model.h"
@@ -15,16 +16,16 @@ namespace HellEngine
 	class StaticEntity
 	{
 	public: // fields
-		Model* model;
 		btRigidBody* rigidBody;
-		Material* material;
+		unsigned int modelID = -1;
+		unsigned int materialID = -1;
 		std::string name = "UNNAMED_STATIC_ENTITY";
 
 	private: // fields
 		Transform transform;
 
 	public: // methods
-		StaticEntity(Model* model, glm::vec3 position, std::string name);
+		StaticEntity(unsigned int modelID, glm::vec3 position, std::string name);
 		~StaticEntity();
 		void SetPosition(glm::vec3 position);
 		void SetRotation(glm::vec3 rotation);

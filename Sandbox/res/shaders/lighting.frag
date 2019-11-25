@@ -47,9 +47,6 @@ vec3 gridSamplingDisk[20] = vec3[]
 
 float ShadowCalculation(vec3 fragPos, vec3 lightPos, int light)
 {
-    //if (fragPos.y > 2.0)
-    //  return 0.0;
-
     // get vector between fragment position and light position
     vec3 fragToLight = fragPos - lightPos;
     float currentDepth = length(fragToLight);

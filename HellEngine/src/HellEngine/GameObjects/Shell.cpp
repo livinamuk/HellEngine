@@ -24,11 +24,6 @@ namespace HellEngine
 		modelTransform.rotation.y = ROTATE_180;
 		modelTransform.scale = glm::vec3(0.01f);
 		
-		diffuseTextureID =		Texture::GetIDByName("Shell_BaseColor.png");
-		normalMapID =			Texture::GetIDByName("Shell_NormalMap.png");
-		metallicTextureID =		Texture::GetIDByName("Shell_Metallic.png");
-		roughnessTextureID =	Texture::GetIDByName("Shell_Roughness.png");
-		
 		shellVelocity = camera->Up * shellSpeedUp;
 		shellVelocity += camera->Right * shellSpeedRight ;
 

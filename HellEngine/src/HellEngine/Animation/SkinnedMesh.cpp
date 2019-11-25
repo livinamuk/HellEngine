@@ -277,11 +277,10 @@ namespace HellEngine
 				unsigned int VertexID = m_Entries[MeshIndex].BaseVertex + pMesh->mBones[i]->mWeights[j].mVertexId;
 				float Weight = pMesh->mBones[i]->mWeights[j].mWeight;
 				Bones[VertexID].AddBoneData(BoneIndex, Weight);
-
-				// So, was it animated?
-				if (pMesh->mNumBones > 0)
-					m_Entries[MeshIndex].hasBoneAnimation = true;
 			}
+			// So, was it animated?
+			if (pMesh->mNumBones > 0)
+				m_Entries[MeshIndex].hasBoneAnimation = true;
 		}
 
 
@@ -384,26 +383,16 @@ namespace HellEngine
 
 			if (m_Entries[i].hasBoneAnimation) {
 				shader->setInt("animated", true);
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Hands_BaseColor.png"));
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Hands_Roughness.png"));
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Hands_Metallic.png"));
-				glActiveTexture(GL_TEXTURE3);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Hands_NormalMap.png"));
+
+				unsigned int handMaterialID = AssetManager::GetMaterialIDByName("Hands");
+				AssetManager::BindMaterial(handMaterialID);
 			}
 			else
 			{
 
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Shotgun_BaseColor.png"));
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Shotgun_Roughness.png"));
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Shotgun_Metallic.png"));
-				glActiveTexture(GL_TEXTURE3);
-				glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName("Shotgun_NormalMap.png"));
+
+				unsigned int shotgunMaterialID = AssetManager::GetMaterialIDByName("Shotgun");
+				AssetManager::BindMaterial(shotgunMaterialID);
 
 
 				shader->setInt("animated", false);

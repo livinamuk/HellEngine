@@ -4,9 +4,10 @@
 
 namespace HellEngine 
 {
-	StaticEntity::StaticEntity(Model* model, glm::vec3 position, std::string name)
+	StaticEntity::StaticEntity(unsigned int modelID, glm::vec3 position, std::string name)
 	{
-		this->model = model;
+		this->modelID = modelID;
+		std::cout << "MODEL ID: " << modelID << "\n";
 		this->name = name;
 		this->transform.position = position;
 
@@ -42,7 +43,7 @@ namespace HellEngine
 	{
 		transform.scale = scale;
 		btBoxShape* collisionShape = new btBoxShape(btVector3(0.5, 0.5, 0.5));
-		glm::vec3 newScale = transform.scale * model->meshes[0].boundingBox.baseTransform.scale;
+		glm::vec3 newScale = transform.scale * AssetManager::GetModelByID(modelID)->meshes[0].boundingBox.baseTransform.scale;
 		collisionShape->setLocalScaling(Util::glmVec3_to_btVec3(newScale));	
 		rigidBody->setCollisionShape(collisionShape);
 	}
@@ -50,7 +51,7 @@ namespace HellEngine
 	void StaticEntity::CreateRigidBody()
 	{
 		// Setup
-		BoundingBox boundingBox = model->meshes[0].boundingBox;
+		BoundingBox boundingBox = AssetManager::GetModelByID(modelID)->meshes[0].boundingBox;
 		btBoxShape* collisionShape = new btBoxShape(btVector3(0.5, 0.5, 0.5));
 		collisionShape->setLocalScaling(Util::glmVec3_to_btVec3(boundingBox.baseTransform.scale));
 
@@ -78,7 +79,7 @@ namespace HellEngine
 void StaticEntity::UpdateRigidBodyTransform()
 {
 	// Get final transformation matrix
-	BoundingBox* boundingBox = &model->meshes[0].boundingBox;
+	BoundingBox* boundingBox = &AssetManager::GetModelByID(modelID)->meshes[0].boundingBox;
 	glm::mat4 matrix = transform.to_mat4()* boundingBox->baseTransform.to_mat4();
 
 	// Strip the rotation
@@ -102,8 +103,6 @@ void StaticEntity::UpdateRigidBodyTransform()
 	// Set the fucking thing
 	rigidBody->setWorldTransform(test);
 }
-
-
 	/*void StaticEntity::UpdateWorldTransform()
 	{
 		// Think about what you are doing here:
@@ -125,7 +124,7 @@ void StaticEntity::UpdateRigidBodyTransform()
 
 	void StaticEntity::DrawBoundingBox(Shader* shader)
 	{
-		BoundingBox* boundingBox = &model->meshes[0].boundingBox;
+		BoundingBox* boundingBox = &AssetManager::GetModelByID(modelID)->meshes[0].boundingBox;
 		shader->setMat4("model", transform.to_mat4()  * boundingBox->baseTransform.to_mat4());
 		boundingBox->Draw(shader);
 	}
@@ -135,26 +134,9 @@ void StaticEntity::UpdateRigidBodyTransform()
 		UpdateRigidBodyTransform();
 
 		if (bindTextures) 
-		{
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName(material->baseColor));
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName(material->roughness));
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName(material->metallic));
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName(material->normalMap));
-		
-			// Emissive map
-			//if (material.hasEmissiveMap)
-			//{
-				//shader->setInt("hasEmissiveMap", 1.0f);
-				//shader->setVec3("emissiveColor", emissiveColor);
-				//glActiveTexture(GL_TEXTURE4);
-				//glBindTexture(GL_TEXTURE_2D, Texture::GetIDByName(material->emi));
-			//}
-		}
+			AssetManager::BindMaterial(materialID);
+
 		shader->setMat4("model", transform.to_mat4());
-		model->Draw(shader);
+		AssetManager::DrawModel(shader, modelID);
 	}
 }

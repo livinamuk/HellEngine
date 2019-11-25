@@ -217,11 +217,11 @@ namespace HellEngine
 
 		glm::vec3 boltPos = glm::vec3(0);
 
-		float swayAmount = 0.005f;
-		float smoothAmount = 4;
+		float swayAmount = 10.0f;
+		float smoothAmount = 5;
 
-		float min_X = -0.01f;
-		float max_X = 0.01f;
+		float min_X = -0.005f;
+		float max_X = 0.005f;
 		float min_Y = -0.005f;
 		float max_Y = 0.001f;
 
@@ -230,7 +230,7 @@ namespace HellEngine
 		glm::vec3 initialPosition = glm::vec3(0.003f, -0.161f, -0.009f);
 
 		void Update(float deltaTime, Camera* camera);
-
+	
 
 
 	};

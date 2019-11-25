@@ -62,6 +62,8 @@ namespace HellEngine
 		static btRigidBody* createRigidBody(float mass, const btTransform& startTransform, btCollisionShape* shape, float friction);
 		void AddWallsToPhysicsWorld(std::vector<BoundingPlane*> planes);
 
+		void AddStairMeshToPhysicsWorld(StairMesh stairMesh);
+
 	//public: // static fields
 		btBoxShape* collisionShapeBox;
 

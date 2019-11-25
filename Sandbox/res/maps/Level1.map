@@ -23,13 +23,13 @@
             ],
             "LightColor": [
                 1.0,
-                0.7799999713897705,
-                0.5289999842643738
+                0.0,
+                0.0
             ],
             "LightAttConstant": 4.031000137329102,
             "LightAttLinear": 5.0,
             "LightAttExp": 0.6809999942779541,
-            "LightStrength": 6.806000232696533
+            "LightStrength": 30.104999542236329
         },
         {
             "CornerA": [
@@ -79,19 +79,19 @@
             "RotateFloorTexture": true,
             "RotateCeilingTexture": false,
             "LightPosition": [
-                -2.0999999046325685,
+                -3.0999999046325685,
                 2.0,
-                5.099999904632568
+                4.5
             ],
             "LightColor": [
-                1.0,
-                0.0,
-                0.0
+                0.8823529481887817,
+                0.864742636680603,
+                0.7352941036224365
             ],
             "LightAttConstant": 0.0,
-            "LightAttLinear": 0.4970000088214874,
+            "LightAttLinear": 3.246000051498413,
             "LightAttExp": 0.026000000536441804,
-            "LightStrength": 6.806000232696533
+            "LightStrength": 23.82200050354004
         },
         {
             "CornerA": [
@@ -119,10 +119,10 @@
                 0.7799999713897705,
                 0.5289999842643738
             ],
-            "LightAttConstant": 1.0,
+            "LightAttConstant": 2.3559999465942385,
             "LightAttLinear": 1.0,
             "LightAttExp": 1.0,
-            "LightStrength": 7.067999839782715
+            "LightStrength": 14.65999984741211
         },
         {
             "CornerA": [
@@ -223,7 +223,7 @@
             "Axis": "Z_NEGATIVE",
             "FloorMaterial": "FloorBoards",
             "RotateFloorTexture": false,
-            "InitiallyOpen": true,
+            "InitiallyOpen": false,
             "InitiallyLocked": false,
             "MaxOpenAngle": 2.0
         },
@@ -236,7 +236,7 @@
             "Axis": "X_NEGATIVE",
             "FloorMaterial": "FloorBoards",
             "RotateFloorTexture": true,
-            "InitiallyOpen": true,
+            "InitiallyOpen": false,
             "InitiallyLocked": false,
             "MaxOpenAngle": 2.0
         },
@@ -263,7 +263,7 @@
             "FloorMaterial": "FloorBoards",
             "RotateFloorTexture": false,
             "InitiallyOpen": false,
-            "InitiallyLocked": false,
+            "InitiallyLocked": true,
             "MaxOpenAngle": 2.0
         },
         {

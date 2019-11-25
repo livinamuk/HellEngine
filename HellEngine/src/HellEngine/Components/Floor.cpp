@@ -1,5 +1,6 @@
 #include "hellpch.h"
 #include "Floor.h"
+#include "HellEngine/AssetManager.h"
 
 namespace HellEngine
 {
@@ -7,15 +8,15 @@ namespace HellEngine
 	{
 	}
 
-	Floor::Floor(glm::vec3 position, float width, float depth, Material* material, bool rotateTexture)
+	Floor::Floor(glm::vec3 position, float width, float depth, unsigned int materialID, bool rotateTexture)
 	{
-		this->material = material;
+		this->materialID = materialID;
 		transform.position = position;
 		this->width = width;
 		this->depth = depth;
 		this->rotateTexture = rotateTexture;
 		transform.scale = glm::vec3(width, 1, depth);
-		this->model = Model::GetByName("UnitPlane.obj");
+		this->model = AssetManager::GetModelByName("UnitPlane.obj");
 
 		glm::vec3 A = position;
 		glm::vec3 B = glm::vec3(position.x + width, position.y, position.z);
@@ -34,7 +35,8 @@ namespace HellEngine
 				shader->setInt("TEXTURE_FLAG", 4);
 		
 			shader->setFloat("TEXTURE_SCALE", textureScale);
-			material->BindTextures();
+			AssetManager::BindMaterial(materialID);
+			AssetManager::BindMaterial(AssetManager::GetMaterialIDByName("FloorBoards"));
 		}
 		shader->setMat4("model", transform.to_mat4());
 		model->Draw(shader);

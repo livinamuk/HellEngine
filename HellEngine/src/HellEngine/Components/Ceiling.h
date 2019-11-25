@@ -11,10 +11,10 @@ namespace HellEngine
 	public: // methods
 		Ceiling();
 		~Ceiling();
-		Ceiling(glm::vec3 position, float width, float depth, Material* material, bool rotateTexture);
+		Ceiling(glm::vec3 position, float width, float depth, unsigned int materialID, bool rotateTexture);
 		void Draw(Shader *shader, bool bindTextures) override;
 		Model* model;
-		Material* material;
+		unsigned int materialID;
 		bool rotateTexture = false;
 
 	public: // fields

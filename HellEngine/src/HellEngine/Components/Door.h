@@ -20,7 +20,7 @@ namespace HellEngine {
 	class Door
 	{
 	public: // methods
-		Door(float x, float z, Axis axis, std::string floorMaterialName, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloor);
+		Door(float x, float z, Axis axis, unsigned int floorMaterialID, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloor);
 		~Door();
 
 		void Update(float deltaTime);
@@ -38,16 +38,11 @@ namespace HellEngine {
 		btTransform baseTransform;
 		btRigidBody* rigidBody; 
 
-		//	btHingeConstraint* hinge;
-
 	public: // fields
 
 		float rotationWhenClosed;
-
-
 		glm::vec3 position;
 		glm::vec3 rotation; 
-		//BoundingBox boundingBox;
 		Axis axis;
 		int doorStatus = DOOR_CLOSED;
 		bool initiallyOpen = false;
@@ -61,10 +56,10 @@ namespace HellEngine {
 		float openAngle = 0;
 		
 	public: // static
-		static Model* modelDoor;
-		static Model* modelDoorShadowCaster;
-		static Model* modelDoorJam;
-		static Model* modelWallHole;
 		static bool PlayerHasKey;
+		static unsigned int materialID_Door;
+		static unsigned int materialID_DoorFrame;
+		static unsigned int modelID_Door;
+		static unsigned int modelID_DoorFrame;
 	};
 }

@@ -2,6 +2,7 @@
 #include "HellEngine/Components/Wall.h"
 #include "HellEngine/Components/Door.h"
 #include "HellEngine/Components/Room.h"
+#include "Platform/OpenGL/StairMesh.h"
 
 namespace HellEngine {
 
@@ -12,20 +13,23 @@ namespace HellEngine {
 		~House();
 		void RebuildRooms();
 		void DrawAll(Shader* shader, bool bindTextures);
-		//void DrawWalls(Shader* shader, bool bindTextures);
 		void DrawDoors(Shader* shader, bool bindTextures);
-		void AddDoor(float x, float z, Axis axis, std::string floorMaterialName, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloorTexture);
-		void AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling);
-		void AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling, Light light);
-		void BufferWallMatrices();
-		void LoadTestScene();
+		void AddDoor(float x, float z, Axis axis, unsigned int floorMaterialID, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloorTexture);
+		void AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, unsigned int wallMaterialID, unsigned int floorMaterialID, unsigned int ceilingMaterialID, bool rotateFloor, bool rotateCeiling);
+		void AddRoom(glm::vec3 cornerA, glm::vec3 cornerB, unsigned int wallMaterialID, unsigned int floorMaterialID, unsigned int ceilingMaterialID, bool rotateFloor, bool rotateCeiling, Light light);
 		void RemoveAllContents();
+
+	//	void ConstructWallMesh();
 
 	public: // fields
 		//std::vector<Wall> walls;
 		std::vector<Door> doors;
 		glm::vec3 position;
 		std::vector<Room> rooms;
+
+		StairMesh stairMesh;
+
+		//WallMesh WallMesh;
 
 		std::vector<glm::mat4> wallModelMatrices;
 

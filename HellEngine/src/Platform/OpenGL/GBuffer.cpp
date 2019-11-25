@@ -11,12 +11,19 @@ namespace HellEngine
 		glGenTextures(1, &gEmmisive);
 		glGenTextures(1, &gNormal);
 		glGenTextures(1, &gAlbedoSpec);
-		glGenTextures(1, &gMousePick);
+		glGenTextures(1, &gAO);
 		glGenTextures(1, &gLighting);
 		glGenRenderbuffers(1, &rboDepth);
 		glBindFramebuffer(GL_FRAMEBUFFER, ID);	
 
 		Configure(width, height);
+
+		std::cout << "GBuffer ID: " << ID << "\n";;
+		std::cout << "GBuffer w:  " << width << "\n";
+		std::cout << "GBuffer w:  " << height << "\n";
+		std::cout << "gAlbedoSpec: " << gAlbedoSpec << "\n";
+		std::cout << "gNormal:     " << gNormal << "\n";
+		std::cout << "gEmmisive:   " << gEmmisive << "\n";
 	}
 	
 	HellEngine::GBuffer::GBuffer()
@@ -51,11 +58,11 @@ namespace HellEngine
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedoSpec, 0);
 
 		// Mouse pick texture
-		glBindTexture(GL_TEXTURE_2D, gMousePick);
+		glBindTexture(GL_TEXTURE_2D, gAO);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMousePick, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gAO, 0);
 
 		// gemiisive
 		glBindTexture(GL_TEXTURE_2D, gLighting);

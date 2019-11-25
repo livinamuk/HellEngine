@@ -247,36 +247,9 @@ namespace HellEngine
 
 		if (bindTextures) {
 
-			shader->setInt("PBR", 1.0f);
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, diffuseTextureID);
-
-			if (roughnessTextureID == -1)
-				shader->setInt("PBR", 0.0f);
-			else {
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D, roughnessTextureID);
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, metallicTextureID);
-			}
-
-			// Normal mapping
-			if (normalMapID != -1) {
-				shader->setInt("hasNormalMap", 1.0f);
-				glActiveTexture(GL_TEXTURE3);
-				glBindTexture(GL_TEXTURE_2D, normalMapID);
-			}
-
-			// Emissive map
-			if (hasEmissiveMap)
-			{
-				shader->setInt("hasEmissiveMap", 1.0f);
-				shader->setVec3("emissiveColor", emissiveColor);
-				glActiveTexture(GL_TEXTURE4);
-				glBindTexture(GL_TEXTURE_2D, emissiveMapID);
-			}
+			shader->setVec3("emissiveColor", emissiveColor);
 		}
+
 
 		shader->setMat4("model", transform.to_mat4() * modelTransform.to_mat4());
 

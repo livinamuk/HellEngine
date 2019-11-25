@@ -11,13 +11,13 @@ namespace HellEngine
 	public: // methods
 		Floor();
 		~Floor();
-		Floor(glm::vec3 position, float width, float depth, Material* material, bool rotateTexture);
+		Floor(glm::vec3 position, float width, float depth, unsigned int materialID, bool rotateTexture);
 		void Draw(Shader *shader, bool bindTextures) override;
 		bool rotateTexture = false;
 
 	public: // fields
 		Model* model;
-		Material* material;
+		unsigned int materialID;
 
 	public: // fields
 		unsigned int VAO;

@@ -31,8 +31,5 @@ namespace HellEngine {
 		std::vector<glm::mat4> animatedTransforms;
 
 
-	public: // static functions
-		static Model* Model::GetByName(std::string filename);
-		static std::vector<Model> models;
 	};
 }

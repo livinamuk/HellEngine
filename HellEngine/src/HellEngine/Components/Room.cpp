@@ -4,11 +4,12 @@
 #include "HellEngine/Material.h"
 #include <algorithm>
 
+#include "Platform/OpenGL/RenderableObject.h"
 namespace HellEngine
 {
 	float Room::Light_Volume_Bias = 0.0925f;
 
-	Room::Room(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling)
+	Room::Room(glm::vec3 cornerA, glm::vec3 cornerB, unsigned int wallMaterialID, unsigned int floorMaterialID, unsigned int ceilingMaterialID, bool rotateFloor, bool rotateCeiling)
 	{
 		float lowestX = std::min(cornerA.x, cornerB.x);
 		float lowestZ = std::min(cornerA.z, cornerB.z);
@@ -19,13 +20,13 @@ namespace HellEngine
 		this->cornerB = glm::vec3(highestX, 0, highestZ);
 		RecalculateWidthAndDepth();
 
-		this->wallMaterialName = wallMaterialName;
-		this->floor = Floor(cornerA, width, depth, Material::GetMaterialByName(floorMaterialName), rotateFloor);
-		this->ceiling = Ceiling(cornerA, width, depth, Material::GetMaterialByName(ceilingMaterialName), rotateCeiling);
+		this->wallMaterialID = wallMaterialID;
+		this->floor = Floor(cornerA, width, depth, floorMaterialID, rotateFloor);
+		this->ceiling = Ceiling(cornerA, width, depth, ceilingMaterialID, rotateCeiling);
 		this->light = Light(cornerA.x + width / 2, 2.0f, cornerA.z + depth / 2);	// centered light
 	}	
 	
-	Room::Room(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling, Light light)
+	Room::Room(glm::vec3 cornerA, glm::vec3 cornerB, unsigned int wallMaterialID, unsigned int floorMaterialID, unsigned int ceilingMaterialID, bool rotateFloor, bool rotateCeiling, Light light)
 	{
 		float lowestX = std::min(cornerA.x, cornerB.x);
 		float lowestZ = std::min(cornerA.z, cornerB.z);
@@ -36,9 +37,9 @@ namespace HellEngine
 		this->cornerB = glm::vec3(highestX, 0, highestZ);
 		RecalculateWidthAndDepth();
 
-		this->wallMaterialName = wallMaterialName;
-		this->floor = Floor(cornerA, width, depth, Material::GetMaterialByName(floorMaterialName), rotateFloor);
-		this->ceiling = Ceiling(cornerA, width, depth, Material::GetMaterialByName(ceilingMaterialName), rotateCeiling);
+		this->wallMaterialID = wallMaterialID;
+		this->floor = Floor(cornerA, width, depth, floorMaterialID, rotateFloor);
+		this->ceiling = Ceiling(cornerA, width, depth, ceilingMaterialID, rotateCeiling);
 		this->light = light;	// constructor specified light
 	}
 
@@ -57,6 +58,7 @@ namespace HellEngine
 	{
 		FindDoors(doors);
 		BuildWalls();
+		CreateLightVolumes();
 		RecalculateWidthAndDepth();
 		ResizeFloorAndCeiling();
 	}
@@ -122,6 +124,132 @@ namespace HellEngine
 			allDoors.push_back(door);
 	}
 
+	void Room::AddBottomWallTrim(glm::vec3 position, float rotation, float scale)
+	{
+		Transform trim;
+		trim.position = position;
+		trim.rotation.y = rotation;
+		trim.scale.x = scale;
+		bottomTrimTransforms.push_back(trim);
+	}	
+	
+	void Room::AddTopWallTrim(glm::vec3 position, float rotation, float scale)
+	{
+		Transform trim;
+		trim.position = position;
+		trim.rotation.y = rotation;
+		trim.scale.x = scale;
+		topTrimTransforms.push_back(trim);
+	}
+
+	void Room::ConstructWallMesh()
+	{
+		float doorWidth = 1;
+		float doorHeight = 2;
+		float roomHeight = 2.4f;
+
+		float cursorX;
+		float cursorZ;
+		float wallWidth;
+
+		wallMesh.ClearMesh();
+		bottomTrimTransforms.clear();
+		topTrimTransforms.clear();
+
+		// Top trim transforms
+		AddTopWallTrim(glm::vec3(cornerA.x, 0, cornerA.z), 0, cornerB.x - cornerA.x);
+		AddTopWallTrim(glm::vec3(cornerB.x, 0, cornerB.z), ROTATE_180, cornerB.x - cornerA.x);
+		AddTopWallTrim(glm::vec3(cornerB.x, 0, cornerA.z), ROTATE_270, cornerB.z - cornerA.z);
+		AddTopWallTrim(glm::vec3(cornerA.x, 0, cornerB.z), ROTATE_90, cornerB.z - cornerA.z);
+
+		// Sort doors
+		std::sort(doors_FrontWall.begin(), doors_FrontWall.end(), [](const Door* a, const Door* b) { return a->position.x < b->position.x; });
+		std::sort(doors_BackWall.begin(), doors_BackWall.end(), [](const Door* a, const Door* b) { return a->position.x > b->position.x; });
+		std::sort(doors_LeftWall.begin(), doors_LeftWall.end(), [](const Door* a, const Door* b) { return a->position.z > b->position.z; });
+		std::sort(doors_RightWall.begin(), doors_RightWall.end(), [](const Door* a, const Door* b) { return a->position.z < b->position.z; });
+
+		// Front walls
+		cursorX = cornerA.x;
+		cursorZ = cornerA.z;
+		for (int i = 0; i < doors_FrontWall.size(); i++)
+		{
+			float wallWidth = doors_FrontWall[i]->position.x - cursorX - (doorWidth / 2);
+			wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX + wallWidth, roomHeight, cursorZ), X); // wall
+			AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), 0, wallWidth);			
+			cursorX += wallWidth + doorWidth;
+			wallMesh.AddQuad(glm::vec3(cursorX - doorWidth, doorHeight, cursorZ), glm::vec3(cursorX, roomHeight, cursorZ), X); // above door
+		}
+		wallWidth = cornerB.x - cursorX;
+		wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX + wallWidth, roomHeight, cursorZ), X); // wall
+		AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), 0, wallWidth);
+
+
+		
+		// Back walls
+		cursorX = cornerB.x;
+		cursorZ = cornerB.z;
+		for (int i = 0; i < doors_BackWall.size(); i++)
+		{
+			float wallWidth = cursorX - doors_BackWall[i]->position.x - (doorWidth / 2);
+			wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX - wallWidth, roomHeight, cursorZ), X_NEGATIVE); // wall
+			AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), ROTATE_180, wallWidth);			
+			cursorX -= wallWidth + doorWidth;
+			wallMesh.AddQuad(glm::vec3(cursorX + doorWidth, doorHeight, cursorZ), glm::vec3(cursorX, roomHeight, cursorZ), X_NEGATIVE); // above door
+		}
+		wallWidth = cursorX - cornerA.x;
+		wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX - wallWidth, roomHeight, cursorZ), X_NEGATIVE); // wall
+		AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), ROTATE_180, wallWidth);
+			
+		// Left walls
+		cursorZ = cornerB.z;
+		cursorX = cornerA.x;
+		for (int i = 0; i < doors_LeftWall.size(); i++)
+		{
+			float wallWidth = cursorZ - doors_LeftWall[i]->position.z - (doorWidth / 2);
+			wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX, roomHeight, cursorZ - wallWidth), Z); // wall
+			AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), ROTATE_90, wallWidth);
+			cursorZ -= wallWidth + doorWidth;
+			wallMesh.AddQuad(glm::vec3(cursorX, doorHeight, cursorZ + doorWidth), glm::vec3(cursorX, roomHeight, cursorZ), Z); // above door
+		}
+		wallWidth = cursorZ - cornerA.z;
+		wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX, roomHeight, cursorZ - wallWidth), Z); // wall
+		AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), ROTATE_90, wallWidth);
+		
+		// Right walls
+		cursorZ = cornerA.z;
+		cursorX = cornerB.x;
+		for (int i = 0; i < doors_RightWall.size(); i++)
+		{
+			float wallWidth = doors_RightWall[i]->position.z - cursorZ - (doorWidth / 2);
+			wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX, roomHeight, cursorZ + wallWidth), Z_NEGATIVE); // wall
+			AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), ROTATE_270, wallWidth);
+			cursorZ += wallWidth + doorWidth;
+			wallMesh.AddQuad(glm::vec3(cursorX, doorHeight, cursorZ - doorWidth), glm::vec3(cursorX, roomHeight, cursorZ), Z_NEGATIVE); // above door
+		}
+		wallWidth = cornerB.z - cursorZ;
+		wallMesh.AddQuad(glm::vec3(cursorX, 0, cursorZ), glm::vec3(cursorX, roomHeight, cursorZ + wallWidth), Z_NEGATIVE); // wall
+		AddBottomWallTrim(glm::vec3(cursorX, 0, cursorZ), ROTATE_270, wallWidth);
+		
+	}
+
+
+	void Room::DrawWallTrim(Shader* shader)
+	{
+		RenderableObject bottomTrim = RenderableObject("WallTrimFloor", AssetManager::GetModelByName("WallTrim.obj"), NULL);
+		RenderableObject topTrim = RenderableObject("WallTrimFloor", AssetManager::GetModelByName("WallTrimTop.obj"), NULL);
+
+		for (Transform transform : bottomTrimTransforms) {
+			shader->setVec2("TEXTURE_SCALE", glm::vec2(transform.scale.x, 1.0));
+			bottomTrim.transform = transform;
+			bottomTrim.Draw(shader, true);
+		}	
+		for (Transform transform : topTrimTransforms) {
+			shader->setVec2("TEXTURE_SCALE", glm::vec2(transform.scale.x, 1.0));
+			topTrim.transform = transform;
+			topTrim.Draw(shader, true);
+		}
+	}
+
 	void Room::BuildWalls()
 	{
 		// WALLS
@@ -129,7 +257,8 @@ namespace HellEngine
 		wallHoles.clear();
 
 		// Misc. Organise this somewhere.
-		Material* material = Material::GetMaterialByName(wallMaterialName);
+		//unsigned int wallMaterialID = 
+		//Material* material = Material::GetMaterialByName(wallMaterialName);
 		float doorWidth = 1;
 
 		// Build x walls
@@ -143,7 +272,7 @@ namespace HellEngine
 			// Find and fill any door gaps
 			for (int i = 0; i < doors_FrontWall.size(); i++) {
 				float wallWidth = doors_FrontWall[i]->position.x - cursorX - (doorWidth / 2);
-				Wall wall = Wall(cursorX, cursorZ, X, wallWidth, material);
+				Wall wall = Wall(cursorX, cursorZ, X, wallWidth, wallMaterialID);
 				walls.push_back(wall);
 				cursorX += wallWidth + doorWidth;
 				wallHoles.push_back({ glm::vec3(cursorX - doorWidth,  0,  cursorZ), X });
@@ -160,7 +289,7 @@ namespace HellEngine
 			}
 			// Fill the final gap (if there's no doors this will be the entire wall)
 			float wallWidth = cornerB.x - cursorX;
-			Wall wall = Wall(cursorX, cursorZ, X, wallWidth, material);
+			Wall wall = Wall(cursorX, cursorZ, X, wallWidth, wallMaterialID);
 			walls.push_back(wall);
 		}
 		// Build X Negative Walls
@@ -174,7 +303,7 @@ namespace HellEngine
 			// Find and fill any door gaps
 			for (int i = 0; i < doors_BackWall.size(); i++) {
 				float wallWidth = cursorX - doors_BackWall[i]->position.x - (doorWidth / 2);
-				Wall wall = Wall(cursorX, cursorZ, X_NEGATIVE, wallWidth, material);
+				Wall wall = Wall(cursorX, cursorZ, X_NEGATIVE, wallWidth, wallMaterialID);
 				walls.push_back(wall);
 				cursorX -= wallWidth + doorWidth;
 				wallHoles.push_back({ glm::vec3(cursorX + doorWidth,  0,  cursorZ), X_NEGATIVE });
@@ -192,7 +321,7 @@ namespace HellEngine
 			}
 			// Fill the final gap (if there's no doors this will be the entire wall)
 			float wallWidth = cursorX - cornerA.x;
-			Wall wall = Wall(cursorX, cursorZ, X_NEGATIVE, wallWidth, material);
+			Wall wall = Wall(cursorX, cursorZ, X_NEGATIVE, wallWidth, wallMaterialID);
 			walls.push_back(wall);
 		}
 
@@ -207,7 +336,7 @@ namespace HellEngine
 			// Find and fill any door gaps
 			for (int i = 0; i < doors_LeftWall.size(); i++) {
 				float wallWidth = cursorZ - doors_LeftWall[i]->position.z - (doorWidth / 2);
-				Wall wall = Wall(cursorX, cursorZ, Z, wallWidth, material);
+				Wall wall = Wall(cursorX, cursorZ, Z, wallWidth, wallMaterialID);
 				walls.push_back(wall);
 				cursorZ -= wallWidth + doorWidth;
 				wallHoles.push_back({ glm::vec3(cursorX,  0,  cursorZ + doorWidth), Z });
@@ -224,7 +353,7 @@ namespace HellEngine
 			}
 			// Fill the final gap (if there's no doors this will be the entire wall)
 			float wallWidth = cursorZ - cornerA.z;
-			Wall wall = Wall(cursorX, cursorZ, Z, wallWidth, material);
+			Wall wall = Wall(cursorX, cursorZ, Z, wallWidth, wallMaterialID);
 			walls.push_back(wall);
 		}
 
@@ -239,7 +368,7 @@ namespace HellEngine
 			// Find and fill any door gaps
 			for (int i = 0; i < doors_RightWall.size(); i++) {
 				float wallWidth = doors_RightWall[i]->position.z - cursorZ - (doorWidth / 2);
-				Wall wall = Wall(cursorX, cursorZ, Z_NEGATIVE, wallWidth, material);
+				Wall wall = Wall(cursorX, cursorZ, Z_NEGATIVE, wallWidth, wallMaterialID);
 				walls.push_back(wall);
 				cursorZ += wallWidth + doorWidth;
 				wallHoles.push_back({ glm::vec3(cursorX,  0,  cursorZ - doorWidth), Z_NEGATIVE });
@@ -256,51 +385,12 @@ namespace HellEngine
 			}
 			// Fill the final gap (if there's no doors this will be the entire wall)
 			float wallWidth = cornerB.z - cursorZ;
-			Wall wall = Wall(cursorX, cursorZ, Z_NEGATIVE, wallWidth, material);
+			Wall wall = Wall(cursorX, cursorZ, Z_NEGATIVE, wallWidth, wallMaterialID);
 			walls.push_back(wall);
 		}
 		for (Wall & wall : walls)
 			wall.CalculateModelMatrix();
 
-		CreateLightVolumes();
-	}
-
-	void Room::DrawWalls(Shader* shader, bool bindTextures)
-	{
-		shader->setVec2("texOffset", texOffset);
-
-		// Wall
-		for (Wall & wall : walls)
-		{
-			if (bindTextures) {
-				if ((wall.axis == X) || (wall.axis == X_NEGATIVE))
-					shader->setInt("TEXTURE_FLAG", 1);
-
-				else if ((wall.axis == Z) || (wall.axis == Z_NEGATIVE))
-					shader->setInt("TEXTURE_FLAG", 2);
-			}
-			wall.Draw(shader, bindTextures);
-		}
-		
-		// Wall Hole
-		for (WallHole & wallHole : wallHoles) 
-		{
-			if (bindTextures) {
-				if ((wallHole.axis == X) || (wallHole.axis == X_NEGATIVE))
-					shader->setInt("TEXTURE_FLAG", 1);
-
-				else if ((wallHole.axis == Z) || (wallHole.axis == Z_NEGATIVE))
-					shader->setInt("TEXTURE_FLAG", 2);
-			}
-			Model* wallHoleModel = Model::GetByName("Wall_DoorHole.obj");
-			glm::mat4 modelMatrix = glm::mat4(1.0f);
-			modelMatrix = glm::translate(modelMatrix, wallHole.position);
-			modelMatrix = glm::rotate(modelMatrix, Util::AxisToAngle(wallHole.axis), glm::vec3(0.0f, 1.0f, 0.0f));
-			shader->setMat4("model", modelMatrix);
-			wallHoleModel->Draw(shader);
-		}
-		if (bindTextures)
-			shader->setInt("TEXTURE_FLAG", 0);
 	}
 
 	float Room::GetLowerXCoord()
@@ -450,18 +540,18 @@ namespace HellEngine
 		for (DoorHole & doorHole : doorHoles_RightWall)
 			rightWallDoorwayLightVolumes.push_back(LightVolume::BuildLightVolumeFromDoorHole(doorHole, light, 0, bias));
 	}
-	void Room::SetWallMaterial(Material * material)
+	void Room::SetWallMaterial(unsigned int materialID)
 	{
 		for (Wall & wall : walls)
-			wall.material = material;
+			wall.materialID = materialID;
 
-		this->wallMaterialName = material->name;
+		this->wallMaterialID = materialID;
 	}
 
 	void Room::ResizeFloorAndCeiling()
 	{
-		this->floor = Floor(cornerA, width, depth, Material::GetMaterialByName(floor.material->name), floor.rotateTexture);
-		this->ceiling = Ceiling(cornerA, width, depth, Material::GetMaterialByName(ceiling.material->name), ceiling.rotateTexture);
+		this->floor = Floor(cornerA, width, depth, floor.materialID, floor.rotateTexture);
+		this->ceiling = Ceiling(cornerA, width, depth, ceiling.materialID, ceiling.rotateTexture);
 	}
 
 	void Room::CenterLight()

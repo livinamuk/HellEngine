@@ -1,6 +1,7 @@
 
 #include "hellpch.h"
 #include "ShotgunLogic.h"
+#include "HellEngine/AssetManager.h"
 
 namespace HellEngine {
 
@@ -25,7 +26,7 @@ namespace HellEngine {
 			shellEjected = true;
 
 			glm::vec3 position = skinnedMesh->boltPos + (camera->Up * -Shell::shellUpFactor) + (camera->Right * Shell::shellRightFactor) + (camera->Front * -Shell::shellForwardFactor);
-			shells->push_back(Shell(Model::GetByName("Shell.fbx"), position, camera, deltaTime));
+			shells->push_back(Shell(AssetManager::GetModelByName("Shell.fbx"), position, camera, deltaTime));
 
 			//Logic::AddToQueue("EJECT_SHOTGUN_SHELL");
 		}

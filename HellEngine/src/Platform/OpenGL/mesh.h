@@ -9,6 +9,7 @@
 #include "Platform/OpenGL/Shader.h"
 #include "Platform/OpenGL/Texture.h"
 #include "Platform/OpenGL/BoundingBox.h"
+#include "HellEngine/core.h"
 
 #include <string>
 #include <fstream>
@@ -19,38 +20,35 @@ using namespace std;
 
 namespace HellEngine
 {
-	struct Vertex {
-		// position
-		glm::vec3 Position;
-		// normal
-		glm::vec3 Normal;
-		// texCoords
-		glm::vec2 TexCoords;
-		// tangent
-		glm::vec3 Tangent;
-		// bitangent
-		glm::vec3 Bitangent;
-	};
+
 
 	class Mesh 
 	{
 	public: // fields
 		vector<Vertex> vertices;
 		vector<unsigned int> indices;
-		unsigned int VAO;
+		unsigned int VAO = 0;
 		BoundingBox boundingBox;
 
 	public: // methods
+
+		/*Mesh()
+		{
+
+		}*/
+
 		Mesh(vector<Vertex> vertices, vector<unsigned int> indices, BoundingBox boundingBox)
 		{
 			this->vertices = vertices;
 			this->indices = indices;
 			this->boundingBox = boundingBox;
-			setupMesh();
 		}
 
 		void Draw(Shader *shader)
 		{
+			if (VAO == 0)
+				setupMesh();
+
 			// draw mesh
 			glBindVertexArray(VAO);
 			glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
@@ -73,7 +71,7 @@ namespace HellEngine
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
-			// vertex Positions
+			// vertex Positions	
 			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 			// vertex normals

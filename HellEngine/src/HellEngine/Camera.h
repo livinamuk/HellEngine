@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/noise.hpp>
+#include <glm/gtc/random.hpp>
 
 #include <vector>
 
@@ -57,13 +59,13 @@ namespace HellEngine {
 		float MouseSensitivity;
 		float Zoom;
 
-		float lastX;
-		float lastY;
+		float oldX;
+		float oldY;
 		bool firstMouse = true;
 
 		float headBobCounter = 0.0f;
 		float headBobSpeed = 7.5f;//0.100f;
-		float headBobFactor = 0.01f;// 0.005f;
+		float headBobFactor = 0.02f;// 0.005f;
 
 		float rotationSpeed = 90.0f;
 
@@ -72,6 +74,10 @@ namespace HellEngine {
 			transform.position = glm::vec3(0);
 			transform.rotation = glm::vec3(-0.13f, ROTATE_180, 0);
 			transform.scale = glm::vec3(1);
+
+			auto [xpos, ypos] = HellEngine::Input::GetMousePosition();
+			oldX = (float)xpos;
+			oldY = (float)ypos;
 		}
 
 		float CalculateHeadBob()
@@ -97,6 +103,15 @@ namespace HellEngine {
 			Up = glm::vec3(transform[1]);
 			Front = glm::vec3(transform[2]);
 		}
+
+		/*void CalculateVectors()
+		{
+			glm::mat4 transform = this->transform.to_mat4();
+			Right = glm::vec3(transform[0]);
+			Up = glm::vec3(transform[1]);
+			Front = glm::vec3(transform[2]);
+			viewMatrix = glm::inverse(transform);
+		}*/
 
 		void CalculateProjectionMatrix(int screenWidth, int screenHeight)
 		{
@@ -136,37 +151,36 @@ namespace HellEngine {
 				Zoom = 45.0f;
 		}
 
-		void updateMouse(double xpos, double ypos)
-		{
-			if (firstMouse)	{
-				lastX = (float)xpos;
-				lastY = (float)ypos;
-				firstMouse = false;
-			}
-		xoffset = (float)xpos - lastX;
-		yoffset = lastY - (float)ypos; // reversed since y-coordinates go from bottom to top
-		lastX = (float)xpos;
-		lastY = (float)ypos;
-		//ProcessMouseMovement(xoffset, yoffset);
-
-		HellEngine::Application& app = HellEngine::Application::Get();
-		if (app.GetWindow().IsMouseEnabled())
-			return;
-
-		transform.rotation += glm::vec3(yoffset, -xoffset, 0.0) / glm::vec3(200);
-
-		transform.rotation.x = min(transform.rotation.x, 1.5f);
-		transform.rotation.x = max(transform.rotation.x, -1.5f);
-		}
-
 		void Update(float deltaTime)
 		{
 			// Mouse
-			auto[x, y] = HellEngine::Input::GetMousePosition();
-			this->updateMouse(x, y);
+			auto[xpos, ypos] = HellEngine::Input::GetMousePosition();
+			xoffset = (float)xpos - oldX;
+			yoffset = oldY - (float)ypos;
+			oldX = (float)xpos;
+			oldY = (float)ypos;
+
+			HellEngine::Application& app = HellEngine::Application::Get();
+			if (app.GetWindow().IsMouseEnabled())
+				return;
+
+			float yLimit = 1.5f;
+			transform.rotation += glm::vec3(yoffset, -xoffset, 0.0) / glm::vec3(200);
+			transform.rotation.x = min(transform.rotation.x, yLimit);
+			transform.rotation.x = max(transform.rotation.x, -yLimit);
 
 			// Headbob
 			headBobCounter += headBobSpeed * deltaTime;
+		}
+
+		float SimplexHeadBob()
+		{
+			return (float)glm::simplex(glm::vec3(glm::gaussRand(0.051f, 0.85f), glm::gaussRand(0.073f, 0.99f), glm::gaussRand(0.051f, 0.63f)));
+		}
+
+		float SmoothHeadBob()
+		{
+			return (float)(cos(headBobCounter) * headBobFactor);
 		}
 	};
 }

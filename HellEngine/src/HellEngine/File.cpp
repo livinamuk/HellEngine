@@ -61,9 +61,9 @@ namespace HellEngine {
 			{
 				glm::vec3 cornerA = ReadVec3(rooms[i], "CornerA");
 				glm::vec3 cornerB = ReadVec3(rooms[i], "CornerB");
-				std::string floorMaterialName = ReadString(rooms[i], "FloorMaterial");
-				std::string ceilingMaterialName = ReadString(rooms[i], "CeilingMaterial");
-				std::string wallMaterialName = ReadString(rooms[i], "WallMaterial");
+				unsigned int floorMaterialID = AssetManager::GetMaterialIDByName(ReadString(rooms[i], "FloorMaterial"));
+				unsigned int ceilingMaterialID = AssetManager::GetMaterialIDByName(ReadString(rooms[i], "CeilingMaterial"));
+				unsigned int wallMaterialID = AssetManager::GetMaterialIDByName(ReadString(rooms[i], "WallMaterial"));
 				bool rotateFloor = ReadBool(rooms[i], "RotateFloorTexture");
 				bool rotateCeiling = ReadBool(rooms[i], "RotateCeilingTexture");
 				glm::vec3 lightPosition = ReadVec3(rooms[i], "LightPosition");
@@ -73,7 +73,7 @@ namespace HellEngine {
 				float LightAttExp = ReadFloat(rooms[i], "LightAttExp");
 				float LightStrength = ReadFloat(rooms[i], "LightStrength");
 				Light light = Light(lightPosition, lightColor, LightAttConstant, LightAttLinear, LightAttExp, LightStrength);
-				house.AddRoom(cornerA, cornerB, wallMaterialName, floorMaterialName, ceilingMaterialName, rotateFloor, rotateCeiling, light);
+				house.AddRoom(cornerA, cornerB, wallMaterialID, floorMaterialID, ceilingMaterialID, rotateFloor, rotateCeiling, light);
 			}
 		}
 		// Doors
@@ -84,12 +84,12 @@ namespace HellEngine {
 			{
 				glm::vec3 position = ReadVec3(rooms[i], "Position");
 				std::string axis = ReadString(rooms[i], "Axis");
-				std::string floorMaterialName = ReadString(rooms[i], "FloorMaterial");
+				unsigned int floorMaterialID = AssetManager::GetMaterialIDByName(ReadString(rooms[i], "FloorMaterial")); 
 				bool rotateFloor = ReadBool(rooms[i], "RotateFloorTexture");
 				bool initiallyOpen = ReadBool(rooms[i], "InitiallyOpen");
 				bool initiallyLocked = ReadBool(rooms[i], "InitiallyLocked");
 				float maxOpenAngle = ReadFloat(rooms[i], "MaxOpenAngle");
-				house.AddDoor(position.x, position.z, Util::StringToAxis(axis), floorMaterialName, initiallyOpen, initiallyLocked, maxOpenAngle, rotateFloor);
+				house.AddDoor(position.x, position.z, Util::StringToAxis(axis), floorMaterialID, initiallyOpen, initiallyLocked, maxOpenAngle, rotateFloor);
 			}
 		}
 		return house;
@@ -109,9 +109,9 @@ namespace HellEngine {
 			rapidjson::Value roomObject(rapidjson::kObjectType);
 			SaveVec3(&roomObject, "CornerA", room.cornerA, allocator);
 			SaveVec3(&roomObject, "CornerB", room.cornerB, allocator);
-			SaveString(&roomObject, "WallMaterial", room.wallMaterialName, allocator);
-			SaveString(&roomObject, "FloorMaterial", room.floor.material->name, allocator);
-			SaveString(&roomObject, "CeilingMaterial", room.ceiling.material->name, allocator);
+			SaveString(&roomObject, "WallMaterial", AssetManager::GetMaterialNameByID(room.wallMaterialID), allocator);
+			SaveString(&roomObject, "FloorMaterial", AssetManager::GetMaterialNameByID(room.floor.materialID), allocator);
+			SaveString(&roomObject, "CeilingMaterial", AssetManager::GetMaterialNameByID(room.ceiling.materialID), allocator);
 			SaveBool(&roomObject, "RotateFloorTexture", room.floor.rotateTexture, allocator);
 			SaveBool(&roomObject, "RotateCeilingTexture", room.ceiling.rotateTexture, allocator);
 			SaveVec3(&roomObject, "LightPosition", room.light.position, allocator);;
@@ -129,7 +129,7 @@ namespace HellEngine {
 			rapidjson::Value doorObject(rapidjson::kObjectType);
 			SaveVec3(&doorObject, "Position", door.position, allocator);
 			SaveString(&doorObject, "Axis", Util::AxisToString(door.axis), allocator);
-			SaveString(&doorObject, "FloorMaterial", door.floor.material->name, allocator);
+			SaveString(&doorObject, "FloorMaterial", AssetManager::GetMaterialNameByID(door.floor.materialID), allocator);
 			SaveBool(&doorObject, "RotateFloorTexture", door.floor.rotateTexture, allocator);
 			SaveBool(&doorObject, "InitiallyOpen", door.initiallyOpen, allocator);
 			SaveBool(&doorObject, "InitiallyLocked", door.initiallyLocked, allocator);

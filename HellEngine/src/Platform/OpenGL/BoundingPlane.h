@@ -12,23 +12,16 @@ namespace HellEngine {
 		~BoundingPlane();
 		void Draw(Shader* shader);
 		void DrawSolid(Shader* shader);
-		void SetAngle(float angle);
-		float GetAngle();
 		void BufferData();
-		void Recalculate_ABC_and_Normal();
 
 	public: // fields
 		glm::vec3 position;
-		glm::vec3 normal;
 		glm::vec3 A, B, C, D; // corners
 		glm::vec3 scale;
-		unsigned int VAO = -1;
+		unsigned int VAO = 0;
 		bool testCollisions = true;
 		std::string name = "None";
-		//glm::vec3 vertices[4];
 
-	private: //fields
-		float angle;
 	};
 }
 

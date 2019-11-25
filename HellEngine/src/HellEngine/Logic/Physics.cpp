@@ -2,6 +2,7 @@
 #include "Physics.h"
 #include "HellEngine/Util.h"
 #include "Physics.h"
+#include "HellEngine/AssetManager.h"
 
 namespace HellEngine
 {
@@ -146,6 +147,43 @@ namespace HellEngine
 
 	}
 
+	void Physics::AddStairMeshToPhysicsWorld(StairMesh stairMesh)
+	{
+		btTriangleMesh* triangleMesh = new btTriangleMesh();
+
+		for (BoundingPlane& plane : stairMesh.boundingPlanes)
+		{
+			if (plane.testCollisions)
+			{
+				btVector3 vertA = Util::glmVec3_to_btVec3(plane.A);
+				btVector3 vertB = Util::glmVec3_to_btVec3(plane.B);
+				btVector3 vertC = Util::glmVec3_to_btVec3(plane.C);
+				btVector3 vertD = Util::glmVec3_to_btVec3(plane.D);
+
+				triangleMesh->addTriangle(vertA, vertB, vertC);
+				triangleMesh->addTriangle(vertC, vertD, vertA);
+			}
+		}
+		btBvhTriangleMeshShape* triangleMeshShape = new btBvhTriangleMeshShape(triangleMesh, true, true);
+
+		m_collisionShapes.push_back(triangleMeshShape);
+
+		btTransform meshTransform;
+		meshTransform.setIdentity();
+		meshTransform.setOrigin(btVector3(0, 0, 0));
+
+		m_triangleCollisionObject = new btCollisionObject();
+		m_triangleCollisionObject->setCollisionShape(triangleMeshShape);
+		m_triangleCollisionObject->setWorldTransform(meshTransform);
+
+		EntityData* entityData = new EntityData();
+		entityData->name = "WALL";
+		entityData->vectorIndex = 0;
+		m_triangleCollisionObject->setUserPointer(entityData);
+
+		m_dynamicsWorld->addCollisionObject(m_triangleCollisionObject);
+		m_triangleCollisionObject->setCollisionFlags(m_triangleCollisionObject->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+	}
 
 	void Physics::AddWallsToPhysicsWorld(std::vector<BoundingPlane*> planes)
 	{
@@ -235,7 +273,7 @@ namespace HellEngine
 	void Physics::AddHouse(House* house)
 	{
 
-		BoundingBox boundingBox = Model::GetByName("Door.obj")->meshes[0].boundingBox;
+		BoundingBox boundingBox = AssetManager::GetModelByName("door.obj")->meshes[0].boundingBox;
 		btVector3 collisionScale = Util::glmVec3_to_btVec3(boundingBox.baseTransform.scale);
 
 		btBoxShape* collisionShape = new btBoxShape(btVector3(0.5, 0.5, 0.5));
@@ -270,7 +308,7 @@ namespace HellEngine
 			//m_rigidBodies.push_back(door->rigidBody);
 		}
 
-		/*BoundingBox boundingBox = Model::GetByName("Door.obj")->meshes[0].boundingBox;
+		/*BoundingBox boundingBox = AssetManager::GetByName("door.obj")->meshes[0].boundingBox;
 		btVector3 collisionScale = Util::glmVec3_to_btVec3(boundingBox.baseTransform.scale);
 
 		btBoxShape* collisionShape = new btBoxShape(btVector3(0.5, 0.5, 0.5));

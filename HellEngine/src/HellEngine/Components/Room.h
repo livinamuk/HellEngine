@@ -6,31 +6,35 @@
 #include "HellEngine/Light.h"
 #include "Platform/OpenGL/TexturedMesh.h"
 #include "Platform/OpenGL/LightVolume.h"
-//#include "HellEngine.h"
+#include "Platform/OpenGL/WallMesh.h"
 
 namespace HellEngine
 {
 	class Room
 	{
 	public: // methods
-		Room(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling);
-		Room(glm::vec3 cornerA, glm::vec3 cornerB, std::string wallMaterialName, std::string floorMaterialName, std::string ceilingMaterialName, bool rotateFloor, bool rotateCeiling, Light light);
+		Room(glm::vec3 cornerA, glm::vec3 cornerB, unsigned int wallMaterialID, unsigned int floorMaterialID, unsigned int ceilingMaterialID, bool rotateFloor, bool rotateCeiling);
+		Room(glm::vec3 cornerA, glm::vec3 cornerB, unsigned int wallMaterialID, unsigned int floorMaterialID, unsigned int ceilingMaterialID, bool rotateFloor, bool rotateCeiling, Light light);
 		~Room();
 		void BuildAll(std::vector<Door>& doors);
 		void FindDoors(std::vector<Door>& doors);
 		void BuildWalls();
-		void DrawWalls(Shader* shader, bool bindTextures);
 		float GetLowerXCoord();
 		float GetLowerZCoord();
 		float GetUpperXCoord();
 		float GetUpperZCoord();
 		void CalculateLightLimits();
 		void CreateLightVolumes();
-		void SetWallMaterial(Material* material);
+		void SetWallMaterial(unsigned int materialID);
 		void RecalculateWidthAndDepth();
 		void ResizeFloorAndCeiling();
 		void CenterLight();
 		void BuildBlackWalls();
+
+		void ConstructWallMesh();
+		void DrawWallTrim(Shader* shader);
+		void AddBottomWallTrim(glm::vec3 position, float rotation, float scale);
+		void AddTopWallTrim(glm::vec3 position, float rotation, float scale);
 
 	public: // fields
 		Floor floor;
@@ -38,7 +42,7 @@ namespace HellEngine
 		Light light;
 		float width;
 		float depth;
-		std::string wallMaterialName;
+		unsigned int wallMaterialID;
 		glm::vec2 texOffset;
 
 		glm::vec3 cornerA; // bottom left
@@ -64,6 +68,11 @@ namespace HellEngine
 
 		std::vector<Wall> walls;
 		std::vector<WallHole> wallHoles;
+
+
+		std::vector<Transform> bottomTrimTransforms;
+		std::vector<Transform> topTrimTransforms;
+		WallMesh wallMesh;
 
 		static float Light_Volume_Bias;
 	};

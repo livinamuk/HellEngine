@@ -44,33 +44,14 @@ namespace HellEngine {
 				modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(0, 1, 0));
 			else {
 				glm::vec3 axis = glm::normalize(glm::cross(squareNormal, normal));
-				Util::OUTPUT("AXIS:  " + Util::Vec3_to_String(axis));
 				modelMatrix = glm::rotate(modelMatrix, angle, axis);
 			}
 		}
-
-
-
-
 		modelMatrix = glm::scale(modelMatrix, transform.scale);
 		shader->setMat4("model", modelMatrix);
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-		Util::OUTPUT("AMGLE: " + std::to_string(angle));
 	}
-
-
-
-//	modelMatrix = glm::rotate(modelMatrix, squareNormal.z, glm::vec3(0, 0, 1));
-//	modelMatrix = glm::rotate(modelMatrix, squareNormal.y, glm::vec3(0, 1, 0));
-//	modelMatrix = glm::rotate(modelMatrix, squareNormal.x, glm::vec3(1, 0, 0));
-
-
-
-
-
 
 	void Cube::Init()
 	{

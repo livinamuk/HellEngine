@@ -42,22 +42,35 @@ namespace HellEngine
 
 		// Create it
 		rigidBody = Physics::createRigidBody(1.0, btTransform, collisionShape, 0.1);
-	
+
 		// Kinematic flags
 		//rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 		//rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
 		//rigidBody->setActivationState(DISABLE_DEACTIVATION);
+
+
+
+
+
+		btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
+		btBoxShape* convexShape = new btBoxShape(btVector3(1, 1, 1));
+
+		//For now only a simple test that it initializes correctly.
+		btKinematicCharacterController* tested = new btKinematicCharacterController(ghostObject, convexShape, 1);
+		
+		btVector3 grabity(0, -9, 0);
+
 	}
 
 	void Player::UpdateRigidBodyWorldTransform()
 	{
-	/*
-		btTransform transform;
-		transform.setIdentity();
-		transform.setOrigin(btVector3(position.x, position.y, position.z));
-		rigidBody->setWorldTransform(transform);
+		/*
+			btTransform transform;
+			transform.setIdentity();
+			transform.setOrigin(btVector3(position.x, position.y, position.z));
+			rigidBody->setWorldTransform(transform);
 
-		CheckBulletCollisions();*/
+			CheckBulletCollisions();*/
 	}
 
 	struct BulletCollisionData {
@@ -66,7 +79,7 @@ namespace HellEngine
 		glm::vec3 point;
 		glm::vec3 normal;
 
-		BulletCollisionData() {reset();}
+		BulletCollisionData() { reset(); }
 		void reset() {
 			occured = false;
 			distance = 0.0;
@@ -78,7 +91,7 @@ namespace HellEngine
 
 	struct collisionTestResult : public btCollisionWorld::ContactResultCallback
 	{
-		collisionTestResult(btRigidBody& playerRigidBody, BulletCollisionData& collisionData) : btCollisionWorld::ContactResultCallback(), body(playerRigidBody), data(collisionData){}
+		collisionTestResult(btRigidBody& playerRigidBody, BulletCollisionData& collisionData) : btCollisionWorld::ContactResultCallback(), body(playerRigidBody), data(collisionData) {}
 		btRigidBody& body;
 		BulletCollisionData& data;
 
@@ -134,27 +147,27 @@ namespace HellEngine
 			spherePosition += penetrationNormal * penetrationDepth;*/
 
 
-		//	float penetrationDistance = glm::length(collisionData.point);
-		//	position.x += collisionData.normal.x * penetrationDistance;
+			//	float penetrationDistance = glm::length(collisionData.point);
+			//	position.x += collisionData.normal.x * penetrationDistance;
 
-		//	std::cout << "CON POINT: " +Util::Vec3ToString(collisionData.point) << "\n";
-			//std::cout << "DIST: " + std::to_string(penetrationDistance) << "\n";
+			//	std::cout << "CON POINT: " +Util::Vec3ToString(collisionData.point) << "\n";
+				//std::cout << "DIST: " + std::to_string(penetrationDistance) << "\n";
 
-			//position.x += penetrationDistance * -1;
+				//position.x += penetrationDistance * -1;
 
-			//position.x = spherePosition.x;
-			//position.z = spherePosition.y;
+				//position.x = spherePosition.x;
+				//position.z = spherePosition.y;
 
-			//position.x = 1;
+				//position.x = 1;
 		}
 	}
 
-	void Player::Update(Camera* camera, float deltaTime, vector<BoundingBox*> boundingBoxes, vector<BoundingPlane*> boundingPlanePtrs)
+	void Player::Update(Camera* camera, Physics* physics, float deltaTime)
 	{
 		CalculateIsRunning();
 		CalculateCurrentSpeed(deltaTime);
 		UpdatePhysicsMovement(deltaTime);
-		UpdateMovement(camera, deltaTime, boundingBoxes, boundingPlanePtrs);
+		UpdateMovement(camera, deltaTime);
 		UpdateCrouching(deltaTime);
 		//UpdateGravity(deltaTime);
 		UpdateAudio(deltaTime);
@@ -183,7 +196,7 @@ namespace HellEngine
 		}
 	}
 
-	void Player::UpdateGravity(float deltaTime)
+	/*void Player::UpdateGravity(float deltaTime)
 	{
 		targetVelocity.y += (gravity * deltaTime);
 		//targetVelocity.y = std::max(targetVelocity.y, currentGroundHeight);
@@ -193,7 +206,7 @@ namespace HellEngine
 			position.y = std::max(position.y, currentGroundHeight);
 			targetVelocity.y = 0;
 		}
-	}
+	}*/
 
 	void Player::CalculateCurrentSpeed(float deltaTime)
 	{
@@ -225,14 +238,12 @@ namespace HellEngine
 		walking = false;
 		isRunning = false;
 		crouching = false;
-
-
-		//position = rigidBody->getWorldTransform.trans();
 	}
 
-	void Player::UpdateMovement(Camera* camera, float deltaTime, vector<BoundingBox*> boundingBoxPtrs, vector<BoundingPlane*> boundingPlanePtrs)
+
+
+	void Player::UpdateMovement(Camera* camera, float deltaTime)
 	{
-	
 		// Movement
 		targetVelocity.x = 0;
 		targetVelocity.z = 0;
@@ -260,31 +271,111 @@ namespace HellEngine
 
 		targetVelocity *= deltaTime *= currentSpeed * 60;
 
-	
-
 		// Jump
-		if ((IsGrounded()) && Input::IsKeyPressed(HELL_KEY_SPACE))
-			targetVelocity.y += jumpStrength;
-		
-
+		//if ((IsGrounded()) && Input::IsKeyPressed(HELL_KEY_SPACE))
+		//	targetVelocity.y += jumpStrength;
 
 		// Lerp
 		currentVelocity.x = Util::FInterpTo(currentVelocity.x, targetVelocity.x, deltaTime, velocityApproachSpeed);
-		currentVelocity.y = Util::FInterpTo(currentVelocity.y, targetVelocity.y, deltaTime, velocityApproachSpeed);
-		//currentVelocity.y = targetVelocity.y;
+	//	currentVelocity.y = Util::FInterpTo(currentVelocity.y, targetVelocity.y, deltaTime, velocityApproachSpeed);
 		currentVelocity.z = Util::FInterpTo(currentVelocity.z, targetVelocity.z, deltaTime, velocityApproachSpeed);
 
-		rigidBody->setLinearVelocity(Util::glmVec3_to_btVec3(currentVelocity));
-
-	}
 		
-	bool Player::IsGrounded()
+
+
+		// Prevent sliding about
+		if (!walking) {
+			currentVelocity.x = 0;
+			currentVelocity.z = 0;
+		}
+
+
+		rigidBody->setAngularVelocity(btVector3(0, 0, 0));
+
+		float linVelY = rigidBody->getLinearVelocity().getY();
+		currentVelocity.y = 0;
+
+		rigidBody->setLinearVelocity(Util::glmVec3_to_btVec3(currentVelocity));
+		rigidBody->setAngularVelocity(btVector3(0, 0, 0));
+	}
+
+	/*bool Player::IsGrounded()
 	{
 		if (position.y <= currentGroundHeight + KINDA_SMALL_NUMBER)
 			return true;
-		else 
+		else
 			return false;
+	}*/
+
+	void Player::FindGroundHeight(Physics* physics, float deltaTime)
+	{
+		return;
+
+		// Begining and end of ray
+		glm::vec3 ray_direction = glm::vec3(0, -1, 0);
+		glm::vec3 out_origin = position + glm::vec3(0, -0.1f, 0);// +rigidBodyHoverHeight;
+		glm::vec3 out_end = position + ray_direction;
+
+		// Disable player body collision
+//		rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+		// Cast ray
+		btCollisionWorld::ClosestRayResultCallback RayCallback(btVector3(out_origin.x, out_origin.y, out_origin.z), btVector3(out_end.x, out_end.y, out_end.z));
+		physics->m_dynamicsWorld->rayTest(btVector3(out_origin.x, out_origin.y, out_origin.z), btVector3(out_end.x, out_end.y, out_end.z), RayCallback);
+
+		groundHeight = 0;
+
+
+
+
+		/*	btTransform transform;
+			transform.setIdentity();
+			transform.setOrigin(btVector3(position.x, 100, position.z));
+			rigidBody->setWorldTransform(transform);
+			*/
+
+		float oldY = position.y;
+
+		btTransform transform;
+		transform.setIdentity();
+		transform.setOrigin(btVector3(position.x, 100, position.z));
+		rigidBody->setWorldTransform(transform);
+
+
+		// Find distance
+		if (RayCallback.hasHit()) {
+			glm::vec3 hitPoint = Util::btVec3_to_glmVec3(RayCallback.m_hitPointWorld);
+			groundHeight = hitPoint.y;
+		}
+
+
+
+		float newY = rigidBodyHoverHeight + groundHeight;
+		float interpolatedY = Util::FInterpTo(oldY, newY, deltaTime, velocityApproachSpeed);
+		//	interpolatedY = newY;
+
+
+
+			//float Y = rigidBodyHoverHeight + groundHeight;// -distanceToGround;
+			//btTransform transform;
+		transform.setIdentity();
+		transform.setOrigin(btVector3(position.x, interpolatedY, position.z));
+		rigidBody->setWorldTransform(transform);
+
+
+		/*
+
+				transform.setIdentity();
+				transform.setOrigin(btVector3(position.x, groundHeight + rigidBodyHoverHeight, position.z));
+				rigidBody->setWorldTransform(transform);
+				*/
+
+				// Enable player body collision
+				//rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+				//std::cout << "GROUND HEIGHT: " << groundHeight << "\n";
 	}
+
 
 	void Player::UpdateCrouching(float deltaTime)
 	{

@@ -1,23 +1,27 @@
 #pragma once
+#include <future>
 
 class Texture
 {
 public:
 	Texture(std::string filename);
+	Texture(std::string filename, std::string filetype);
 	~Texture();
-	static void Init();
 
 	unsigned int ID = 0;
 	std::string name;
-	std::string type;
+	std::string filetype;
 
 	static void LoadTexture(std::string filename);
+	//static void PrepareToLoadTexture(std::string filename);
+	//static void MultithreadedLoadTexture(std::vector<Texture>*, std::string filename);
+	
 	static unsigned int GetIDByName(std::string filename);
 	static bool TextureExists(std::string textureName);
-
-private:
 	static std::vector<Texture> textures;
 
-	static std::vector<std::string> textureNames; // For loading
+private:
+	static std::vector<std::string> textureFilepaths; // For loading
+	static std::vector<std::future<void>> m_Futures;
 };
 

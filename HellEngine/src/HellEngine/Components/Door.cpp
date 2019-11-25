@@ -2,24 +2,28 @@
 #include "Door.h"
 #include "HellEngine/Audio/Audio.h"
 #include "Platform/OpenGL/Quad2D.h"
+#include "HellEngine/AssetManager.h"
 
 
 namespace HellEngine {
 
-	Model* Door::modelDoor = nullptr;
-	Model* Door::modelDoorShadowCaster = nullptr;
-	Model* Door::modelDoorJam = nullptr;
-	Model* Door::modelWallHole = nullptr;
+	unsigned int Door::materialID_Door;
+	unsigned int Door::materialID_DoorFrame;
+	unsigned int Door::modelID_Door;
+	unsigned int Door::modelID_DoorFrame;
+
 	bool Door::PlayerHasKey = false;
 
-	Door::Door(float x, float z, Axis axis, std::string floorMaterialName, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloor)
+	Door::Door(float x, float z, Axis axis, unsigned int floorMaterialID, bool initiallyOpen, bool initiallyLocked, float maxOpenAngle, bool rotateFloor)
 	{
+		// May as well do this here. Over and over lol.
+		materialID_Door = AssetManager::GetMaterialIDByName("Door");
+		materialID_DoorFrame = AssetManager::GetMaterialIDByName("Wood");
+		modelID_Door = AssetManager::GetModelIDByName("door.obj");
+		modelID_DoorFrame = AssetManager::GetModelIDByName("Door_jam.obj");
+
 		this->position = glm::vec3(x, 0, z);
 		this->axis = axis;
-
-		//glm::vec3 doorBoundingBoxSize = glm::vec3(0.79f, 1.97, 0.04f);
-		//boundingBox = BoundingBox(GetDoorModelPosition(), doorBoundingBoxSize, ObjectOrigin::BOTTOM_LEFT_FRONT_CORNER, "Door", true);
-	
 		this->initiallyLocked = initiallyLocked;
 		this->locked = initiallyLocked;
 		this->maxOpenAngle = maxOpenAngle;
@@ -31,35 +35,35 @@ namespace HellEngine {
 
 		// Floor
 		if (axis == X)
-			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f, Material::GetMaterialByName(floorMaterialName), rotateFloor);
+			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f, floorMaterialID, rotateFloor);
 		if (axis == X_NEGATIVE)
-			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f, Material::GetMaterialByName(floorMaterialName), rotateFloor);
+			this->floor = Floor(glm::vec3(x - 0.5f, 0, z - 0.1f), 1, 0.1f, floorMaterialID, rotateFloor);
 		if (axis == Z)
-			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1, Material::GetMaterialByName(floorMaterialName), rotateFloor);
+			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1, floorMaterialID, rotateFloor);
 		if (axis == Z_NEGATIVE)
-			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1, Material::GetMaterialByName(floorMaterialName), rotateFloor);
+			this->floor = Floor(glm::vec3(x - 0.1f, 0, z - 0.5f), 0.1f, 1, floorMaterialID, rotateFloor);
 
 		// Base Transform
-		BoundingBox* boundingBox = &Model::GetByName("Door.obj")->meshes[0].boundingBox;
+		BoundingBox* boundingBox = &AssetManager::GetModelByName("door.obj")->meshes[0].boundingBox;
 		baseTransform.setIdentity();		
 		if (axis == X) {
 			rotationWhenClosed = 0;
-			baseTransform.setOrigin(btVector3(position.x, position.y + 1, position.z - 0.005f - boundingBox->depth));
+			baseTransform.setOrigin(btVector3(position.x, position.y + 1, position.z - (boundingBox->depth / 2)));
 			baseTransform.setRotation(btQuaternion(rotationWhenClosed, 0, 0));
 		}
 		else if (axis == X_NEGATIVE) {
 			rotationWhenClosed = ROTATE_180;
-			baseTransform.setOrigin(btVector3(position.x, position.y + 1, position.z - 0.005f - 0.1f + boundingBox->depth));
+			baseTransform.setOrigin(btVector3(position.x, position.y + 1, position.z + 0.015f - 0.1f + boundingBox->depth));
 			baseTransform.setRotation(btQuaternion(rotationWhenClosed, 0, 0));
 		}
 		else if (axis == Z) {
 			rotationWhenClosed = ROTATE_90;
-			baseTransform.setOrigin(btVector3(position.x - 0.005f - boundingBox->depth, position.y + 1,  position.z));
+			baseTransform.setOrigin(btVector3(position.x + 0.015f - boundingBox->depth, position.y + 1,  position.z));
 			baseTransform.setRotation(btQuaternion(rotationWhenClosed, 0, 0));
 		}
 		else if (axis == Z_NEGATIVE) {
 			rotationWhenClosed = ROTATE_270;
-			baseTransform.setOrigin(btVector3(position.x - 0.005f - 0.1f + boundingBox->depth, position.y + 1, position.z));
+			baseTransform.setOrigin(btVector3(position.x + 0.015f - 0.1f + boundingBox->depth, position.y + 1, position.z));
 			baseTransform.setRotation(btQuaternion(rotationWhenClosed, 0, 0));
 		}
 	}
@@ -82,7 +86,7 @@ namespace HellEngine {
 		modelTransform.rotation = glm::vec3(z, y, x);
 
 		// Bounding box
-		BoundingBox* boundingBox = &Model::GetByName("Door.obj")->meshes[0].boundingBox;
+		BoundingBox* boundingBox = &AssetManager::GetModelByName("door.obj")->meshes[0].boundingBox;
 		boundingBox->baseTransform.position = glm::vec3(0);
 
 		shader->setMat4("model", modelTransform.to_mat4() * boundingBox->baseTransform.to_mat4());
@@ -115,23 +119,12 @@ namespace HellEngine {
 		if (doorStatus == LOCKED_FROM_THE_OTHER_SIDE)
 			openAngle = 0;
 
-
-
-		// Recreate the bounding box if it has changed shape (aka the door angle changed)
-		//if (doorStatus == DOOR_OPENING || doorStatus == DOOR_CLOSING)
-			//boundingBox.SetAngle(this->GetAngle());
-
-
-		// Set rigid body transform
-
 		UpdateRigidBodyTransfrom();
 	}
 
 	void Door::UpdateRigidBodyTransfrom()
 	{
-		BoundingBox* boundingBox = &Model::GetByName("Door.obj")->meshes[0].boundingBox;
-
-		// Position
+		BoundingBox* boundingBox = &AssetManager::GetModelByName("door.obj")->meshes[0].boundingBox;
 
 		btTransform translateXMat;
 		translateXMat.setIdentity();
@@ -274,7 +267,7 @@ namespace HellEngine {
 		modelTransform.rotation = glm::vec3(z, y, x);
 
 		// Bounding box
-		BoundingBox* boundingBox = &Model::GetByName("Door.obj")->meshes[0].boundingBox;
+		BoundingBox* boundingBox = &AssetManager::GetModelByName("door.obj")->meshes[0].boundingBox;
 		//boundingBox->baseTransform.position = glm::vec3(0);
 
 		// Modifier

@@ -143,6 +143,7 @@
     <ClInclude Include="src\HellEngine.h" />
     <ClInclude Include="src\HellEngine\Animation\SkinnedMesh.h" />
     <ClInclude Include="src\HellEngine\Application.h" />
+    <ClInclude Include="src\HellEngine\AssetManager.h" />
     <ClInclude Include="src\HellEngine\Audio\Audio.h" />
     <ClInclude Include="src\HellEngine\Audio\common.h" />
     <ClInclude Include="src\HellEngine\Audio\common_platform.h" />
@@ -172,8 +173,8 @@
     <ClInclude Include="src\HellEngine\Events\MouseEvent.h" />
     <ClInclude Include="src\HellEngine\File.h" />
     <ClInclude Include="src\HellEngine\GameObjects\Decal.h" />
-    <ClInclude Include="src\HellEngine\GameObjects\StaticEntity.h" />
     <ClInclude Include="src\HellEngine\GameObjects\Shell.h" />
+    <ClInclude Include="src\HellEngine\GameObjects\StaticEntity.h" />
     <ClInclude Include="src\HellEngine\ImGUI\ImGuiLayer.h" />
     <ClInclude Include="src\HellEngine\Input.h" />
     <ClInclude Include="src\HellEngine\KeyCodes.h" />
@@ -186,7 +187,6 @@
     <ClInclude Include="src\HellEngine\Logic\ShotgunLogic.h" />
     <ClInclude Include="src\HellEngine\Material.h" />
     <ClInclude Include="src\HellEngine\Model.h" />
-    <ClInclude Include="src\HellEngine\ModelLoader.h" />
     <ClInclude Include="src\HellEngine\MouseButtonCodes.h" />
     <ClInclude Include="src\HellEngine\Physics\PhysicsObject.h" />
     <ClInclude Include="src\HellEngine\Player.h" />
@@ -199,6 +199,8 @@
     <ClInclude Include="src\Platform\OpenGL\BoundingBox.h" />
     <ClInclude Include="src\Platform\OpenGL\BoundingPlane.h" />
     <ClInclude Include="src\Platform\OpenGL\Cube.h" />
+    <ClInclude Include="src\Platform\OpenGL\StairMesh.h" />
+    <ClInclude Include="src\Platform\OpenGL\WallMesh.h" />
     <ClInclude Include="src\Platform\OpenGL\GBuffer.h" />
     <ClInclude Include="src\Platform\OpenGL\LightVolume.h" />
     <ClInclude Include="src\Platform\OpenGL\LightingBuffer.h" />
@@ -598,6 +600,7 @@
   <ItemGroup>
     <ClCompile Include="src\HellEngine\Animation\SkinnedMesh.cpp" />
     <ClCompile Include="src\HellEngine\Application.cpp" />
+    <ClCompile Include="src\HellEngine\AssetManager.cpp" />
     <ClCompile Include="src\HellEngine\Audio\Audio.cpp" />
     <ClCompile Include="src\HellEngine\Audio\common.cpp" />
     <ClCompile Include="src\HellEngine\Audio\common_platform.cpp" />
@@ -621,7 +624,6 @@
     <ClCompile Include="src\HellEngine\Logic\ShotgunLogic.cpp" />
     <ClCompile Include="src\HellEngine\Material.cpp" />
     <ClCompile Include="src\HellEngine\Model.cpp" />
-    <ClCompile Include="src\HellEngine\ModelLoader.cpp" />
     <ClCompile Include="src\HellEngine\Physics\PhysicsObject.cpp" />
     <ClCompile Include="src\HellEngine\Player.cpp" />
     <ClCompile Include="src\HellEngine\Timer.cpp" />
@@ -631,6 +633,8 @@
     <ClCompile Include="src\Platform\OpenGL\BoundingBox.cpp" />
     <ClCompile Include="src\Platform\OpenGL\BoundingPlane.cpp" />
     <ClCompile Include="src\Platform\OpenGL\Cube.cpp" />
+    <ClCompile Include="src\Platform\OpenGL\StairMesh.cpp" />
+    <ClCompile Include="src\Platform\OpenGL\WallMesh.cpp" />
     <ClCompile Include="src\Platform\OpenGL\GBuffer.cpp" />
     <ClCompile Include="src\Platform\OpenGL\LightVolume.cpp" />
     <ClCompile Include="src\Platform\OpenGL\LightingBuffer.cpp" />

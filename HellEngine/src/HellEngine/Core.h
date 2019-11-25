@@ -50,6 +50,15 @@
 // Colours
 #define HELL_YELLOW	glm::vec3(1, 1, 0)
 
+	struct Vertex {
+		glm::vec3 Position = glm::vec3(0, 0, 0);
+		glm::vec3 Normal = glm::vec3(0, 0, 0);
+		glm::vec2 TexCoords = glm::vec2(0, 0);
+		glm::vec3 Tangent = glm::vec3(0, 0, 0);
+		glm::vec3 Bitangent = glm::vec3(0, 0, 0);
+	};
+
+
 
 	enum MousePickType { NotFound, Wall, Door };
 

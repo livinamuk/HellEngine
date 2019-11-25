@@ -1,5 +1,6 @@
 #include "hellpch.h"
 #include "Ceiling.h"
+#include "HellEngine/AssetManager.h"
 
 namespace HellEngine
 {
@@ -7,9 +8,9 @@ namespace HellEngine
 	{
 	}
 
-	Ceiling::Ceiling(glm::vec3 position, float width, float depth, Material* material, bool rotateTexture)
+	Ceiling::Ceiling(glm::vec3 position, float width, float depth, unsigned int materialID, bool rotateTexture)
 	{
-		this->material = material;
+		this->materialID = materialID;
 		transform.position = position;
 		transform.position.y = 2.4f;
 		transform.position.z += depth;
@@ -17,7 +18,7 @@ namespace HellEngine
 		this->depth = depth;
 		this->rotateTexture = rotateTexture;
 		transform.scale = glm::vec3(width, -1, -depth);
-		this->model = Model::GetByName("UnitPlane.obj");
+		this->model = AssetManager::GetModelByName("UnitPlane.obj");
 
 		glm::vec3 A = transform.position;
 		glm::vec3 B = glm::vec3(transform.position.x + width, transform.position.y, transform.position.z);
@@ -34,7 +35,8 @@ namespace HellEngine
 				shader->setInt("TEXTURE_FLAG", 3);
 			if (rotateTexture)
 				shader->setInt("TEXTURE_FLAG", 4);
-			material->BindTextures();
+			AssetManager::BindMaterial(materialID);
+			AssetManager::BindMaterial(AssetManager::GetMaterialIDByName("FloorBoards"));
 		}
 		shader->setMat4("model", transform.to_mat4());
 

@@ -27,7 +27,11 @@ namespace HellEngine
 
 
 	public: // methods
-		static PlayerPlaneCollisionData Util::PlayerPlaneCollision(glm::vec3 playerPosition, float playerRadius, BoundingPlane* plane);
+
+		//static bool stringEndsIn(std::string input, std::string query);
+		//static PlayerPlaneCollisionData Util::PlayerPlaneCollision(glm::vec3 playerPosition, float playerRadius, BoundingPlane* plane);
+		static glm::vec3 NormalFromTriangle(glm::vec3 pos0, glm::vec3 pos1, glm::vec3 pos2);
+		static void SetNormalsAndTangentsFromVertices(Vertex* vert0, Vertex* vert1, Vertex* vert2);
 		static float Util::RandomFloat(float a, float b);
 		static glm::mat4 QuarternionToRotationMatrix(glm::quat q);
 		static bool CircleIntersectsLine(glm::vec3 circleCenter, glm::vec3 point1, glm::vec3 point2, float circleRadius);
@@ -52,10 +56,14 @@ namespace HellEngine
 		static glm::mat4 Mat4InitTranslationTransform(float x, float y, float z);
 		static std::string Mat4ToString(glm::mat4 m);
 		static bool StringBeginsWith(std::string mainString, std::string subString);
-		
-		static std::string OUTPUT_TEXT;
-		static void OUTPUT(std::string text);
+//		static float RandomFloat(float a, float b);
 
+		//template <class T>
+		static void OUTPUT(const char* text, glm::vec3 value);
+		static void OUTPUT(const char* text, float value);
+		static void OUTPUT(const char* text, int value);
+		static void OUTPUT(const char* text, const char* value);
+		static std::string OUTPUT_TEXT;
 
 		static std::string Vec3_to_String(glm::vec3 vector);
 		static std::string Mat4_to_String(glm::mat4 matrix);

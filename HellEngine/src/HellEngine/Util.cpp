@@ -6,10 +6,54 @@
 
 namespace HellEngine
 {
+
 	std::string Util::OUTPUT_TEXT;
 	glm::mat4 Util::weaponModelMatrix;
 	
+	//template void Util::OUTPUT(const char*, float);
+	//template void Util::OUTPUT(const char*, int);		
+	
+	float Util:: RandomFloat(float a, float b) {
+		float random = ((float)rand()) / (float)RAND_MAX;
+		float diff = b - a;
+		float r = random * diff;
+		return a + r;
+	}
 
+	void Util::SetNormalsAndTangentsFromVertices(Vertex* vert0, Vertex* vert1, Vertex* vert2)
+	{
+		// Shortcuts for UVs
+		glm::vec3& v0 = vert0->Position;
+		glm::vec3& v1 = vert1->Position;
+		glm::vec3& v2 = vert2->Position;
+		glm::vec2& uv0 = vert0->TexCoords;
+		glm::vec2& uv1 = vert1->TexCoords;
+		glm::vec2& uv2 = vert2->TexCoords;
+
+		// Edges of the triangle : postion delta. UV delta
+		glm::vec3 deltaPos1 = v1 - v0;
+		glm::vec3 deltaPos2 = v2 - v0;
+		glm::vec2 deltaUV1 = uv1 - uv0;
+		glm::vec2 deltaUV2 = uv2 - uv0;
+
+		float r = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+		glm::vec3 tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
+		glm::vec3 bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;		
+		
+		glm::vec3 normal = Util::NormalFromTriangle(vert0->Position, vert1->Position, vert2->Position);
+
+		vert0->Normal = normal;
+		vert1->Normal = normal;
+		vert2->Normal = normal;
+
+		vert0->Tangent = tangent;
+		vert1->Tangent = tangent;
+		vert2->Tangent = tangent;
+
+		vert0->Bitangent = bitangent;
+		vert1->Bitangent = bitangent;
+		vert2->Bitangent = bitangent;
+	}
 
 	glm::mat4 Util::Normal_To_Rotation_Matrix(glm::vec3 normal)
 	{
@@ -135,6 +179,19 @@ namespace HellEngine
 		return result; 
 	}
 
+	/*bool stringEndsIn(std::string input, std::string query)
+	{
+		int position = input.size() - query.size();
+
+		if (position < 0)
+			return false;
+		
+		if (input.substr(position, query.size()) == query)
+			return true;
+		else 
+			return false;
+	}*/
+
 	std::string Util::FloatToString(float value, int precision)
 	{
 		std::stringstream stream;
@@ -250,13 +307,6 @@ namespace HellEngine
 		return matrix;
 	}
 
-	float Util::RandomFloat(float a, float b) {
-		float random = ((float)rand()) / (float)RAND_MAX;
-		float diff = b - a;
-		float r = random * diff;
-		return a + r;
-	}
-
 	glm::mat4 Util::Mat4InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ)
 	{
 		glm::mat4 m = glm::mat4(1);
@@ -326,9 +376,50 @@ namespace HellEngine
 		return m;
 	}
 
-	void Util::OUTPUT(std::string text)
+	//template <class T>
+	void Util::OUTPUT(const char* text, glm::vec3 value)
 	{
-		OUTPUT_TEXT += text + "\n";
+		OUTPUT_TEXT += text;
+		OUTPUT_TEXT += " (";
+		char buffer[128];
+
+		snprintf(buffer, sizeof buffer, "%f", value.x);
+		OUTPUT_TEXT += buffer;
+		OUTPUT_TEXT += ", ";
+
+		snprintf(buffer, sizeof buffer, "%f", value.y);
+		OUTPUT_TEXT += buffer;
+		OUTPUT_TEXT += ", ";
+
+		snprintf(buffer, sizeof buffer, "%f", value.z);
+		OUTPUT_TEXT += buffer;
+		OUTPUT_TEXT += ")\n";
+	}
+
+	void Util::OUTPUT(const char* text, float value)
+	{
+		char buffer[128];
+		snprintf(buffer, sizeof buffer, "%f", value);
+		OUTPUT_TEXT += text;
+		OUTPUT_TEXT += buffer;
+		OUTPUT_TEXT += "\n";
+	}
+
+	void Util::OUTPUT(const char* text, const char* value)
+	{
+		OUTPUT_TEXT += text;
+		OUTPUT_TEXT += value;
+		OUTPUT_TEXT += "\n";
+	}
+
+	void Util::OUTPUT(const char* text, int value)
+	{
+		char buffer[128];
+		snprintf(buffer, sizeof buffer, "%f", value);
+	//	char* ptr = reinterpret_cast<char*>(&value);
+		OUTPUT_TEXT += text;
+		OUTPUT_TEXT += buffer;
+		OUTPUT_TEXT += "\n";
 	}
 
 	bool Util::StringBeginsWith(std::string mainString, std::string subString)
@@ -484,7 +575,12 @@ namespace HellEngine
 			return collision;
 	}
 
-	PlayerPlaneCollisionData Util::PlayerPlaneCollision(glm::vec3 playerPosition, float playerRadius, BoundingPlane* plane)
+	glm::vec3 Util::NormalFromTriangle(glm::vec3 pos0, glm::vec3 pos1, glm::vec3 pos2)
+	{
+		return glm::normalize(glm::cross(pos1 - pos0, pos2 - pos0));
+	}
+
+	/*PlayerPlaneCollisionData Util::PlayerPlaneCollision(glm::vec3 playerPosition, float playerRadius, BoundingPlane* plane)
 	{
 		PlayerPlaneCollisionData data;
 		data.occured = false;
@@ -514,7 +610,7 @@ namespace HellEngine
 			data.newPlayerPosition.z = spherePosition.y;
 		}
 		return data;
-	}
+	}*/
 
 
 	btVector3 Util::glmVec3_to_btVec3(glm::vec3 vector)

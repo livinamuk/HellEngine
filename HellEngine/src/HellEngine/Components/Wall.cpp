@@ -1,6 +1,7 @@
 #include "hellpch.h"
 #include "Wall.h"
 #include "../../Platform/OpenGL/mesh.h"
+#include "HellEngine/AssetManager.h"
 
 namespace HellEngine {
 
@@ -9,13 +10,13 @@ namespace HellEngine {
 	const float WALL_HEIGHT = 2.4f;
 	//unsigned int modelMatricesVBO = 0;
 
-	Wall::Wall(float x, float z, Axis axis, float width, Material* material)
+	Wall::Wall(float x, float z, Axis axis, float width, unsigned int materialID)
 	{
 		position = glm::vec3(x, 0, z);
 		this->width = width;
 		this->axis = axis;
 		this->scale = glm::vec3(width, 1, 1);
-		this->material = material;
+		this->materialID = materialID;
 
 		if (axis == Axis::X) {
 			angle = ROTATE_0;
@@ -45,7 +46,7 @@ namespace HellEngine {
 	void Wall::Draw(Shader* shader, bool bindTextures)
 	{
 		if (bindTextures) {
-			material->BindTextures();
+			AssetManager::BindMaterial(materialID);
 		}
 		shader->setMat4("model", modelMatrix);
 		this->model->Draw(shader);
