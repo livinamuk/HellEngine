@@ -6,13 +6,6 @@
 
 namespace HellEngine
 {
-	/*float MovementSpeed = 2.25f;
-	float viewHeight = 1.6f;
-	float headBobCounter = 0.0f;
-	float headBobSpeed = 0.3f;
-	float headBobFactor = 0.0075f;*/
-
-	const float COLLISION_RESPONSE_AMOUNT = 0.001f;
 	const glm::vec3 INITIAL_POSITION = glm::vec3(0.6f, 0.3f, -0.6f);
 
 	Player::Player()
@@ -30,136 +23,15 @@ namespace HellEngine
 	{
 		// Setup
 		btCapsuleShape* collisionShape = new btCapsuleShape(radius, height);
-		//btCylinderShape* collisionShape = new btCylinderShape(btVector3(radius, height, radius));
 		collisionShape->setLocalScaling(btVector3(1, 1, 1));
 
 		// Position
 		btTransform btTransform;
 		btTransform.setIdentity();
-
-		// Rotation
 		btTransform.setOrigin(btVector3(Util::glmVec3_to_btVec3(INITIAL_POSITION)));
 
 		// Create it
 		rigidBody = Physics::createRigidBody(1.0, btTransform, collisionShape, 0.1);
-
-		// Kinematic flags
-		//rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
-		//rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
-		//rigidBody->setActivationState(DISABLE_DEACTIVATION);
-
-
-
-
-
-		btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
-		btBoxShape* convexShape = new btBoxShape(btVector3(1, 1, 1));
-
-		//For now only a simple test that it initializes correctly.
-		btKinematicCharacterController* tested = new btKinematicCharacterController(ghostObject, convexShape, 1);
-		
-		btVector3 grabity(0, -9, 0);
-
-	}
-
-	void Player::UpdateRigidBodyWorldTransform()
-	{
-		/*
-			btTransform transform;
-			transform.setIdentity();
-			transform.setOrigin(btVector3(position.x, position.y, position.z));
-			rigidBody->setWorldTransform(transform);
-
-			CheckBulletCollisions();*/
-	}
-
-	struct BulletCollisionData {
-		bool occured;
-		float distance;
-		glm::vec3 point;
-		glm::vec3 normal;
-
-		BulletCollisionData() { reset(); }
-		void reset() {
-			occured = false;
-			distance = 0.0;
-			point = glm::vec3(0);
-			normal = glm::vec3(0);
-		}
-	};
-
-
-	struct collisionTestResult : public btCollisionWorld::ContactResultCallback
-	{
-		collisionTestResult(btRigidBody& playerRigidBody, BulletCollisionData& collisionData) : btCollisionWorld::ContactResultCallback(), body(playerRigidBody), data(collisionData) {}
-		btRigidBody& body;
-		BulletCollisionData& data;
-
-		virtual	btScalar	addSingleResult(btManifoldPoint& cp, const btCollisionObjectWrapper* colObj0Wrap, int partId0, int index0, const btCollisionObjectWrapper* colObj1Wrap, int partId1, int index1)
-		{
-			data.occured = true;
-			data.distance = cp.getDistance();
-			data.normal = Util::btVec3_to_glmVec3(cp.m_normalWorldOnB);
-			data.point = Util::btVec3_to_glmVec3(cp.m_localPointA);
-			//std::cout << "P: " << Util::Vec3ToString(data.point) << " N: " << Util::Vec3ToString(data.normal) << "\n";
-			return 0;
-		}
-	};
-
-
-	void Player::CheckBulletCollisions()
-	{
-		btRigidBody plyr(*rigidBody);									// reference to player
-		btCollisionObject triMesh(*Physics::m_triangleCollisionObject);	// reference to triangle mesh
-		BulletCollisionData collisionData;
-		collisionTestResult renderCallback(plyr, collisionData);
-
-		// Check against rigid bodies
-	/*	for (int i = 0; i < Physics::m_rigidBodies.size(); i++)
-		{
-			btRigidBody body(*Physics::m_rigidBodies[i]);				// reference to object in world
-			Physics::m_dynamicsWorld->contactPairTest(&plyr, &body, renderCallback);
-
-			if (collisionData.occured)
-			{
-
-			}
-
-
-
-		}	*/
-
-		// Check against the giant triangle mesh
-		Physics::m_dynamicsWorld->contactPairTest(&plyr, &triMesh, renderCallback);
-
-		if (collisionData.occured)
-		{
-			/*glm::vec2 contactPoint = this->position - collisionData.normal * collisionData.distance;
-			float penetrationDepth = this->radius - collisionData.distance;
-
-
-			glm::vec2 planeNormal = glm::vec2(collisionData.normal.x, collisionData.normal.z);
-			glm::vec2 spherePosition = glm::vec2(position.x, position.z);
-
-
-
-			glm::vec2 penetrationNormal = glm::vec2(collisionData.normal.x, collisionData.normal.z);
-			spherePosition += penetrationNormal * penetrationDepth;*/
-
-
-			//	float penetrationDistance = glm::length(collisionData.point);
-			//	position.x += collisionData.normal.x * penetrationDistance;
-
-			//	std::cout << "CON POINT: " +Util::Vec3ToString(collisionData.point) << "\n";
-				//std::cout << "DIST: " + std::to_string(penetrationDistance) << "\n";
-
-				//position.x += penetrationDistance * -1;
-
-				//position.x = spherePosition.x;
-				//position.z = spherePosition.y;
-
-				//position.x = 1;
-		}
 	}
 
 	void Player::Update(Camera* camera, Physics* physics, float deltaTime)
@@ -169,17 +41,15 @@ namespace HellEngine
 		UpdatePhysicsMovement(deltaTime);
 		UpdateMovement(camera, deltaTime);
 		UpdateCrouching(deltaTime);
-		//UpdateGravity(deltaTime);
 		UpdateAudio(deltaTime);
-		//UpdateRigidBodyWorldTransform();
 	}
 
 	void Player::UpdateAudio(float deltaTime)
 	{
-		if (!walking)
+		if (!isMoving)
 			footstepAudioTimer = 0;
 		else {
-			if (walking && footstepAudioTimer == 0) {
+			if (isMoving && footstepAudioTimer == 0) {
 				int random_number = std::rand() % 4 + 1;
 				std::string file = "player_step_" + std::to_string(random_number) + ".wav";
 				Audio::PlayAudio(file);
@@ -195,18 +65,6 @@ namespace HellEngine
 				footstepAudioTimer = 0;
 		}
 	}
-
-	/*void Player::UpdateGravity(float deltaTime)
-	{
-		targetVelocity.y += (gravity * deltaTime);
-		//targetVelocity.y = std::max(targetVelocity.y, currentGroundHeight);
-
-		if (IsGrounded())
-		{
-			position.y = std::max(position.y, currentGroundHeight);
-			targetVelocity.y = 0;
-		}
-	}*/
 
 	void Player::CalculateCurrentSpeed(float deltaTime)
 	{
@@ -235,7 +93,7 @@ namespace HellEngine
 		float zPos = (float)rigidBody->getCenterOfMassPosition().z();
 		position = glm::vec3(xPos, yPos, zPos);
 
-		walking = false;
+		isMoving = false;
 		isRunning = false;
 		crouching = false;
 	}
@@ -249,31 +107,27 @@ namespace HellEngine
 		targetVelocity.z = 0;
 
 		rigidBody->activate();
-		walking = false;
+		isMoving = false;
 		glm::vec3 Forward = glm::normalize(glm::vec3(camera->Front.x, 0, camera->Front.z));
 
 		if (Input::IsKeyPressed(HELL_KEY_W)) {
 			targetVelocity -= Forward;
-			walking = true;
+			isMoving = true;
 		}
 		if (Input::IsKeyPressed(HELL_KEY_S)) {
 			targetVelocity += Forward;
-			walking = true;
+			isMoving = true;
 		}
 		if (Input::IsKeyPressed(HELL_KEY_A)) {
 			targetVelocity -= camera->Right;
-			walking = true;
+			isMoving = true;
 		}
 		if (Input::IsKeyPressed(HELL_KEY_D)) {
 			targetVelocity += camera->Right;
-			walking = true;
+			isMoving = true;
 		}
 
 		targetVelocity *= deltaTime *= currentSpeed * 60;
-
-		// Jump
-		//if ((IsGrounded()) && Input::IsKeyPressed(HELL_KEY_SPACE))
-		//	targetVelocity.y += jumpStrength;
 
 		// Lerp
 		currentVelocity.x = Util::FInterpTo(currentVelocity.x, targetVelocity.x, deltaTime, velocityApproachSpeed);
@@ -281,10 +135,8 @@ namespace HellEngine
 		currentVelocity.z = Util::FInterpTo(currentVelocity.z, targetVelocity.z, deltaTime, velocityApproachSpeed);
 
 		
-
-
 		// Prevent sliding about
-		if (!walking) {
+		if (!isMoving) {
 			currentVelocity.x = 0;
 			currentVelocity.z = 0;
 		}
@@ -293,89 +145,11 @@ namespace HellEngine
 		rigidBody->setAngularVelocity(btVector3(0, 0, 0));
 
 		float linVelY = rigidBody->getLinearVelocity().getY();
-		currentVelocity.y = 0;
+		//currentVelocity.y = 0;
 
 		rigidBody->setLinearVelocity(Util::glmVec3_to_btVec3(currentVelocity));
-		rigidBody->setAngularVelocity(btVector3(0, 0, 0));
+		//rigidBody->setAngularVelocity(btVector3(0, 0, 0));
 	}
-
-	/*bool Player::IsGrounded()
-	{
-		if (position.y <= currentGroundHeight + KINDA_SMALL_NUMBER)
-			return true;
-		else
-			return false;
-	}*/
-
-	void Player::FindGroundHeight(Physics* physics, float deltaTime)
-	{
-		return;
-
-		// Begining and end of ray
-		glm::vec3 ray_direction = glm::vec3(0, -1, 0);
-		glm::vec3 out_origin = position + glm::vec3(0, -0.1f, 0);// +rigidBodyHoverHeight;
-		glm::vec3 out_end = position + ray_direction;
-
-		// Disable player body collision
-//		rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
-
-		// Cast ray
-		btCollisionWorld::ClosestRayResultCallback RayCallback(btVector3(out_origin.x, out_origin.y, out_origin.z), btVector3(out_end.x, out_end.y, out_end.z));
-		physics->m_dynamicsWorld->rayTest(btVector3(out_origin.x, out_origin.y, out_origin.z), btVector3(out_end.x, out_end.y, out_end.z), RayCallback);
-
-		groundHeight = 0;
-
-
-
-
-		/*	btTransform transform;
-			transform.setIdentity();
-			transform.setOrigin(btVector3(position.x, 100, position.z));
-			rigidBody->setWorldTransform(transform);
-			*/
-
-		float oldY = position.y;
-
-		btTransform transform;
-		transform.setIdentity();
-		transform.setOrigin(btVector3(position.x, 100, position.z));
-		rigidBody->setWorldTransform(transform);
-
-
-		// Find distance
-		if (RayCallback.hasHit()) {
-			glm::vec3 hitPoint = Util::btVec3_to_glmVec3(RayCallback.m_hitPointWorld);
-			groundHeight = hitPoint.y;
-		}
-
-
-
-		float newY = rigidBodyHoverHeight + groundHeight;
-		float interpolatedY = Util::FInterpTo(oldY, newY, deltaTime, velocityApproachSpeed);
-		//	interpolatedY = newY;
-
-
-
-			//float Y = rigidBodyHoverHeight + groundHeight;// -distanceToGround;
-			//btTransform transform;
-		transform.setIdentity();
-		transform.setOrigin(btVector3(position.x, interpolatedY, position.z));
-		rigidBody->setWorldTransform(transform);
-
-
-		/*
-
-				transform.setIdentity();
-				transform.setOrigin(btVector3(position.x, groundHeight + rigidBodyHoverHeight, position.z));
-				rigidBody->setWorldTransform(transform);
-				*/
-
-				// Enable player body collision
-				//rigidBody->setCollisionFlags(rigidBody->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
-
-				//std::cout << "GROUND HEIGHT: " << groundHeight << "\n";
-	}
-
 
 	void Player::UpdateCrouching(float deltaTime)
 	{

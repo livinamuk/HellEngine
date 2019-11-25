@@ -310,7 +310,7 @@ namespace HellEngine
 			ANIMATION_TIME += deltaTime;
 			WORLD_TIME += deltaTime;
 
-			if (player.walking)
+			if (player.isMoving)
 				skinnedMesh.headBobCounter += deltaTime * skinnedMesh.headBobSpeed;
 
 			// GAME OBJECTS

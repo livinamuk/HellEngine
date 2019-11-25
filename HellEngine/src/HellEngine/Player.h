@@ -70,7 +70,7 @@ namespace HellEngine
 		float jumpStrength = 0.05f;
 		float currentGroundHeight = 0;
 
-		bool walking;
+		bool isMoving;
 		float footstepAudioTimer;
 		float footstepAudioLoopLength = 0.35f;
 	};
