@@ -131,24 +131,16 @@ namespace HellEngine
 
 		// Lerp
 		currentVelocity.x = Util::FInterpTo(currentVelocity.x, targetVelocity.x, deltaTime, velocityApproachSpeed);
-	//	currentVelocity.y = Util::FInterpTo(currentVelocity.y, targetVelocity.y, deltaTime, velocityApproachSpeed);
+		currentVelocity.y = rigidBody->getLinearVelocity().getY();
 		currentVelocity.z = Util::FInterpTo(currentVelocity.z, targetVelocity.z, deltaTime, velocityApproachSpeed);
 
-		
 		// Prevent sliding about
 		if (!isMoving) {
 			currentVelocity.x = 0;
 			currentVelocity.z = 0;
 		}
 
-
-		rigidBody->setAngularVelocity(btVector3(0, 0, 0));
-
-		float linVelY = rigidBody->getLinearVelocity().getY();
-		//currentVelocity.y = 0;
-
 		rigidBody->setLinearVelocity(Util::glmVec3_to_btVec3(currentVelocity));
-		//rigidBody->setAngularVelocity(btVector3(0, 0, 0));
 	}
 
 	void Player::UpdateCrouching(float deltaTime)
