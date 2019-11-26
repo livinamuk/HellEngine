@@ -285,6 +285,11 @@ namespace HellEngine
 			entity2->SetRotation(glm::vec3(ROTATE_270, 5.5f, 0));
 			entity2->SetScale(glm::vec3(0.0015));
 			entity2->materialID = AssetManager::GetMaterialIDByName("Key");
+
+			StaticEntity* entity6 = CreateStaticEntity("LANDING", "cube.obj", glm::vec3(0.6f, 0.75, 10.0f));
+			//->SetRotation(glm::vec3(ROTATE_270, 5.5f, 0));
+			entity6->SetScale(glm::vec3(1.2f, 1.5f, 1));
+			entity6->materialID = AssetManager::GetMaterialIDByName("Eye");
 		}
 
 		StaticEntity* CreateStaticEntity(std::string entityName, std::string modelName, glm::vec3 position)
@@ -1499,7 +1504,7 @@ namespace HellEngine
 			}
 
 			// Map list
-			static std::string currentMap = "Level1.map";
+			static std::string currentMap = "Level2.map";
 
 			// Materials list
 			std::vector<std::string> materialList;
@@ -2150,7 +2155,7 @@ namespace HellEngine
 			glm::vec3 HouseCornerA = glm::vec3(5.6f, 0, -0.1f);
 			glm::vec3 HouseCornerB = glm::vec3(-4.2f, 0, -0.1f);
 			glm::vec3 HouseCornerC = glm::vec3(5.6f, 0, 9.7f);
-			glm::vec3 HouseCornerD = glm::vec3(-4.2f, 0, 9.7f);
+			glm::vec3 HouseCornerD = glm::vec3(-4.2f, 0, 11.7f);
 
 			// Back wall of house
 			OuterWallPlane_4 = BoundingPlane(glm::vec3(HouseCornerB.x, 2.4f, HouseCornerD.z),
@@ -2245,14 +2250,18 @@ namespace HellEngine
 			glm::vec3 out_origin = camera.transform.position;
 			glm::vec3 out_end = out_origin + (direction * glm::vec3(-100));
 
-			btCollisionWorld::ClosestRayResultCallback RayCallback(
+			btCollisionWorld::ClosestRayResultCallback rayCallback(
 				btVector3(out_origin.x, out_origin.y, out_origin.z),
 				btVector3(out_end.x, out_end.y, out_end.z)
 			);
+
+			// Ingore player capsule
+			rayCallback.m_collisionFilterMask &= ~btBroadphaseProxy::CharacterFilter;
+
 			physics.m_dynamicsWorld->rayTest(
 				btVector3(out_origin.x, out_origin.y, out_origin.z),
 				btVector3(out_end.x, out_end.y, out_end.z),
-				RayCallback
+				rayCallback
 			);
 
 			BulletRaycastData raycastData;
@@ -2262,20 +2271,21 @@ namespace HellEngine
 			raycastData.distance = 0;
 			raycastData.name = "UNKNOWN";
 
-			if (RayCallback.hasHit())
+
+			if (rayCallback.hasHit())
 			{
 				// Collision object
-				btVector3 objectCOM = RayCallback.m_collisionObject->getWorldTransform().getOrigin();
-				RayCastOffsetFromCOM = objectCOM - RayCallback.m_hitPointWorld;
+				btVector3 objectCOM = rayCallback.m_collisionObject->getWorldTransform().getOrigin();
+				RayCastOffsetFromCOM = objectCOM - rayCallback.m_hitPointWorld;
 
 				// Find rigid body
-				RayCastWorldArrayIndex = (int)RayCallback.m_collisionObject->getWorldArrayIndex();
+				RayCastWorldArrayIndex = (int)rayCallback.m_collisionObject->getWorldArrayIndex();
 
-				btRigidBody* rigidBody = (btRigidBody*)RayCallback.m_collisionObject;
+				btRigidBody* rigidBody = (btRigidBody*)rayCallback.m_collisionObject;
 
-				raycastData.hitPoint = Util::btVec3_to_glmVec3(RayCallback.m_hitPointWorld);
-				raycastData.distance = (RayCallback.m_hitPointWorld - Util::glmVec3_to_btVec3(camera.transform.position)).length();
-				raycastData.surfaceNormal = Util::btVec3_to_glmVec3(RayCallback.m_hitNormalWorld);
+				raycastData.hitPoint = Util::btVec3_to_glmVec3(rayCallback.m_hitPointWorld);
+				raycastData.distance = (rayCallback.m_hitPointWorld - Util::glmVec3_to_btVec3(camera.transform.position)).length();
+				raycastData.surfaceNormal = Util::btVec3_to_glmVec3(rayCallback.m_hitNormalWorld);
 
 				EntityData* entityData = (EntityData*)rigidBody->getUserPointer();
 				if (entityData) {

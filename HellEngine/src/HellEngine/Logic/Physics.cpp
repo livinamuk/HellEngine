@@ -140,7 +140,8 @@ namespace HellEngine
 		float maxMotorImpulse = 1.0f;
 		doorHinge->enableAngularMotor(true, targetVelocity, maxMotorImpulse);
 		
-		m_dynamicsWorld->addRigidBody(doorRigidBody);
+		m_dynamicsWorld->
+dBody(doorRigidBody);
 		m_dynamicsWorld->addConstraint(doorHinge);
 
 		m_rigidBodies.push_back(doorRigidBody);*/
@@ -177,7 +178,7 @@ namespace HellEngine
 		m_triangleCollisionObject->setWorldTransform(meshTransform);
 
 		EntityData* entityData = new EntityData();
-		entityData->name = "WALL";
+		entityData->name = "STAIRS";
 		entityData->vectorIndex = 0;
 		m_triangleCollisionObject->setUserPointer(entityData);
 
@@ -214,12 +215,10 @@ namespace HellEngine
 		m_triangleCollisionObject = new btCollisionObject();
 		m_triangleCollisionObject->setCollisionShape(triangleMeshShape);
 		m_triangleCollisionObject->setWorldTransform(meshTransform);
-
 		EntityData* entityData = new EntityData();
 		entityData->name = "WALL";
 		entityData->vectorIndex = 0;
 		m_triangleCollisionObject->setUserPointer(entityData);
-
 		m_dynamicsWorld->addCollisionObject(m_triangleCollisionObject);
 		m_triangleCollisionObject->setCollisionFlags(m_triangleCollisionObject->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 	}
@@ -254,6 +253,7 @@ namespace HellEngine
 
 		body->setUserIndex(-1);
 		m_dynamicsWorld->addRigidBody(body);
+
 		return body;
 		
 	}
@@ -279,7 +279,6 @@ namespace HellEngine
 		btBoxShape* collisionShape = new btBoxShape(btVector3(0.5, 0.5, 0.5));
 		collisionShape->setLocalScaling(collisionScale);
 
-
 		//for (Door & door : house->doors)
 		for (int i = 0; i < house->doors.size(); i++)
 		{
@@ -303,7 +302,11 @@ namespace HellEngine
 			entityData->vectorIndex = i;
 			door->rigidBody->setUserPointer(entityData);
 
-			door->rigidBody->setCollisionFlags(door->rigidBody->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+			door->rigidBody->setCollisionFlags(door->rigidBody->getCollisionFlags() |
+				btCollisionObject::CF_KINEMATIC_OBJECT |
+				btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+
+	
 
 			//m_rigidBodies.push_back(door->rigidBody);
 		}

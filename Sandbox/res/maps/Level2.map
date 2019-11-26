@@ -102,7 +102,7 @@
             "CornerB": [
                 3.200000047683716,
                 0.0,
-                9.600000381469727
+                11.100006103515625
             ],
             "WallMaterial": "Wall",
             "FloorMaterial": "FloorBoards",
@@ -223,7 +223,7 @@
             "Axis": "Z_NEGATIVE",
             "FloorMaterial": "FloorBoards",
             "RotateFloorTexture": false,
-            "InitiallyOpen": true,
+            "InitiallyOpen": false,
             "InitiallyLocked": false,
             "MaxOpenAngle": 2.0
         },
@@ -236,7 +236,7 @@
             "Axis": "X_NEGATIVE",
             "FloorMaterial": "FloorBoards",
             "RotateFloorTexture": true,
-            "InitiallyOpen": true,
+            "InitiallyOpen": false,
             "InitiallyLocked": false,
             "MaxOpenAngle": 2.0
         },

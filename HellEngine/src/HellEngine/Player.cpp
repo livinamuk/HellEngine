@@ -32,6 +32,14 @@ namespace HellEngine
 
 		// Create it
 		rigidBody = Physics::createRigidBody(1.0, btTransform, collisionShape, 0.1);
+		
+		// Set rigid body name
+		EntityData* entityData = new EntityData();
+		entityData->name = "PLAYER";
+		rigidBody->setUserPointer(entityData);
+
+		// Set collision filter group (for raycasting and not hitting the player capsule)
+		rigidBody->getBroadphaseProxy()->m_collisionFilterGroup = btBroadphaseProxy::CharacterFilter;
 	}
 
 	void Player::Update(Camera* camera, Physics* physics, float deltaTime)
