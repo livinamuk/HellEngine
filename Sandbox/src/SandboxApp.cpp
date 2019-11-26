@@ -42,7 +42,7 @@ namespace HellEngine
 
 		glm::vec3 ray_direction;
 		//RaycastData raycastData;
-		BulletRaycastData cameraRaycastData;
+		RaycastResult cameraRaycastData;
 		//BulletRaycastData bulletRaycastData;
 
 
@@ -287,12 +287,19 @@ namespace HellEngine
 			entity2->materialID = AssetManager::GetMaterialIDByName("Key");
 
 			StaticEntity* entity6 = CreateStaticEntity("LANDING", "cube.obj", glm::vec3(0.6f, 0.75, 10.0f));
-			//->SetRotation(glm::vec3(ROTATE_270, 5.5f, 0));
 			entity6->SetScale(glm::vec3(1.2f, 1.5f, 1));
 			entity6->materialID = AssetManager::GetMaterialIDByName("Eye");
+			
+			StaticEntity* entity7 = CreateStaticEntity("LANDING", "cube.obj", glm::vec3(0.6f, 0.75, 11.0f));
+			entity7->SetScale(glm::vec3(1.2f, 1.5f, 1));
+			entity7->materialID = AssetManager::GetMaterialIDByName("Eye");
+			
+			StaticEntity* entity8 = CreateStaticEntity("LANDING", "cube.obj", glm::vec3(0.6f, 0.75, 12.0f));
+			entity8->SetScale(glm::vec3(1.2f, 1.5f, 1));
+			entity8->materialID = AssetManager::GetMaterialIDByName("Eye");
 		}
 
-		StaticEntity* CreateStaticEntity(std::string entityName, std::string modelName, glm::vec3 position)
+		StaticEntity* CreateStaticEntity(char* entityName, std::string modelName, glm::vec3 position)
 		{
 			StaticEntity* e = new StaticEntity(AssetManager::GetModelIDByName(modelName), position, entityName);
 			staticEntities.push_back(e);
@@ -1115,20 +1122,27 @@ namespace HellEngine
 			Util::OUTPUT_TEXT = "";
 			Util::OUTPUT("Time: ", ANIMATION_TIME);
 
-			
-			//Util::OUTPUT("STRING ALLOCATIONS: ", (int)s_AllocCount);
-			//Util::OUTPUT("HEADBOB: ", skinnedMesh.headBobCounter);
-			//Util::OUTPUT("RAYCAST: ", cameraRaycastData.name);
+			Util::OUTPUT("", "");
+			Util::OUTPUT("player.position: ", player.position);
+			Util::OUTPUT("player.isMoving: ", player.isMoving);
+			Util::OUTPUT("player.isGrounded: ", player.isGrounded);
+			Util::OUTPUT("player.targetVelocity:  ", player.targetVelocity);
+			Util::OUTPUT("player.currentVelocity: ", player.currentVelocity);
 
-			//Util::OUTPUT("Index:   ", cameraRaycastData.index);
-			//btVector3 pos = player.rigidBody->getCenterOfMassPosition();
-			//glm::vec3 pos2 = Util::btVec3_to_glmVec3(pos);
-		//	Util::OUTPUT("Rigid Pos: ", Util::Vec3ToString(pos2));
-			Util::OUTPUT("target vel:  ", player.targetVelocity);
-			Util::OUTPUT("current vel: ", player.currentVelocity);
-			Util::OUTPUT("bt angular vel: ", Util::btVec3_to_glmVec3(player.rigidBody->getAngularVelocity()));
-			Util::OUTPUT("bt linear vel:  ", Util::btVec3_to_glmVec3(player.rigidBody->getLinearVelocity()));
-			Util::OUTPUT("Raycast object: ", cameraRaycastData.name.c_str());
+			Util::OUTPUT("", "");
+			Util::OUTPUT("player.rigidBody->graivty:         ", Util::btVec3_to_glmVec3(player.rigidBody->getGravity()));
+			Util::OUTPUT("player.rigidBody->angularVelocity: ", Util::btVec3_to_glmVec3(player.rigidBody->getAngularVelocity()));
+			Util::OUTPUT("player.rigidBody->linearVelocity:  ", Util::btVec3_to_glmVec3(player.rigidBody->getLinearVelocity()));
+
+			Util::OUTPUT("", "");
+			Util::OUTPUT("cameraRay.name:     ", cameraRaycastData.name);
+			Util::OUTPUT("cameraRay.distance: ", cameraRaycastData.distance);
+			Util::OUTPUT("cameraRay.normal:   ", cameraRaycastData.surfaceNormal);
+
+			Util::OUTPUT("", "");
+			Util::OUTPUT("floorRay.name:     ", player.floorRay.name);
+			Util::OUTPUT("floorRay.distance: ", player.floorRay.distance);
+			Util::OUTPUT("floorRay.normal:   ", player.floorRay.surfaceNormal);
 
 			// Draw outside of house
 			/*if (bindTextures) {
@@ -1224,9 +1238,9 @@ namespace HellEngine
 			// Player pos
 			std::string p = "Player Pos: " + std::to_string(player.position.x) + ", " + std::to_string(player.position.y) + ", " + std::to_string(player.position.z);
 			//std::string p = "Camera Rot: " + std::to_string(camera.Rotation.x) + ", " + std::to_string(camera.Rotation.y) + ", " + std::to_string(camera.Rotation.z);
-			std::string dist = std::to_string(player.groundHeight);
-			p += "\nGround Height: ";
-			p += dist.c_str();
+			//std::string dist = std::to_string(player.groundHeight);
+			//p += "\nGround Height: ";
+			//p += dist.c_str();
 
 			
 			ImGui::Text(p.c_str());
@@ -1869,7 +1883,7 @@ namespace HellEngine
 					shellEjected = false;
 					shotgunFiring = true;
 
-					BulletRaycastData bulletRaycastData;
+					RaycastResult bulletRaycastData;
 
 					for (int i = 0; i < 12; i++) {
 						bulletRaycastData = GetRaycastData(0.125f);
@@ -2155,7 +2169,7 @@ namespace HellEngine
 			glm::vec3 HouseCornerA = glm::vec3(5.6f, 0, -0.1f);
 			glm::vec3 HouseCornerB = glm::vec3(-4.2f, 0, -0.1f);
 			glm::vec3 HouseCornerC = glm::vec3(5.6f, 0, 9.7f);
-			glm::vec3 HouseCornerD = glm::vec3(-4.2f, 0, 11.7f);
+			glm::vec3 HouseCornerD = glm::vec3(-4.2f, 0, 12.6f);
 
 			// Back wall of house
 			OuterWallPlane_4 = BoundingPlane(glm::vec3(HouseCornerB.x, 2.4f, HouseCornerD.z),
@@ -2226,7 +2240,7 @@ namespace HellEngine
 
 		}
 
-		BulletRaycastData GetRaycastData(float variance)
+		RaycastResult GetRaycastData(float variance)
 		{
 			// Calculate ray direction
 			glm::vec3 ray_nds = glm::vec3(0, 0, 0);
@@ -2264,7 +2278,7 @@ namespace HellEngine
 				rayCallback
 			);
 
-			BulletRaycastData raycastData;
+			RaycastResult raycastData;
 			raycastData.index = -1;
 			raycastData.hitPoint = glm::vec3(0);
 			raycastData.surfaceNormal = glm::vec3(0);

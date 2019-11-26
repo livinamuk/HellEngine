@@ -45,7 +45,7 @@
 
 
 
-#define GRAVITY -1.8f
+#define GRAVITY -0.981f
 
 // Colours
 #define HELL_YELLOW	glm::vec3(1, 1, 0)
@@ -60,7 +60,7 @@
 
 
 
-	enum MousePickType { NotFound, Wall, Door };
+	///enum MousePickType { NotFound, Wall, Door };
 
 	enum Axis { X, X_NEGATIVE, Z, Z_NEGATIVE };
 
@@ -89,16 +89,16 @@
 	};
 	*/
 
-	struct BulletRaycastData {
+	struct RaycastResult {
 		int index = -1;
 		float distance = 0;
 		glm::vec3 hitPoint;
 		glm::vec3 surfaceNormal;
-		std::string name;
+		char* name;
 	};
 
 struct EntityData {
-	std::string name = "NONE";
+	char* name = "NONE";
 	int vectorIndex = -1;
 };
 
@@ -142,7 +142,7 @@ struct EntityData {
 			itemName = "None";
 		}
 	};*/
-
+/*
 	struct CollisionData
 	{
 		bool occured;
@@ -152,10 +152,10 @@ struct EntityData {
 
 		// DEPRICATE BELOW
 		//IntersectionData intersectionData;
-	};
+	};*/
 
 
-	struct PlayerPlaneCollisionData
+/*	struct PlayerPlaneCollisionData
 	{
 		bool occured = false;
 		float distance = 1000;
@@ -167,8 +167,8 @@ struct EntityData {
 	{
 		MousePickType type;
 		int indexInVector;
-	};
-
+	};8?
+	*/
 	struct WallHole
 	{
 		glm::vec3 position;

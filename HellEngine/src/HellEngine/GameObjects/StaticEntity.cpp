@@ -4,14 +4,13 @@
 
 namespace HellEngine 
 {
-	StaticEntity::StaticEntity(unsigned int modelID, glm::vec3 position, std::string name)
+	StaticEntity::StaticEntity(unsigned int modelID, glm::vec3 position, char* name)
 	{
 		this->modelID = modelID;
 		std::cout << "MODEL ID: " << modelID << "\n";
 		this->name = name;
 		this->transform.position = position;
-
-		HELL_ERROR(name + " Constructor");
+		HELL_ERROR(std::string(name) + " Constructor");
 		CreateRigidBody();
 	}
 

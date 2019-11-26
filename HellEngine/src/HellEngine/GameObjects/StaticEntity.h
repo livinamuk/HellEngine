@@ -19,20 +19,19 @@ namespace HellEngine
 		btRigidBody* rigidBody;
 		unsigned int modelID = -1;
 		unsigned int materialID = -1;
-		std::string name = "UNNAMED_STATIC_ENTITY";
+		char* name = "UNNAMED_STATIC_ENTITY";
 
 	private: // fields
 		Transform transform;
 
 	public: // methods
-		StaticEntity(unsigned int modelID, glm::vec3 position, std::string name);
+		StaticEntity(unsigned int modelID, glm::vec3 position, char* name);
 		~StaticEntity();
 		void SetPosition(glm::vec3 position);
 		void SetRotation(glm::vec3 rotation);
 		void SetScale(glm::vec3 rotation);
 		void DrawBoundingBox(Shader* shader);
 		void Draw(Shader* shader, bool bindTextures);
-		void Delete();
 
 	private: // methods
 		void CreateRigidBody();

@@ -60,6 +60,7 @@ namespace HellEngine
 
 		//template <class T>
 		static void OUTPUT(const char* text, glm::vec3 value);
+		static void OUTPUT(const char* text, bool value);
 		static void OUTPUT(const char* text, float value);
 		static void OUTPUT(const char* text, int value);
 		static void OUTPUT(const char* text, const char* value);
@@ -72,10 +73,10 @@ namespace HellEngine
 		//static IntersectionData RayIntersectPlane(glm::vec3 plane_origin, glm::vec3 plane_normal, glm::vec3 ray_origin, glm::vec3 ray_direction);
 		//static CollisionData RayIntersectsBoundingPlane(glm::vec3 ray_origin, glm::vec3 ray_direction, BoundingPlane* boundingPlane);
 
-		static CollisionData Util::RayIntersectFloor(Floor floor, glm::vec3 ray_origin, glm::vec3 ray_direction);
-		static CollisionData Util::RayIntersectCeiling(Ceiling ceiling, glm::vec3 ray_origin, glm::vec3 ray_direction);
+	//	static CollisionData Util::RayIntersectFloor(Floor floor, glm::vec3 ray_origin, glm::vec3 ray_direction);
+	//	static CollisionData Util::RayIntersectCeiling(Ceiling ceiling, glm::vec3 ray_origin, glm::vec3 ray_direction);
 
-		static CollisionData RayTriangleIntersect(glm::vec3 orig, glm::vec3 dir, glm::vec3 vert0, glm::vec3 vert1, glm::vec3 vert2);
+	//	static CollisionData RayTriangleIntersect(glm::vec3 orig, glm::vec3 dir, glm::vec3 vert0, glm::vec3 vert1, glm::vec3 vert2);
 
 		//static void ImguiFloat3(std::string text, glm::vec3* vector);
 		static btVector3 glmVec3_to_btVec3(glm::vec3);

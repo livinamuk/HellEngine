@@ -379,8 +379,12 @@ namespace HellEngine
 	//template <class T>
 	void Util::OUTPUT(const char* text, glm::vec3 value)
 	{
+		value.x = ((abs(value.x) < 0.0005) ? 0.000 : value.x);
+		value.y = ((abs(value.y) < 0.0005) ? 0.000 : value.y);
+		value.z = ((abs(value.z) < 0.0005) ? 0.000 : value.z);
+
 		OUTPUT_TEXT += text;
-		OUTPUT_TEXT += " (";
+		OUTPUT_TEXT += "(";
 		char buffer[128];
 
 		snprintf(buffer, sizeof buffer, "%f", value.x);
@@ -403,6 +407,15 @@ namespace HellEngine
 		OUTPUT_TEXT += text;
 		OUTPUT_TEXT += buffer;
 		OUTPUT_TEXT += "\n";
+	}
+
+	void Util::OUTPUT(const char* text, bool value)
+	{
+		OUTPUT_TEXT += text;
+		if (value)
+			OUTPUT_TEXT += "TRUE\n";
+		else
+			OUTPUT_TEXT += "FALSE\n";
 	}
 
 	void Util::OUTPUT(const char* text, const char* value)
@@ -513,6 +526,10 @@ namespace HellEngine
 
 	std::string Util::Vec3_to_String(glm::vec3 v)
 	{
+		v.x = ((abs(v.x) < 0.0005) ? 0.000 : v.x);
+		v.y = ((abs(v.y) < 0.0005) ? 0.000 : v.y);
+		v.z = ((abs(v.z) < 0.0005) ? 0.000 : v.z);
+
 		std::string s = "(";
 		s += std::to_string(v.x);
 		s += ", ";
@@ -533,7 +550,7 @@ namespace HellEngine
 		return s;
 	}
 
-	CollisionData Util::RayTriangleIntersect(glm::vec3 orig, glm::vec3 dir, glm::vec3 vertex0, glm::vec3 vertex1, glm::vec3 vertex2)
+	/*CollisionData Util::RayTriangleIntersect(glm::vec3 orig, glm::vec3 dir, glm::vec3 vertex0, glm::vec3 vertex1, glm::vec3 vertex2)
 	{
 		CollisionData collision;
 		collision.distance = 0;
@@ -573,7 +590,7 @@ namespace HellEngine
 		}
 		else // This means that there is a line intersection but not a ray intersection.
 			return collision;
-	}
+	}*/
 
 	glm::vec3 Util::NormalFromTriangle(glm::vec3 pos0, glm::vec3 pos1, glm::vec3 pos2)
 	{

@@ -23,6 +23,7 @@ namespace HellEngine
 	{
 		// Setup
 		btCapsuleShape* collisionShape = new btCapsuleShape(radius, height);
+		//btCylinderShape* collisionShape = new btCylinderShape(btVector3(radius, height, radius));
 		collisionShape->setLocalScaling(btVector3(1, 1, 1));
 
 		// Position
@@ -45,11 +46,62 @@ namespace HellEngine
 	void Player::Update(Camera* camera, Physics* physics, float deltaTime)
 	{
 		CalculateIsRunning();
+		CastFloorRay(physics);
+		CalculateIsGrounded();
 		CalculateCurrentSpeed(deltaTime);
 		UpdatePhysicsMovement(deltaTime);
 		UpdateMovement(camera, deltaTime);
 		UpdateCrouching(deltaTime);
 		UpdateAudio(deltaTime);
+	}
+
+	void Player::CalculateIsGrounded()
+	{
+		if (floorRay.name == "NO RAY HIT")
+			isGrounded = false;
+		else 
+			if (floorRay.distance < 0.3f) // 0.2 is the distance on flat ground, and 0.28 is the distance on stairs
+				isGrounded = true;
+		else
+			isGrounded = false;
+	}
+
+	void Player::CastFloorRay(Physics* physics)
+	{
+		// Begining and end of ray
+		glm::vec3 origin = position + glm::vec3(0, 0.0f, 0);
+		glm::vec3 end = origin + glm::vec3(0, -1.0f, 0);
+
+		// Create a call back and ingore player capsule
+		btCollisionWorld::ClosestRayResultCallback rayCallback(Util::glmVec3_to_btVec3(origin), Util::glmVec3_to_btVec3(end));
+		rayCallback.m_collisionFilterMask &= ~btBroadphaseProxy::CharacterFilter;
+
+		physics->m_dynamicsWorld->rayTest(Util::glmVec3_to_btVec3(origin), Util::glmVec3_to_btVec3(end), rayCallback);
+
+		floorRay.index = -1;
+		floorRay.hitPoint = glm::vec3(0);
+		floorRay.surfaceNormal = glm::vec3(0);
+		floorRay.distance = -1;
+		floorRay.name = "NO RAY HIT";
+
+		if (rayCallback.hasHit())
+		{
+			// Collision object
+			btVector3 objectCOM = rayCallback.m_collisionObject->getWorldTransform().getOrigin();
+			btVector3 RayCastOffsetFromCOM = objectCOM - rayCallback.m_hitPointWorld;
+
+			btRigidBody* rigidBody = (btRigidBody*)rayCallback.m_collisionObject;
+
+			floorRay.hitPoint = Util::btVec3_to_glmVec3(rayCallback.m_hitPointWorld);
+			floorRay.distance = (rayCallback.m_hitPointWorld - Util::glmVec3_to_btVec3(origin)).length();
+			floorRay.surfaceNormal = Util::btVec3_to_glmVec3(rayCallback.m_hitNormalWorld);
+
+			EntityData* entityData = (EntityData*)rigidBody->getUserPointer();
+			if (entityData) {
+				floorRay.name = entityData->name;
+			}
+		}
+
 	}
 
 	void Player::UpdateAudio(float deltaTime)
@@ -146,7 +198,29 @@ namespace HellEngine
 		if (!isMoving) {
 			currentVelocity.x = 0;
 			currentVelocity.z = 0;
+			
+	
 		}
+
+		/*
+		//	currentVelocity.y = 0;
+		//	rigidBody->setAngularFactor(btVector3(0,0,0));
+
+		// Prevent silding down slopes
+		if (floorRay.name == "STAIRS" && isGrounded && !isMoving) {
+			rigidBody->setGravity(btVector3(0, 0, 0));
+			currentVelocity.y = 0;
+		}
+		else
+			rigidBody->setGravity(btVector3(0, -10, 0));
+
+		float MAX_Y_VEL_UP_STAIRS = 21;
+
+		if (floorRay.name == "STAIRS")
+			currentVelocity.y = std::min(currentVelocity.y, MAX_Y_VEL_UP_STAIRS);
+
+		// Perhaps think about shooting 4 rays, all on different edges of the player capsule rigid body, and taking any hit.
+		*/
 
 		rigidBody->setLinearVelocity(Util::glmVec3_to_btVec3(currentVelocity));
 	}

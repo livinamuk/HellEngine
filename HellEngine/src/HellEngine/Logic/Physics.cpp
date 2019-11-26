@@ -24,7 +24,7 @@ namespace HellEngine
 
 		// The world.
 		btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-		dynamicsWorld->setGravity(btVector3(0, -0.981f, 0));
+		dynamicsWorld->setGravity(btVector3(0, GRAVITY, 0));
 
 		InitCollisionShapes();
 		CreateWorld();

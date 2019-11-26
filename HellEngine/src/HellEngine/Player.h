@@ -29,12 +29,15 @@ namespace HellEngine
 		void CalculateCurrentSpeed(float deltaTime);
 		void UpdateCrouching(float deltaTime);
 		void UpdateMovement(Camera* camera, float deltaTime);
-		void UpdateGravity(float deltaTime);
 		void UpdateAudio(float deltaTime);
 		void CreateRigidBody();
-		void UpdateRigidBodyWorldTransform();
-		void CheckBulletCollisions();
-		void FindGroundHeight(Physics* physics, float deltaTime);
+		void CastFloorRay(Physics* physics);
+		void CalculateIsGrounded();
+
+		//void UpdateGravity(float deltaTime);
+		//void UpdateRigidBodyWorldTransform();
+		//void CheckBulletCollisions();
+		//void FindGroundHeight(Physics* physics, float deltaTime);
 
 		void UpdatePhysicsMovement(float deltaTime);
 
@@ -55,8 +58,8 @@ namespace HellEngine
 		float standingViewHeight = 1.4f;
 
 		// Movement
-		float groundHeight = 0;
-		float rigidBodyHoverHeight = 0.5f;
+		//float groundHeight = 0;
+		//float rigidBodyHoverHeight = 0.5f;
 
 		//float gravity = -0.9f;
 		glm::vec3 currentVelocity = glm::vec3(0);
@@ -73,5 +76,9 @@ namespace HellEngine
 		bool isMoving;
 		float footstepAudioTimer;
 		float footstepAudioLoopLength = 0.35f;
+
+		RaycastResult floorRay;
+		bool isGrounded;
+		
 	};
 }
